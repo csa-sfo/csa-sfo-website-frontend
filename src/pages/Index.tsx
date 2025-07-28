@@ -88,7 +88,7 @@ export default function Index() {
                     className="w-32 h-32 object-contain"
                   />
                 </div>
-                <p className="text-gray-600 text-sm font-medium">We are a 501(c)3 nonprofit</p>
+                <p className="text-gray-600 text-sm font-bold">We are a 501(c)3 nonprofit</p>
               </div>
             </div>
 
