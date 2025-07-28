@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,12 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Updated CSA Brand Colors with orange from image
+				'csa-blue': '#367ABB',
+				'csa-navy': '#2B5F8A',
+				'csa-accent': '#F27D42',  // Orange color from San Francisco Chapter image
+				'csa-light': '#F7F9FC'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +90,52 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'slide-in-right': {
+					'0%': { transform: 'translateX(100%)' },
+					'100%': { transform: 'translateX(0)' }
+				},
+				'zoom-out-to-header': {
+					'0%': { 
+						transform: 'scale(1) translate(0, 0)',
+						opacity: '1'
+					},
+					'20%': { 
+						transform: 'scale(1.1) translate(0, 0)',
+						opacity: '1'
+					},
+					'60%': { 
+						transform: 'scale(0.4) translate(-120px, -180px)',
+						opacity: '0.8'
+					},
+					'100%': { 
+						transform: 'scale(0.2) translate(-240px, -360px)',
+						opacity: '0'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'slide-in-right': 'slide-in-right 0.3s ease-out',
+				'zoom-out-to-header': 'zoom-out-to-header 1s ease-out forwards'
+			},
+			fontFamily: {
+				sans: ['Inter', 'sans-serif'],
+			},
+			maxWidth: {
+				'site': '1440px'
 			}
 		}
 	},
