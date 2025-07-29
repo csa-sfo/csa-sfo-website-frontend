@@ -76,7 +76,7 @@ export default function Index() {
               
               {/* CSA Badges */}
               <div className="flex flex-col items-center sm:items-start pt-4 space-y-4">
-                <div className="flex gap-4 items-center relative">
+                <div className="flex gap-4 items-center">
                   <img 
                     src="/lovable-uploads/2dad453f-52d8-4e4c-b61a-c988b8f613a1.png"
                     alt="CSA Chapter of Excellence Badge"
@@ -87,14 +87,6 @@ export default function Index() {
                     alt="CSA San Francisco Chapter Badge"
                     className="w-32 h-32 object-contain"
                   />
-                  <a 
-                    href="https://indrasol.com/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="absolute -right-16 bottom-0 text-xs text-gray-500 hover:text-csa-accent transition-colors"
-                  >
-                    by Indrasol
-                  </a>
                 </div>
                 <p className="text-gray-600 text-sm font-bold">We are a 501(c)3 nonprofit</p>
               </div>

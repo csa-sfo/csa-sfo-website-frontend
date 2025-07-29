@@ -37,7 +37,7 @@ export function Header() {
           {/* Logo */}
           <Link 
             to="/" 
-            className="flex items-center space-x-2 sm:space-x-3 font-semibold text-base sm:text-lg"
+            className="flex items-center space-x-2 sm:space-x-3 font-semibold text-base sm:text-lg relative"
             aria-label="CSA San Francisco Chapter Home"
           >
             <img 
@@ -45,6 +45,14 @@ export function Header() {
               alt="CSA San Francisco Chapter logo" 
               className="h-8 sm:h-10 md:h-12"
             />
+            <a 
+              href="https://indrasol.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="absolute -right-20 bottom-0 text-xs text-gray-500 hover:text-accent transition-colors"
+            >
+              by Indrasol
+            </a>
           </Link>
 
           {/* Desktop Navigation */}
