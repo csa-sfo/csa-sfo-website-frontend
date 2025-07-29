@@ -125,41 +125,67 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-24 right-4 z-50 w-80 sm:w-96">
+    <div className="fixed bottom-4 right-4 z-50 w-80 sm:w-96">
+      {/* Zoom out mascot effect - starts from toggle button position */}
+      {showZoomOut && (
+        <div className="absolute bottom-0 right-0 z-60 pointer-events-none">
+          <div className="h-24 w-24 rounded-full bg-white/95 border-4 border-csa-blue flex items-center justify-center animate-zoom-out-to-header">
+            <img 
+              src="/lovable-uploads/6c9d0416-c5cd-4552-baee-a4aaf7ed03e5.png" 
+              alt="CSA Bot" 
+              className="h-16 w-16 object-contain"
+            />
+          </div>
+        </div>
+      )}
+      
       <Card className={cn(
-        "shadow-2xl border border-border bg-background/95 backdrop-blur-xl rounded-2xl overflow-hidden transition-all duration-300",
-        isOpen ? "animate-scale-in opacity-100" : "animate-scale-out opacity-0"
+        "shadow-2xl border-4 border-csa-blue bg-white/10 backdrop-blur-xl rounded-3xl overflow-hidden",
+        isOpen ? "animate-slide-in-right" : ""
       )}>
-        <CardHeader className="bg-primary/5 border-b border-border p-4">
+        <CardHeader className="bg-gradient-to-r from-csa-blue/90 to-csa-navy/90 backdrop-blur-md text-white p-4 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <Avatar className="h-10 w-10 border-2 border-primary/20">
+                <Avatar className="h-12 w-12 border-2 border-white/30 bg-white/10 backdrop-blur-sm">
                   <AvatarImage 
                     src="/lovable-uploads/6c9d0416-c5cd-4552-baee-a4aaf7ed03e5.png" 
                     alt="CSA Bot" 
-                    className="h-10 w-10 object-contain"
+                    className="h-12 w-12 object-contain"
                   />
-                  <AvatarFallback className="bg-primary text-primary-foreground">CSA</AvatarFallback>
+                  <AvatarFallback className="bg-csa-accent/80 text-white backdrop-blur-sm">CSA</AvatarFallback>
                 </Avatar>
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
+                {/* Subtle pulse effect */}
+                <div className="absolute inset-0 rounded-full border-2 border-white/20 animate-pulse opacity-30"></div>
               </div>
               <div>
-                <CardTitle className="text-base">CSA Assistant</CardTitle>
-                <p className="text-xs text-muted-foreground">Online • Typically replies instantly</p>
+                <CardTitle className="text-lg">CSA Bot</CardTitle>
+                <Badge variant="secondary" className="bg-green-500/30 text-green-100 text-xs backdrop-blur-sm border border-green-400/20">
+                  Online
+                </Badge>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggle}
-              className="h-8 w-8 p-0 hover:bg-destructive/20"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggle}
+                className="text-white hover:bg-white/10 backdrop-blur-sm h-8 w-8 p-0"
+              >
+                <Minimize2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggle}
+                className="text-white hover:bg-white/10 backdrop-blur-sm h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 bg-white/5 backdrop-blur-xl">
           <ScrollArea className="h-80 p-4" ref={scrollAreaRef}>
             <div className="space-y-4">
               {messages.map((message) => (
@@ -172,10 +198,10 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
                 >
                   <div
                     className={cn(
-                      "max-w-[75%] rounded-2xl px-4 py-2 text-sm",
+                      "max-w-[75%] rounded-2xl px-4 py-2 text-sm backdrop-blur-sm",
                       message.sender === 'user'
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
+                        ? "bg-csa-blue/90 text-white border border-csa-blue/30"
+                        : "bg-white/20 text-gray-800 border border-white/30"
                     )}
                   >
                     {message.text}
@@ -187,30 +213,30 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
               ))}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="bg-muted text-muted-foreground rounded-2xl px-4 py-2 text-sm">
+                  <div className="bg-white/20 text-gray-800 border border-white/30 backdrop-blur-sm rounded-2xl px-4 py-2 text-sm">
                     <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-2 h-2 bg-csa-blue rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-csa-blue rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-csa-blue rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
                   </div>
                 </div>
               )}
             </div>
           </ScrollArea>
-          <div className="p-4 border-t border-border bg-muted/30">
+          <div className="p-4 border-t border-white/10 bg-white/5 backdrop-blur-md">
             <div className="flex space-x-2">
               <Input
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Type your message..."
-                className="flex-1"
+                className="flex-1 rounded-full bg-white/10 backdrop-blur-sm border-white/20 focus:border-csa-blue/50 text-gray-800 placeholder:text-gray-600"
               />
               <Button
                 onClick={handleSendMessage}
                 size="sm"
-                className="rounded-full h-10 w-10 p-0"
+                className="bg-csa-accent/90 hover:bg-csa-accent backdrop-blur-sm text-white rounded-full h-10 w-10 p-0 border border-csa-accent/30"
               >
                 <Send className="h-4 w-4" />
               </Button>
