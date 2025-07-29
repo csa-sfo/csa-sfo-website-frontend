@@ -9,7 +9,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* About Section */}
           <div className="space-y-3 sm:space-y-4 sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center space-x-2 sm:space-x-3 relative">
+            <div className="flex flex-col items-start">
               <img 
                 src="/lovable-uploads/f9f64043-c236-482e-acb2-d6a08e0612fc.png" 
                 alt="CSA San Francisco Chapter logo" 
@@ -19,7 +19,7 @@ export function Footer() {
                 href="https://indrasol.com/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="absolute -right-20 bottom-0 text-xs text-gray-400 hover:text-csa-accent transition-colors"
+                className="text-xs text-gray-400 hover:text-csa-accent transition-colors ml-auto -mt-1"
               >
                 by Indrasol
               </a>
