@@ -19,9 +19,9 @@ export function Footer() {
                 href="https://indrasol.com/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-xs text-gray-400 hover:text-csa-accent transition-colors ml-auto -mt-1"
+                className="text-xs text-gray-400 hover:text-gray-300 transition-colors ml-auto -mt-1"
               >
-                by Indrasol
+                Powered by Indrasol
               </a>
             </div>
             <p className="text-sm text-gray-300 leading-relaxed">
