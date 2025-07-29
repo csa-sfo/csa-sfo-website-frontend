@@ -147,6 +147,17 @@
   .mobile-heading {
     @apply text-lg sm:text-xl md:text-2xl;
   }
+
+  /* Client Carousel Animations */
+  @keyframes scroll-left {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-33.333%); }
+  }
+  
+  @keyframes scroll-right {
+    0% { transform: translateX(-33.333%); }
+    100% { transform: translateX(0); }
+  }
 }
 
 /* Mobile-specific improvements */
