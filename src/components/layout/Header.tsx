@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Phone } from "lucide-react";
 import { AuthModal } from "@/components/auth/AuthModal";
 
 const navigation = [
@@ -37,7 +37,7 @@ export function Header() {
           {/* Logo */}
           <Link 
             to="/" 
-            className="flex flex-col items-start font-semibold text-base sm:text-lg relative"
+            className="flex flex-col items-start font-semibold text-base sm:text-lg"
             aria-label="CSA San Francisco Chapter Home"
           >
             <img 
@@ -45,15 +45,23 @@ export function Header() {
               alt="CSA San Francisco Chapter logo" 
               className="h-8 sm:h-10 md:h-12"
             />
-            <a 
-              href="https://indrasol.com/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-xs text-primary hover:text-primary/80 transition-colors self-end -mt-1"
-            >
-              Powered by Indrasol
-            </a>
           </Link>
+
+          {/* Phone Number */}
+          <div className="hidden md:flex items-center space-x-2 bg-gradient-to-r from-primary/5 to-csa-accent/5 px-4 py-2 rounded-full border border-primary/10 hover:border-primary/20 transition-all duration-300">
+            <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-full">
+              <Phone className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-500 font-medium">Call Us</span>
+              <a 
+                href="tel:+1-415-555-0123" 
+                className="text-sm font-semibold text-primary hover:text-csa-accent transition-colors duration-300"
+              >
+                (415) 555-0123
+              </a>
+            </div>
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">
