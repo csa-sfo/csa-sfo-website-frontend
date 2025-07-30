@@ -8,7 +8,7 @@ const stats = [
   { label: "Active Members", value: "250+", icon: Users },
   { label: "Events This Year", value: "12", icon: Calendar },
   { label: "Industry Partners", value: "25+", icon: Award },
-  { label: "Years Active", value: "8", icon: TrendingUp },
+  { label: "Years Active", value: "4", icon: TrendingUp },
 ];
 
 const upcomingEvent = {
@@ -48,14 +48,26 @@ export default function Index() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative bg-white overflow-hidden">
-        <div className="container-site py-8 sm:py-12 lg:py-16 xl:py-20">
+        {/* Powered by Indrasol - Close to header */}
+        <div className="container-site pt-1 pb-0">
+          <a 
+            href="https://indrasol.com/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-block text-xs text-primary hover:text-primary/80 transition-colors font-bold"
+          >
+            Powered by Indrasol
+          </a>
+        </div>
+        
+        <div className="container-site py-4 sm:py-8 lg:py-12 xl:py-16">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 xl:gap-20 items-start lg:items-center">
             {/* Left Column - Text Content */}
             <div className="space-y-6 lg:space-y-8 animate-fade-in pt-4 lg:pt-0">
               <div className="space-y-4 lg:space-y-6">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight text-secondary">
-                  <span className="text-secondary">Advancing Cloud Security in the</span>{" "}
-                  <span className="text-csa-accent">Bay Area</span>
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight text-secondary">
+                  <div className="text-secondary">Advancing Cloud Security</div>
+                  <div>in the <span className="text-csa-accent">Bay Area</span></div>
                 </h1>
                 <p className="text-lg md:text-xl lg:text-2xl text-gray-600 leading-relaxed max-w-xl">
                   Join San Francisco's premier community of cloud security professionals. 
@@ -543,6 +555,33 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* Floating Social Media Bar */}
+      <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50 hidden lg:block">
+        <div className="flex flex-col space-y-4">
+          <a
+            href="https://www.linkedin.com/groups/14049487/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 border border-gray-200 hover:border-primary/20"
+            aria-label="Join our LinkedIn Group"
+          >
+            <svg 
+              className="h-6 w-6 transition-all duration-300" 
+              viewBox="0 0 24 24" 
+              fill="#0077B5"
+            >
+              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            </svg>
+            
+            {/* Tooltip */}
+            <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
+              Join our LinkedIn Group
+              <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+            </div>
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
