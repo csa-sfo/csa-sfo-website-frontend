@@ -36,8 +36,8 @@ export function Header() {
   return (
     <header className="bg-white text-primary sticky top-0 z-50 border-b border-primary/20">
       <div className="container-site">
-        <div className="flex items-end justify-between h-14 sm:h-16">
-          {/* Logo and Phone Number Group */}
+        <div className="flex justify-between h-14 sm:h-16">
+          {/* Logo and Phone Number Group - Bottom Aligned */}
           <div className="flex items-end space-x-3 sm:space-x-4 md:space-x-6">
             {/* Logo */}
             <Link 
@@ -66,7 +66,7 @@ export function Header() {
             </div>
           </div>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - Center Aligned */}
           <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">
             <nav className="flex items-center space-x-6 xl:space-x-8" aria-label="Main navigation">
               {navigation.map((item) => (
