@@ -560,7 +560,7 @@ export default function Index() {
       <div className="fixed right-4 bottom-24 md:bottom-32 lg:top-1/2 lg:transform lg:-translate-y-1/2 z-30">
         <div className="flex flex-col space-y-3 lg:space-y-4">
           <a
-            href="https://www.linkedin.com/groups/14049487/"
+            href="https://www.linkedin.com/groups/13346003/"
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 border border-gray-200 hover:border-primary/20"
