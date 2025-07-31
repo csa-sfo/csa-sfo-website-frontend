@@ -36,9 +36,9 @@ const sponsors = [
 ];
 
 const partners = [
-  { name: "ISC2 Silicon Valley", logo: "/lovable-uploads/ISC2-SiliconValley.png", website: "https://www.isc2-siliconvalley-chapter.org/" },
-  { name: "OWASP", logo: "/lovable-uploads/logo-owasp-org.png", website: "https://owasp.org/" },
   { name: "Pacific Hackers Conference", logo: "/lovable-uploads/pacific hacker.png", website: "https://www.phack.org/" },
+  { name: "OWASP", logo: "/lovable-uploads/logo-owasp-org.png", website: "https://owasp.org/" },
+  { name: "ISC2 Silicon Valley", logo: "/lovable-uploads/ISC2-SiliconValley.png", website: "https://www.isc2-siliconvalley-chapter.org/" },
 ];
 
 export default function Index() {
@@ -557,27 +557,33 @@ export default function Index() {
       </section>
 
       {/* Floating Social Media Bar */}
-      <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50 hidden lg:block">
-        <div className="flex flex-col space-y-4">
+      <div className="fixed right-4 bottom-24 md:bottom-32 lg:top-1/2 lg:transform lg:-translate-y-1/2 z-30">
+        <div className="flex flex-col space-y-3 lg:space-y-4">
           <a
             href="https://www.linkedin.com/groups/14049487/"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 border border-gray-200 hover:border-primary/20"
+            className="group flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 border border-gray-200 hover:border-primary/20"
             aria-label="Join our LinkedIn Group"
           >
             <svg 
-              className="h-6 w-6 transition-all duration-300" 
+              className="h-5 w-5 sm:h-6 sm:w-6 transition-all duration-300" 
               viewBox="0 0 24 24" 
               fill="#0077B5"
             >
               <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
             </svg>
             
-            {/* Tooltip */}
-            <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
+            {/* Tooltip - positioned to the left for right-side placement */}
+            <div className="absolute right-full mr-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none hidden sm:block">
               Join our LinkedIn Group
-              <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+              <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+            </div>
+            
+            {/* Mobile tooltip - positioned above */}
+            <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none sm:hidden">
+              LinkedIn
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -translate-y-px w-2 h-2 bg-gray-900 rotate-45"></div>
             </div>
           </a>
         </div>
