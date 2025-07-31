@@ -3,8 +3,10 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X, Phone } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Menu, X, Phone, User, Settings, LogOut, Shield } from "lucide-react";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -20,6 +22,7 @@ export function Header() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const location = useLocation();
+  const { isAuthenticated, isAdmin, user, logout } = useAuth();
 
   const isActive = (href: string) => {
     if (href === "/") return location.pathname === "/";
@@ -33,30 +36,30 @@ export function Header() {
   return (
     <header className="bg-white text-primary sticky top-0 z-50 border-b border-primary/20">
       <div className="container-site">
-        <div className="flex items-center justify-between h-14 sm:h-16">
-          {/* Logo */}
-          <Link 
-            to="/" 
-            className="flex flex-col items-start font-semibold text-base sm:text-lg"
-            aria-label="CSA San Francisco Chapter Home"
-          >
-            <img 
-              src="/lovable-uploads/f9f64043-c236-482e-acb2-d6a08e0612fc.png" 
-              alt="CSA San Francisco Chapter logo" 
-              className="h-8 sm:h-10 md:h-12"
-            />
-          </Link>
+        <div className="flex items-end justify-between h-14 sm:h-16">
+          {/* Logo and Phone Number Group */}
+          <div className="flex items-end space-x-3 sm:space-x-4 md:space-x-6">
+            {/* Logo */}
+            <Link 
+              to="/" 
+              className="flex flex-col items-start font-semibold text-base sm:text-lg"
+              aria-label="CSA San Francisco Chapter Home"
+            >
+              <img 
+                src="/lovable-uploads/f9f64043-c236-482e-acb2-d6a08e0612fc.png" 
+                alt="CSA San Francisco Chapter logo" 
+                className="h-8 sm:h-10 md:h-12"
+              />
+            </Link>
 
-          {/* Phone Number */}
-          <div className="hidden md:flex items-center space-x-2 bg-gradient-to-r from-primary/5 to-csa-accent/5 px-4 py-2 rounded-full border border-primary/10 hover:border-primary/20 transition-all duration-300">
-            <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-full">
-              <Phone className="h-4 w-4 text-primary" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-500 font-medium">Call Us</span>
+            {/* Phone Number */}
+            <div className="flex items-center space-x-1.5 sm:space-x-2 bg-gradient-to-r from-primary/5 to-csa-accent/5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full border border-primary/10 hover:border-primary/20 transition-all duration-300 mb-1">
+              <div className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-primary/10 rounded-full">
+                <Phone className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
+              </div>
               <a 
                 href="tel:+1-415-555-0123" 
-                className="text-sm font-semibold text-primary hover:text-csa-accent transition-colors duration-300"
+                className="text-xs sm:text-sm font-semibold text-primary hover:text-csa-accent transition-colors duration-300"
               >
                 (415) 555-0123
               </a>
@@ -90,12 +93,52 @@ export function Header() {
               >
                 <Link to="/sponsorship">Sponsorship</Link>
               </Button>
-              <Button
-                onClick={handleAuthClick}
-                className="bg-orange-500 text-white hover:bg-orange-600 px-4 py-2 text-sm"
-              >
-                Sign Up
-              </Button>
+              
+              {isAuthenticated ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex items-center space-x-2">
+                      <User className="h-4 w-4" />
+                      <span className="hidden sm:inline">{user?.name}</span>
+                      {isAdmin && <Shield className="h-3 w-3 text-orange-500" />}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-2 py-1.5 text-sm">
+                      <div className="font-medium">{user?.name}</div>
+                      <div className="text-gray-500 text-xs">{user?.email}</div>
+                      {isAdmin && (
+                        <div className="text-orange-600 text-xs font-medium mt-1">
+                          Administrator
+                        </div>
+                      )}
+                    </div>
+                    <DropdownMenuSeparator />
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin" className="flex items-center space-x-2">
+                            <Settings className="h-4 w-4" />
+                            <span>Admin Panel</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    <DropdownMenuItem onClick={logout} className="text-red-600">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  onClick={handleAuthClick}
+                  className="bg-orange-500 text-white hover:bg-orange-600 px-4 py-2 text-sm"
+                >
+                  Sign Up
+                </Button>
+              )}
             </div>
           </div>
 
@@ -161,15 +204,60 @@ export function Header() {
                       Sponsorship
                     </Link>
                   </Button>
-                  <Button
-                    onClick={() => {
-                      setIsOpen(false);
-                      handleAuthClick();
-                    }}
-                    className="bg-orange-500 text-white hover:bg-orange-600 w-full py-3 text-base font-medium"
-                  >
-                    Sign Up
-                  </Button>
+                  
+                  {isAuthenticated ? (
+                    <div className="space-y-3">
+                      {/* User Info */}
+                      <div className="bg-white/10 rounded-lg p-3">
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-white" />
+                          <span className="text-white font-medium">{user?.name}</span>
+                          {isAdmin && <Shield className="h-3 w-3 text-orange-300" />}
+                        </div>
+                        <div className="text-white/70 text-sm mt-1">{user?.email}</div>
+                        {isAdmin && (
+                          <div className="text-orange-300 text-xs font-medium mt-1">
+                            Administrator
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Admin Panel Link for Mobile */}
+                      {isAdmin && (
+                        <Button
+                          asChild
+                          className="bg-white/20 text-white hover:bg-white/30 w-full py-3 text-base font-medium"
+                        >
+                          <Link to="/admin" onClick={() => setIsOpen(false)}>
+                            <Settings className="h-4 w-4 mr-2" />
+                            Admin Panel
+                          </Link>
+                        </Button>
+                      )}
+                      
+                      {/* Logout Button */}
+                      <Button
+                        onClick={() => {
+                          setIsOpen(false);
+                          logout();
+                        }}
+                        className="bg-red-600 text-white hover:bg-red-700 w-full py-3 text-base font-medium"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Sign Out
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        setIsOpen(false);
+                        handleAuthClick();
+                      }}
+                      className="bg-orange-500 text-white hover:bg-orange-600 w-full py-3 text-base font-medium"
+                    >
+                      Sign Up
+                    </Button>
+                  )}
                 </div>
               </div>
             </SheetContent>

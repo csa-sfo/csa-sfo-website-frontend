@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -19,15 +21,58 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const { login, loading } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Form submitted:", { email, password, name });
+    setError("");
+
+    if (!email || !password) {
+      setError("Please fill in all required fields");
+      return;
+    }
+
+    if (mode === "signup" && !name) {
+      setError("Please enter your full name");
+      return;
+    }
+
+    try {
+      const success = await login(email, password);
+      if (success) {
+        toast.success(`Welcome back! You've been signed in successfully.`);
+        setEmail("");
+        setPassword("");
+        setName("");
+        onClose();
+      } else {
+        setError("Invalid email or password. Please try again.");
+      }
+    } catch (error) {
+      setError("An error occurred during sign in. Please try again.");
+    }
+  };
+
+  const resetForm = () => {
+    setEmail("");
+    setPassword("");
+    setName("");
+    setError("");
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const handleModeChange = (newMode: "login" | "signup") => {
+    setError("");
+    onModeChange(newMode);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="w-[95vw] max-w-sm mx-auto bg-white border-0 shadow-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="text-center space-y-2 pb-1">
           <div className="flex justify-center">
@@ -46,7 +91,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           {/* Tab Navigation */}
           <div className="flex bg-gray-50 rounded-lg p-1">
             <button
-              onClick={() => onModeChange("login")}
+              onClick={() => handleModeChange("login")}
               className={`flex-1 py-2 px-2 text-sm font-medium rounded-md transition-all duration-200 ${
                 mode === "login"
                   ? "bg-white text-orange-600 shadow-sm"
@@ -56,7 +101,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
               Log In
             </button>
             <button
-              onClick={() => onModeChange("signup")}
+              onClick={() => handleModeChange("signup")}
               className={`flex-1 py-2 px-2 text-sm font-medium rounded-md transition-all duration-200 ${
                 mode === "signup"
                   ? "bg-white text-orange-600 shadow-sm"
@@ -66,6 +111,30 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
               Sign Up
             </button>
           </div>
+
+          {/* Demo Admin Credentials Info */}
+          {mode === "login" && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-blue-800">
+                  <p className="font-medium mb-1">Demo Admin Access:</p>
+                  <p>Email: <code className="bg-blue-100 px-1 rounded">admin@csasf.org</code></p>
+                  <p>Password: <code className="bg-blue-100 px-1 rounded">CSA2024!</code></p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          )}
 
           {/* Social Login Buttons */}
           <div className="space-y-2">
@@ -177,9 +246,17 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
 
             <Button
               type="submit"
-              className="w-full h-10 bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] mt-4"
+              disabled={loading}
+              className="w-full h-10 bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {mode === "login" ? "Sign In" : "Create Account"}
+              {loading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Signing In...</span>
+                </div>
+              ) : (
+                mode === "login" ? "Sign In" : "Create Account"
+              )}
             </Button>
           </form>
         </div>
