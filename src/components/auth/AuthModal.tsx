@@ -112,20 +112,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
             </button>
           </div>
 
-          {/* Demo Admin Credentials Info */}
-          {mode === "login" && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="flex items-start space-x-2">
-                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-blue-800">
-                  <p className="font-medium mb-1">Demo Admin Access:</p>
-                  <p>Email: <code className="bg-blue-100 px-1 rounded">admin@csasf.org</code></p>
-                  <p>Password: <code className="bg-blue-100 px-1 rounded">CSA2024!</code></p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Error Message */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
