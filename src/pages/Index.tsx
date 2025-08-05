@@ -328,8 +328,8 @@ export default function Index() {
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-secondary mb-2">
               Technical Partner
             </h2>
-            <p className="text-sm sm:text-base text-gray-600 max-w-lg mx-auto px-4">
-              Partnering with industry leaders to deliver cutting-edge cloud infrastructure solutions
+            <p className="text-sm sm:text-base text-gray-600 max-w-3xl mx-auto px-4 sm:px-6">
+              Indrasol has developed AI-powered features for the CSA SFO website, including a context-aware AI voice assistant that guides visitors using live website updates, an AI chatbot, and integrated Stripe payments.
             </p>
           </div>
 
