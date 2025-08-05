@@ -36,17 +36,18 @@ const boardMembers = [
 ];
 
 const advisoryMembers = [
+  
+  {
+    name: "Kapil Raina",
+    role: "Advisory Member",
+    linkedin: "https://www.linkedin.com/in/kapilraina/ ",
+    image: "/lovable-uploads/members/Kapilraina.png"
+  },
   {
     name: "Rahul Kalva",
     role: "Advisory Member",
     linkedin: "https://www.linkedin.com/in/rahul-kalva",
     image: "/lovable-uploads/members/rahulkalva.png"
-  },
-  {
-    name: "Kapil Raina",
-    role: "Advisory Member",
-    linkedin: "https://www.linkedin.com/in/kapilraina/ ",
-    image: "/api/placeholder/150/150"
   }
 ];
 
@@ -185,7 +186,7 @@ export default function About() {
         <div className="container-site px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-csa-navy mb-6">
-              Leadership Team
+            CSA SFO Team
             </h2>
             <p className="text-lg text-gray-600">
               Meet the dedicated professionals leading our chapter.
