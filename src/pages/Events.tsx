@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, MapPin, Users } from "lucide-react";
+import { Event } from "@/types/event";
 
-const upcomingEvents = [
+const upcomingEvents: Event[] = [
   {
     id: "1",
     title: "Zero Trust Architecture: Implementing Mature Security Models",
@@ -16,10 +17,28 @@ const upcomingEvents = [
     location: "Adobe, 345 Park Avenue, San Jose, CA",
     excerpt: "Join us for an evening of networking and expert insights on implementing Zero Trust security frameworks in enterprise environments.",
     slug: "zero-trust-architecture-jan-2025",
-    speakers: ["Satish Govindappa", "Dr. Sarah Chen"],
+    speakers: [
+      {
+        id: "1",
+        name: "Satish Govindappa",
+        role: "Chapter Chair",
+        company: "Oracle",
+        about: "Cloud security architect with 15+ years in enterprise security.",
+        imageUrl: "/api/placeholder/150/150"
+      },
+      {
+        id: "2",
+        name: "Dr. Sarah Chen",
+        role: "Principal Security Architect",
+        company: "Salesforce",
+        about: "Research scientist specializing in zero trust architectures.",
+        imageUrl: "/api/placeholder/150/150"
+      }
+    ],
     tags: ["Zero Trust", "Enterprise Security"],
     attendees: 45,
-    capacity: 60
+    capacity: 60,
+    agenda: []
   },
   {
     id: "2", 
@@ -28,14 +47,32 @@ const upcomingEvents = [
     location: "Salesforce Tower, 415 Mission St, San Francisco, CA",
     excerpt: "Explore the latest cloud security mesh patterns and how they're reshaping enterprise security architectures.",
     slug: "cloud-security-mesh-feb-2025",
-    speakers: ["Maria Rodriguez", "Alex Kim"],
+    speakers: [
+      {
+        id: "3",
+        name: "Maria Rodriguez",
+        role: "Security Architect",
+        company: "Google Cloud",
+        about: "Cloud security specialist focusing on mesh architectures.",
+        imageUrl: "/api/placeholder/150/150"
+      },
+      {
+        id: "4",
+        name: "Alex Kim",
+        role: "Principal Engineer",
+        company: "AWS",
+        about: "Expert in cloud infrastructure and security patterns.",
+        imageUrl: "/api/placeholder/150/150"
+      }
+    ],
     tags: ["Cloud Architecture", "Security Mesh"],
     attendees: 32,
-    capacity: 50
+    capacity: 50,
+    agenda: []
   }
 ];
 
-const pastEvents = [
+const pastEvents: Event[] = [
   {
     id: "3",
     title: "AI/ML Security in the Cloud: Challenges and Solutions",
@@ -43,10 +80,28 @@ const pastEvents = [
     location: "Cisco Campus, 170 W Tasman Dr, San Jose, CA",
     excerpt: "Deep dive into securing AI/ML workloads in cloud environments and emerging threat vectors.",
     slug: "ai-ml-security-dec-2024",
-    speakers: ["Dr. James Liu", "Rebecca Zhang"],
+    speakers: [
+      {
+        id: "5",
+        name: "Dr. James Liu",
+        role: "AI Security Researcher",
+        company: "Cisco",
+        about: "Expert in AI/ML security and threat detection systems.",
+        imageUrl: "/api/placeholder/150/150"
+      },
+      {
+        id: "6",
+        name: "Rebecca Zhang",
+        role: "ML Engineer",
+        company: "NVIDIA",
+        about: "Specialist in securing machine learning pipelines.",
+        imageUrl: "/api/placeholder/150/150"
+      }
+    ],
     tags: ["AI/ML", "Cloud Security", "Machine Learning"],
     attendees: 55,
-    capacity: 55
+    capacity: 55,
+    agenda: []
   }
 ];
 
@@ -69,7 +124,7 @@ export default function Events() {
     };
   };
 
-  const EventCard = ({ event, showRegistration = false }: { event: any, showRegistration?: boolean }) => {
+  const EventCard = ({ event, showRegistration = false }: { event: Event, showRegistration?: boolean }) => {
     const dateInfo = formatEventDate(event.date);
     const spotsLeft = event.capacity - event.attendees;
 
@@ -117,7 +172,7 @@ export default function Events() {
           <div className="space-y-2">
             <div className="text-sm font-medium text-gray-700">Speakers:</div>
             <div className="text-sm text-gray-600">
-              {event.speakers.join(", ")}
+              {event.speakers.map(speaker => speaker.name).join(", ")}
             </div>
           </div>
 
