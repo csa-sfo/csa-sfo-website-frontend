@@ -107,7 +107,7 @@ export default function EventDetail() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Event Not Found</h1>
           <p className="text-gray-600 mb-8">The event you're looking for doesn't exist.</p>
-          <Button asChild>
+          <Button asChild className="bg-csa-accent hover:bg-csa-accent/90 text-white">
             <Link to="/events">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Events
@@ -185,7 +185,7 @@ END:VCALENDAR`;
       <section className="bg-gradient-to-r from-csa-blue to-csa-navy text-white py-16">
         <div className="container-site">
           <div className="mb-6">
-            <Button asChild variant="outline" className="border-white text-white hover:bg-white hover:text-csa-navy">
+            <Button asChild className="bg-csa-accent hover:bg-csa-accent/90 text-white border-none">
               <Link to="/events">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Events
