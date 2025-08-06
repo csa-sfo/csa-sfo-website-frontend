@@ -12,63 +12,70 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, MapPin, Users, Clock, ExternalLink, ArrowLeft, Download } from "lucide-react";
 import { toast } from "sonner";
+import { Event } from "@/types/event";
 
-// Mock event data - in real app this would come from CMS/API
-const eventData = {
+// Mock event data - in real app this would come from CMS/API or shared state
+const eventData: Record<string, Event> = {
   "zero-trust-architecture-jan-2025": {
+    id: "1",
     title: "Zero Trust Architecture: Implementing Mature Security Models",
     date: "2025-01-28T17:30:00-08:00",
     location: "Adobe, 345 Park Avenue, San Jose, CA 95110",
     excerpt: "Join us for an evening of networking and expert insights on implementing Zero Trust security frameworks in enterprise environments.",
-    description: `
-      Zero Trust has evolved from a buzzword to a fundamental security paradigm. This session will provide practical insights into implementing mature Zero Trust architectures in enterprise environments.
+    slug: "zero-trust-architecture-jan-2025",
+    description: `Zero Trust has evolved from a buzzword to a fundamental security paradigm. This session will provide practical insights into implementing mature Zero Trust architectures in enterprise environments.
 
-      Our expert speakers will cover real-world implementation challenges, lessons learned, and best practices for organizations at various stages of their Zero Trust journey.
+Our expert speakers will cover real-world implementation challenges, lessons learned, and best practices for organizations at various stages of their Zero Trust journey.
 
-      This event includes networking opportunities before and after the presentation, allowing you to connect with fellow security professionals and discuss implementation strategies.
-    `,
+This event includes networking opportunities before and after the presentation, allowing you to connect with fellow security professionals and discuss implementation strategies.`,
     agenda: [
       {
-        time: "5:30 PM - 6:00 PM",
-        title: "Registration & Networking",
+        id: "1",
+        duration: "5:30 PM - 6:00 PM",
+        topic: "Registration & Networking",
         description: "Welcome reception with light refreshments and networking opportunities."
       },
       {
-        time: "6:00 PM - 6:15 PM",
-        title: "Welcome & Chapter Updates",
+        id: "2",
+        duration: "6:00 PM - 6:15 PM",
+        topic: "Welcome & Chapter Updates",
         description: "Chapter updates and upcoming events overview by Satish Govindappa."
       },
       {
-        time: "6:15 PM - 7:00 PM",
-        title: "Zero Trust Implementation: Enterprise Perspective",
-        description: "Real-world case study and lessons learned from implementing Zero Trust at scale.",
-        speaker: "Dr. Sarah Chen"
+        id: "3",
+        duration: "6:15 PM - 7:00 PM",
+        topic: "Zero Trust Implementation: Enterprise Perspective",
+        description: "Real-world case study and lessons learned from implementing Zero Trust at scale."
       },
       {
-        time: "7:00 PM - 7:15 PM",
-        title: "Q&A Session",
+        id: "4",
+        duration: "7:00 PM - 7:15 PM",
+        topic: "Q&A Session",
         description: "Interactive discussion with speakers and audience."
       },
       {
-        time: "7:15 PM - 8:00 PM",
-        title: "Networking & Closing",
+        id: "5",
+        duration: "7:15 PM - 8:00 PM",
+        topic: "Networking & Closing",
         description: "Continued networking and informal discussions."
       }
     ],
     speakers: [
       {
+        id: "1",
         name: "Satish Govindappa",
-        title: "Chapter Chair, CSA SF",
+        role: "Chapter Chair, CSA SF",
         company: "Oracle",
-        bio: "Cloud security architect with 15+ years in enterprise security and cloud transformation. Currently leading cloud security initiatives at Oracle.",
-        image: "/api/placeholder/150/150"
+        about: "Cloud security architect with 15+ years in enterprise security and cloud transformation. Currently leading cloud security initiatives at Oracle.",
+        imageUrl: "/api/placeholder/150/150"
       },
       {
+        id: "2",
         name: "Dr. Sarah Chen",
-        title: "Principal Security Architect",
+        role: "Principal Security Architect",
         company: "Salesforce",
-        bio: "Research scientist specializing in zero trust architectures and identity management. Published author on cloud security frameworks.",
-        image: "/api/placeholder/150/150"
+        about: "Research scientist specializing in zero trust architectures and identity management. Published author on cloud security frameworks.",
+        imageUrl: "/api/placeholder/150/150"
       }
     ],
     tags: ["Zero Trust", "Enterprise Security", "Cloud Architecture"],
@@ -266,22 +273,17 @@ END:VCALENDAR`;
               <h2 className="text-2xl font-bold text-csa-navy mb-6">Agenda</h2>
               <Accordion type="single" collapsible className="space-y-4">
                 {event.agenda.map((item, index) => (
-                  <AccordionItem key={index} value={`item-${index}`} className="border border-gray-200 rounded-lg">
+                  <AccordionItem key={item.id} value={`item-${index}`} className="border border-gray-200 rounded-lg">
                     <AccordionTrigger className="px-6 py-4 hover:no-underline">
                       <div className="flex items-center space-x-4 text-left">
                         <div className="text-sm font-medium text-csa-blue bg-csa-light px-3 py-1 rounded">
-                          {item.time}
+                          {item.duration}
                         </div>
-                        <div className="font-semibold">{item.title}</div>
+                        <div className="font-semibold">{item.topic}</div>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-6 pb-4 text-gray-600">
                       <p className="mb-2">{item.description}</p>
-                      {item.speaker && (
-                        <p className="text-sm font-medium text-csa-blue">
-                          Speaker: {item.speaker}
-                        </p>
-                      )}
                     </AccordionContent>
                   </AccordionItem>
                 ))}
@@ -293,11 +295,11 @@ END:VCALENDAR`;
               <h2 className="text-2xl font-bold text-csa-navy mb-6">Speakers</h2>
               <div className="grid md:grid-cols-2 gap-6">
                 {event.speakers.map((speaker, index) => (
-                  <Card key={speaker.name}>
+                  <Card key={speaker.id}>
                     <CardContent className="pt-6">
                       <div className="flex items-start space-x-4">
                         <img
-                          src={speaker.image}
+                          src={speaker.imageUrl}
                           alt={`${speaker.name} profile`}
                           className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                         />
@@ -305,10 +307,10 @@ END:VCALENDAR`;
                           <h3 className="text-lg font-semibold text-csa-navy mb-1">
                             {speaker.name}
                           </h3>
-                          <p className="text-csa-blue font-medium mb-1">{speaker.title}</p>
+                          <p className="text-csa-blue font-medium mb-1">{speaker.role}</p>
                           <p className="text-sm text-gray-600 mb-3">{speaker.company}</p>
                           <p className="text-sm text-gray-600 leading-relaxed">
-                            {speaker.bio}
+                            {speaker.about}
                           </p>
                         </div>
                       </div>
