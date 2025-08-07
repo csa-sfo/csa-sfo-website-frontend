@@ -58,10 +58,10 @@ export function Header() {
                 <Phone className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
               </div>
               <a 
-                href="tel:+1-415-555-0123" 
+                href="tel:+1-415-417-0991" 
                 className="text-xs sm:text-sm font-semibold text-primary hover:text-csa-accent transition-colors duration-300"
               >
-                (415) 555-0123
+                +1 415 417 0991
               </a>
             </div>
           </div>
