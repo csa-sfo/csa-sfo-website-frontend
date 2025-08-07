@@ -66,8 +66,9 @@ const sponsorshipTiers = [
     name: "Platinum",
     price: "$5,000",
     priceValue: 5000,
-    stripeProductId: "prod_platinum_sponsorship", // Replace with actual Stripe Product ID
-    stripePriceId: "price_platinum_5000", // Replace with actual Stripe Price ID
+    stripeProductId: "prod_SpACkIzs6Mu0vy",
+    stripePriceId: "price_1RtVs8FKTK8ICUprI5sOstOV",
+    stripePaymentLink: "https://buy.stripe.com/test_7sYfZh0wv8vw0iRal3abK06",
     description: "Maximum visibility and engagement opportunities",
     features: [
       "Logo prominently displayed on all event materials",
@@ -85,8 +86,9 @@ const sponsorshipTiers = [
     name: "Gold",
     price: "$3,000",
     priceValue: 3000,
-    stripeProductId: "prod_gold_sponsorship", // Replace with actual Stripe Product ID
-    stripePriceId: "price_gold_3000", // Replace with actual Stripe Price ID
+    stripeProductId: "prod_SpADwX487uKFub",
+    stripePriceId: "price_1RtVt7FKTK8ICUprMBqHqjh3",
+    stripePaymentLink: "https://buy.stripe.com/test_28E14n5QP7rse9H2SBabK07",
     description: "Strong brand presence and networking access",
     features: [
       "Logo on event materials and presentations",
@@ -103,8 +105,9 @@ const sponsorshipTiers = [
     name: "Silver",
     price: "$1,500",
     priceValue: 1500,
-    stripeProductId: "prod_silver_sponsorship", // Replace with actual Stripe Product ID
-    stripePriceId: "price_silver_1500", // Replace with actual Stripe Price ID
+    stripeProductId: "prod_SpAEMMgs97IGiD",
+    stripePriceId: "price_1RtVtaFKTK8ICUprhZ6uPoYV",
+    stripePaymentLink: "https://buy.stripe.com/test_9B6cN5cfdbHIe9HfFnabK08",
     description: "Brand recognition and community support",
     features: [
       "Logo on select event materials",
@@ -120,8 +123,9 @@ const sponsorshipTiers = [
     name: "Bronze",
     price: "$500",
     priceValue: 500,
-    stripeProductId: "prod_bronze_sponsorship", // Replace with actual Stripe Product ID
-    stripePriceId: "price_bronze_500", // Replace with actual Stripe Price ID
+    stripeProductId: "prod_SpAEGHk3Z4yFA6",
+    stripePriceId: "price_1RtVu6FKTK8ICUprQ3iKqFMN",
+    stripePaymentLink: "https://buy.stripe.com/test_bJecN51Az5jk2qZ64NabK09",
     description: "Community support and brand awareness",
     features: [
       "Logo on website sponsor page",
@@ -170,46 +174,24 @@ export default function Sponsorship() {
   }, []);
 
   // Stripe Checkout Handler
-  const handleStripeCheckout = async (tier: typeof sponsorshipTiers[0]) => {
+  const handleStripeCheckout = (tier: typeof sponsorshipTiers[0]) => {
     setLoadingTier(tier.name);
     
     try {
-      // For demo purposes, using Stripe Payment Links
-      // In production, you would either:
-      // 1. Use Stripe Payment Links (easiest setup)
-      // 2. Create a Stripe Checkout Session via your backend API
+      // Redirect to Stripe payment link
+      window.location.href = tier.stripePaymentLink;
       
-      // Option 1: Payment Links (recommended for quick setup)
-      const paymentLinkUrl = `https://buy.stripe.com/test_${tier.stripePriceId}`;
-      
-      // Option 2: Checkout Session (requires backend API)
-      // const response = await fetch('/api/create-checkout-session', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     tierName: tier.name,
-      //     priceId: tier.stripePriceId,
-      //     amount: tier.priceValue,
-      //     description: `${tier.name} Sponsorship - ${tier.description}`
-      //   })
-      // });
-      // const { url } = await response.json();
-      
-      // For now, we'll simulate the checkout process
-      // Replace this with actual Stripe integration
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
-      // In production, this would redirect to Stripe Checkout
-      alert(`Redirecting to Stripe Checkout for ${tier.name} sponsorship (${tier.price})\n\nIntegration ready - replace with actual Stripe Payment Link or Checkout Session.`);
-      
-      // Uncomment this line when you have actual Stripe setup:
-      // window.location.href = paymentLinkUrl;
+      // Fallback redirect if the first attempt doesn't work
+      setTimeout(() => {
+        window.location.replace(tier.stripePaymentLink);
+      }, 1000);
       
     } catch (error) {
-      console.error('Stripe checkout error:', error);
-      alert('Payment initialization failed. Please try again or contact support.');
-    } finally {
+      console.error('Payment redirect failed:', error);
       setLoadingTier(null);
+      
+      // Fallback: open in new tab
+      window.open(tier.stripePaymentLink, '_blank');
     }
   };
 
@@ -396,7 +378,11 @@ export default function Sponsorship() {
                   
                   {/* Enhanced Stripe Payment Button */}
                   <Button 
-                    onClick={() => handleStripeCheckout(tier)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleStripeCheckout(tier);
+                    }}
                     disabled={loadingTier === tier.name}
                     className={`w-full mt-6 h-12 ${
                       tier.popular 
