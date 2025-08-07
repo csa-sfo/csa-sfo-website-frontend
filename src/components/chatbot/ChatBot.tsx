@@ -1,13 +1,16 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Minimize2, Send, X } from "lucide-react";
+import React, { useEffect, useRef, useState } from 'react';
+
+import { API_ENDPOINTS } from "@/config/api";
 import { Badge } from "@/components/ui/badge";
-import { Send, MessageCircle, X, Minimize2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import ReactMarkdown from 'react-markdown';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   id: string;
@@ -50,7 +53,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
     }
   }, [isOpen]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
     const userMessage: Message = {
@@ -64,21 +67,42 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
     setInputText('');
     setIsTyping(true);
 
-    // Simulate bot response with typing effect
-    setTimeout(() => {
-      const botResponse = getBotResponse(inputText);
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: '',
-        sender: 'bot',
-        timestamp: new Date(),
-        isTyping: true
-      };
-      
-      setMessages(prev => [...prev, botMessage]);
-      setIsTyping(false);
-      
-      // Simulate typing effect
+    // Create bot message placeholder
+    const botMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      text: '',
+      sender: 'bot',
+      timestamp: new Date(),
+      isTyping: true
+    };
+    
+    setMessages(prev => [...prev, botMessage]);
+    try {
+      // Make API call to your backend
+      const response = await fetch(API_ENDPOINTS.SEND_MESSAGE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: "chatbot_user", // You can make this dynamic if needed
+          query: inputText,
+          timestamp: new Date().toISOString(),
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('API Response:', data);
+
+      // Extract the response text from the API response
+      // Adjust this based on your API response structure
+      const botResponse = data.response || 'Sorry, I could not process your request.';
+
+      // Simulate typing effect with the API response
       let currentText = '';
       let index = 0;
       const typingInterval = setInterval(() => {
@@ -103,18 +127,26 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
           );
         }
       }, 30);
-    }, 1000);
+
+    } catch (error) {
+      console.error('API call failed:', error);
+      
+      // Fallback response if API fails
+      const fallbackResponse = "I'm sorry, I'm having trouble connecting to my brain right now. Please try again later or contact our support team.";
+      
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === botMessage.id 
+            ? { ...msg, text: fallbackResponse, isTyping: false }
+            : msg
+        )
+      );
+    } finally {
+      setIsTyping(false);
+    }
   };
 
-  const getBotResponse = (input: string): string => {
-    const responses = [
-      "I'm here to help with Cloud Security Alliance questions! What would you like to know about our events, membership, or cloud security resources?",
-      "Great question! Our next event is coming up soon. Would you like more information about registration?",
-      "Cloud security is our specialty! I can help you with information about best practices, upcoming training, or connecting with our community.",
-      "Thanks for your interest in CSA! Feel free to ask about our certification programs, local chapter events, or how to get involved.",
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
+  // Removed getBotResponse function - now using API calls instead
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -204,7 +236,28 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
                         : "bg-white/20 text-gray-800 border border-white/30"
                     )}
                   >
-                    {message.text}
+                    {message.sender === 'bot' ? (
+                      <div className="prose prose-sm max-w-none">
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            // Customize markdown components for better styling
+                            p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                            strong: ({ children }) => <strong className="font-bold text-csa-blue">{children}</strong>,
+                            em: ({ children }) => <em className="italic">{children}</em>,
+                            ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+                            ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
+                            li: ({ children }) => <li className="mb-1">{children}</li>,
+                            code: ({ children }) => <code className="bg-gray-200 px-1 py-0.5 rounded text-sm">{children}</code>,
+                            pre: ({ children }) => <pre className="bg-gray-100 p-2 rounded text-sm overflow-x-auto">{children}</pre>,
+                          }}
+                        >
+                          {message.text}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      message.text
+                    )}
                     {message.isTyping && (
                       <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1">|</span>
                     )}
