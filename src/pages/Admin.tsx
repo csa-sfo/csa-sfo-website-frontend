@@ -23,6 +23,7 @@ interface EventFormProps {
   onDateChange: (date: string) => void;
   onSlugChange: (slug: string) => void;
   onLocationChange: (location: string) => void;
+  onParkingCheckInChange: (parkingCheckIn: string) => void;
   onExcerptChange: (excerpt: string) => void;
   onTagsChange: (tags: string) => void;
   onCapacityChange: (capacity: string) => void;
@@ -44,6 +45,7 @@ const EventForm = memo(({
   onDateChange,
   onSlugChange,
   onLocationChange,
+  onParkingCheckInChange,
   onExcerptChange,
   onTagsChange,
   onCapacityChange,
@@ -95,6 +97,16 @@ const EventForm = memo(({
           value={formData.location || ""}
           onChange={(e) => onLocationChange(e.target.value)}
           placeholder="Venue name, address"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="parkingCheckIn">Parking/Check In</Label>
+        <Input
+          id="parkingCheckIn"
+          value={formData.parkingCheckIn || ""}
+          onChange={(e) => onParkingCheckInChange(e.target.value)}
+          placeholder="Parking instructions and check-in details"
         />
       </div>
 
@@ -324,6 +336,7 @@ const initialEvents: Event[] = [
     title: "Zero Trust Architecture: Implementing Mature Security Models",
     date: "2025-01-28T17:30:00-08:00",
     location: "Adobe, 345 Park Avenue, San Jose, CA",
+    parkingCheckIn: "Free parking available in the Adobe campus garage. Check in at the main lobby reception.",
     excerpt: "Join us for an evening of networking and expert insights on implementing Zero Trust security frameworks in enterprise environments.",
     slug: "zero-trust-architecture-jan-2025",
     speakers: [
@@ -373,6 +386,7 @@ const initialEvents: Event[] = [
     title: "Cloud Security Mesh: Next-Gen Architecture Patterns",
     date: "2025-02-25T17:30:00-08:00",
     location: "Salesforce Tower, 415 Mission St, San Francisco, CA",
+    parkingCheckIn: "Valet parking available at Salesforce Tower. Check in at the 34th floor Ohana reception desk.",
     excerpt: "Explore the latest cloud security mesh patterns and how they're reshaping enterprise security architectures.",
     slug: "cloud-security-mesh-feb-2025",
     speakers: [
@@ -421,6 +435,7 @@ export default function Admin() {
     title: "",
     date: "",
     location: "",
+    parkingCheckIn: "",
     excerpt: "",
     slug: "",
     speakers: [],
@@ -435,6 +450,7 @@ export default function Admin() {
       title: "",
       date: "",
       location: "",
+      parkingCheckIn: "",
       excerpt: "",
       slug: "",
       speakers: [],
@@ -479,6 +495,7 @@ export default function Admin() {
       title: formData.title!,
       date: formData.date!,
       location: formData.location!,
+      parkingCheckIn: formData.parkingCheckIn,
       excerpt: formData.excerpt || "",
       slug: formData.slug!,
       speakers: formData.speakers || [],
@@ -505,6 +522,7 @@ export default function Admin() {
       title: formData.title!,
       date: formData.date!,
       location: formData.location!,
+      parkingCheckIn: formData.parkingCheckIn,
       excerpt: formData.excerpt || "",
       slug: formData.slug!,
       speakers: formData.speakers || [],
@@ -533,6 +551,7 @@ export default function Admin() {
       title: event.title,
       date: event.date,
       location: event.location,
+      parkingCheckIn: event.parkingCheckIn,
       excerpt: event.excerpt,
       slug: event.slug,
       speakers: event.speakers,
@@ -627,6 +646,10 @@ export default function Admin() {
 
   const handleLocationChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, location: value }));
+  }, []);
+
+  const handleParkingCheckInChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, parkingCheckIn: value }));
   }, []);
 
   const handleExcerptChange = useCallback((value: string) => {
@@ -779,6 +802,7 @@ export default function Admin() {
                                       onDateChange={handleDateChange}
                                       onSlugChange={handleSlugChange}
                                       onLocationChange={handleLocationChange}
+                                      onParkingCheckInChange={handleParkingCheckInChange}
                                       onExcerptChange={handleExcerptChange}
                                       onTagsChange={handleTagsChange}
                                       onCapacityChange={handleCapacityChange}
@@ -853,6 +877,7 @@ export default function Admin() {
                   onDateChange={handleDateChange}
                   onSlugChange={handleSlugChange}
                   onLocationChange={handleLocationChange}
+                  onParkingCheckInChange={handleParkingCheckInChange}
                   onExcerptChange={handleExcerptChange}
                   onTagsChange={handleTagsChange}
                   onCapacityChange={handleCapacityChange}

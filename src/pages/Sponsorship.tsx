@@ -103,8 +103,8 @@ const sponsorshipTiers = [
   },
   {
     name: "Silver",
-    price: "$1,500",
-    priceValue: 1500,
+    price: "$2,000",
+    priceValue: 2000,
     stripeProductId: "prod_SpAEMMgs97IGiD",
     stripePriceId: "price_1RtVtaFKTK8ICUprhZ6uPoYV",
     stripePaymentLink: "https://buy.stripe.com/test_9B6cN5cfdbHIe9HfFnabK08",
@@ -116,22 +116,6 @@ const sponsorshipTiers = [
       "Newsletter acknowledgment",
       "Networking event invitations",
       "Member directory access"
-    ],
-    popular: false
-  },
-  {
-    name: "Bronze",
-    price: "$500",
-    priceValue: 500,
-    stripeProductId: "prod_SpAEGHk3Z4yFA6",
-    stripePriceId: "price_1RtVu6FKTK8ICUprQ3iKqFMN",
-    stripePaymentLink: "https://buy.stripe.com/test_bJecN51Az5jk2qZ64NabK09",
-    description: "Community support and brand awareness",
-    features: [
-      "Logo on website sponsor page",
-      "Social media mention",
-      "Newsletter acknowledgment",
-      "Event networking opportunities"
     ],
     popular: false
   }
@@ -343,7 +327,7 @@ export default function Sponsorship() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sponsorshipTiers.map((tier, index) => (
               <Card key={index} className={`relative transform transition-all duration-300 hover:scale-105 hover:shadow-xl ${tier.popular ? 'border-csa-blue shadow-lg ring-2 ring-csa-blue/20' : 'hover:border-csa-blue/30'}`}>
                 {tier.popular && (

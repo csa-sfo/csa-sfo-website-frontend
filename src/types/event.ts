@@ -19,6 +19,7 @@ export interface Event {
   title: string;
   date: string;
   location: string;
+  parkingCheckIn?: string;
   excerpt: string;
   slug: string;
   speakers: Speaker[];
