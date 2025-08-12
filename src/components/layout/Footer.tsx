@@ -89,10 +89,10 @@ export function Footer() {
                   <Mail className="h-4 w-4 text-csa-accent flex-shrink-0" />
                 </div>
                 <a 
-                  href="mailto:sanfrancisco@cloudsecurityalliance.org"
+                  href="mailto:csasanfranciscochapter@gmail.com"
                   className="text-sm text-gray-300 hover:text-white transition-colors break-all leading-relaxed"
                 >
-                  sanfrancisco@cloudsecurityalliance.org
+                  csasanfranciscochapter@gmail.com
                 </a>
               </div>
               <div className="group flex items-start space-x-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-white/20">
