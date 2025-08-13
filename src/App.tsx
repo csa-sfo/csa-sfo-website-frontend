@@ -16,6 +16,7 @@ import EventDetail from "./pages/EventDetail";
 import Archive from "./pages/Archive";
 import GetInvolved from "./pages/GetInvolved";
 import Sponsorship from "./pages/Sponsorship";
+import SponsorshipSuccess from "./pages/SponsorshipSuccess";
 import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -40,6 +41,7 @@ const App = () => (
                 <Route path="/archive" element={<Archive />} />
                 <Route path="/get-involved" element={<GetInvolved />} />
                 <Route path="/sponsorship" element={<Sponsorship />} />
+                <Route path="/sponsorship/success" element={<SponsorshipSuccess />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/admin" element={
                   <AdminRoute>

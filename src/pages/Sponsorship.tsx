@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Star, Users, Calendar, Globe, Award, ExternalLink, CreditCard, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { loadStripe } from "@stripe/stripe-js";
 
 // Slider data for hero section
 const heroSlides = [
@@ -174,24 +175,60 @@ export default function Sponsorship() {
   }, []);
 
   // Stripe Checkout Handler
-  const handleStripeCheckout = (tier: typeof sponsorshipTiers[0]) => {
+  const handleStripeCheckout = async (tier: typeof sponsorshipTiers[0]) => {
     setLoadingTier(tier.name);
     
     try {
-      // Redirect to Stripe payment link
-      window.location.href = tier.stripePaymentLink;
+      // Get the current domain for success/cancel URLs
+      const baseUrl = window.location.origin;
+      const successUrl = `${baseUrl}/sponsorship/success?session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = `${baseUrl}/sponsorship`;
       
-      // Fallback redirect if the first attempt doesn't work
-      setTimeout(() => {
-        window.location.replace(tier.stripePaymentLink);
-      }, 1000);
+      // Call our backend to create a checkout session
+      const response = await fetch(`${import.meta.env.VITE_DEV_API_URL}/api/v1/payments/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          price_id: tier.stripePriceId,
+          customer_email: '', // You might want to collect this from a form
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          metadata: {
+            tier: tier.name,
+            // Add any additional metadata you want to track
+          }
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create checkout session');
+      }
+      
+      const { sessionId } = await response.json();
+      
+      // Redirect to Stripe Checkout
+      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+      if (!stripe) {
+        throw new Error('Stripe failed to initialize');
+      }
+      
+      const { error } = await stripe.redirectToCheckout({
+        sessionId,
+      });
+      
+      if (error) {
+        throw error;
+      }
       
     } catch (error) {
-      console.error('Payment redirect failed:', error);
+      console.error('Error during checkout:', error);
+      // Handle error (e.g., show error message to user)
+      alert('Failed to start checkout. Please try again.');
+    } finally {
       setLoadingTier(null);
-      
-      // Fallback: open in new tab
-      window.open(tier.stripePaymentLink, '_blank');
     }
   };
 
