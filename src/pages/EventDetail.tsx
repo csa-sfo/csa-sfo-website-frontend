@@ -59,7 +59,7 @@ const eventData: Record<string, Event> = {
         role: "Principal Product Manager",
         company: "Palo Alto Networks",
         about: "Spencer Thellmann is a Principal Product Manager at Palo Alto Networks, holding an MPhil in Technology Policy from the University of Cambridge, and leading efforts in AI runtime security—most recently advancing the Prisma AIRS platform and Python SDK to protect AI applications and agents from real-time threats.",
-        imageUrl: "/public/Speaker-images/Spencer.png"
+        imageUrl: "/Speaker-images/Spencer.png"
       },
       {
         id: "10",
@@ -67,7 +67,7 @@ const eventData: Record<string, Event> = {
         role: "Principal Product Manager",
         company: "F5",
         about: "Debrup Ghosh is a product management leader—currently serving as Principal Product Manager at F5 Networks—renowned for driving innovative AI/ML-enabled Web Application and API Protection (WAAP) solutions, having previously led Synopsys’s Polaris application security platform to award-winning status and holding a computer-vision patent simplifying U.S. truck driver inspections.",
-        imageUrl: "/public/Speaker-images/Debrup.png"
+        imageUrl: "/Speaker-images/Debrup.png"
       },
       {
         id: "11",
@@ -75,7 +75,7 @@ const eventData: Record<string, Event> = {
         role: "President",
         company: "CSA SF Chapter",
         about: "Sudesh Gadewar is the President of the Cloud Security Alliance San Francisco Chapter, a global non-profit organization dedicated to advancing the adoption of best practices for securing the cloud. He is a recognized leader in the field of cybersecurity, with over 20 years of experience in the industry.",
-        imageUrl: "/public/lovable-uploads/members/sudeshgadewar.png"
+        imageUrl: "/lovable-uploads/members/sudeshgadewar.png"
       },
       {
         id: "12",
@@ -83,7 +83,7 @@ const eventData: Record<string, Event> = {
         role: "Regional Account Executive",
         company: "Endor Labs",
         about: "Brent Ichien is a Regional Account Executive at Endor Labs, specializing in Software Supply Chain Security since March 2024, and previously served as a Regional Sales Manager at Synopsys from November 2020 to March 2024",
-        imageUrl: "/public/Speaker-images/brent.png"
+        imageUrl: "/Speaker-images/brent.png"
       },
       
     ],
@@ -92,7 +92,7 @@ const eventData: Record<string, Event> = {
     capacity: 60,
     regUrl: "https://www.eventbrite.com/e/csa-san-francisco-chapter-meeting-august-2025-tickets-11111111111",
     mapUrl: "https://maps.google.com/?q=Adobe,345+Park+Avenue,San+Jose,CA",
-    posterUrl: "/public/posters/CSA-Sfo-August.png"
+    posterUrl: "/posters/CSA-Sfo-August.png"
   },
   "csa-san-francisco-chapter-meeting-july-2025": {
     id: "2",
@@ -141,7 +141,7 @@ Whether you're a seasoned professional or new to the field, this meeting provide
         role: "Senior Manager, Cyber Threat Research & Intelligence",
         company: "Adobe",
         about: "Expert in Cyber Threat Research & Intelligence.",
-        imageUrl: "/public/Speaker-images/omkar-nimbalkar.png"
+        imageUrl: "/Speaker-images/omkar-nimbalkar.png"
       },
       {
         id: "3",
@@ -165,14 +165,14 @@ Whether you're a seasoned professional or new to the field, this meeting provide
         role: "Technology & Cybersecurity Audit",
         company: "Delta Dental",
         about: "Specialist in technology and security reviews at Delta Dental of California, assessing effectiveness, identifying risks, and reporting findings to the Board of Directors and Senior Leadership",
-        imageUrl: "/public/Speaker-images/chris-oshaben.png"
+        imageUrl: "/Speaker-images/chris-oshaben.png"
       }
     ],
     tags: ["Cybersecurity", "Cloud Security", "Networking"],
     attendees: 55,
     capacity: 55,
     mapUrl: "https://maps.google.com/?q=Adobe,345+Park+Avenue,San+Jose,CA",
-    posterUrl: "/public/posters/CSA-SFO-July.png"
+    posterUrl: "/posters/CSA-SFO-July.png"
   },
   "csa-san-francisco-chapter-meeting-may-2025": {
     id: "3",
@@ -252,7 +252,7 @@ Join us for an engaging session that combines technical deep-dives with practica
     attendees: 40,
     capacity: 45,
     mapUrl: "https://maps.google.com/?q=Salesforce+Tower,415+Mission+St,San+Francisco,CA",
-    posterUrl: "/public/posters/CSA-SFO-May.png"
+    posterUrl: "/posters/CSA-SFO-May.png"
   }
 };
 
