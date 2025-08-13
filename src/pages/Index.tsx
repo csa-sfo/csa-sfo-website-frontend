@@ -95,7 +95,12 @@ const upcomingEvent = {
   location: "3000 Tannery Way, Santa Clara, CA",
   excerpt: "Join us for an evening of networking with cybersecurity enthusiasts, learn about the latest industry trends, and share your own experiences.",
   slug: "csa-san-francisco-chapter-meeting-august-2025",
-  speakers: ["TBD"],
+  speakers: [
+    "Spencer Thellmann",
+    "Debrup Ghosh",
+    "Sudesh Gadewar",
+    "Brent Ichien"
+  ],
   tags: ["CSA", "Cybersecurity", "Cloud Security", "Networking"]
 };
 

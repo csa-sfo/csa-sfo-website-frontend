@@ -20,13 +20,38 @@ const upcomingEvents: Event[] = [
     slug: "csa-san-francisco-chapter-meeting-august-2025",
     speakers: [
       {
-        id: "1",
-        name: "TBD",
-        role: "TBD",
-        company: "TBD",
-        about: "TBD",
-        imageUrl: "/api/placeholder/150/150"
+        id: "9",
+        name: "Spencer Thellmann",
+        role: "Principal Product Manager",
+        company: "Palo Alto Networks",
+        about: "Spencer Thellmann is a Principal Product Manager at Palo Alto Networks, holding an MPhil in Technology Policy from the University of Cambridge, and leading efforts in AI runtime security—most recently advancing the Prisma AIRS platform and Python SDK to protect AI applications and agents from real-time threats.",
+        imageUrl: "/public/Speaker-images/Spencer.png"
       },
+      {
+        id: "10",
+        name: "Debrup Ghosh",
+        role: "Principal Product Manager",
+        company: "F5",
+        about: "Debrup Ghosh is a product management leader—currently serving as Principal Product Manager at F5 Networks—renowned for driving innovative AI/ML-enabled Web Application and API Protection (WAAP) solutions, having previously led Synopsys’s Polaris application security platform to award-winning status and holding a computer-vision patent simplifying U.S. truck driver inspections.",
+        imageUrl: "/public/Speaker-images/Debrup.png"
+      },
+      {
+        id: "11",
+        name: "Sudesh Gadewar",
+        role: "President",
+        company: "CSA SF Chapter",
+        about: "Sudesh Gadewar is the President of the Cloud Security Alliance San Francisco Chapter, a global non-profit organization dedicated to advancing the adoption of best practices for securing the cloud. He is a recognized leader in the field of cybersecurity, with over 20 years of experience in the industry.",
+        imageUrl: "/public/lovable-uploads/members/sudeshgadewar.png"
+      },
+      {
+        id: "12",
+        name: "Brent Ichien",
+        role: "Regional Account Executive",
+        company: "Endor Labs",
+        about: "Brent Ichien is a Regional Account Executive at Endor Labs, specializing in Software Supply Chain Security since March 2024, and previously served as a Regional Sales Manager at Synopsys from November 2020 to March 2024",
+        imageUrl: "/public/Speaker-images/brent.png"
+      },
+      
       
     ],
     tags: ["CSA","Cybersecurity","Cloud Security", "Networking"],
@@ -48,7 +73,7 @@ const pastEvents: Event[] = [
          slug: "csa-san-francisco-chapter-meeting-july-2025",
     speakers: [
       {
-        id: "2",
+        id: "1",
         name: "Omkar Nimbalkar",
         role: "Senior Manager, Cyber Threat Research & Intelligence",
         company: "Adobe",
@@ -56,7 +81,7 @@ const pastEvents: Event[] = [
         imageUrl: "/api/placeholder/150/150"
       },
       {
-        id: "3",
+        id: "2",
         name: "Louis Roberts",
         role: "Global Sales Director",
         company: "RAD Security",
@@ -64,7 +89,7 @@ const pastEvents: Event[] = [
         imageUrl: "/api/placeholder/150/150"
       },
       {
-        id: "4",
+        id: "3",
         name: "Mike Zelle",
         role: "Pre-Sales Technical Solutions Director",
         company: "Tanium",
@@ -72,7 +97,7 @@ const pastEvents: Event[] = [
         imageUrl: "/api/placeholder/150/150"
       },
       {
-        id: "5",
+        id: "4",
         name: "Chris Oshaben",
         role: "Technology & Cybersecurity Audit",
         company: "Delta Dental",
@@ -95,7 +120,7 @@ const pastEvents: Event[] = [
      slug: "csa-san-francisco-chapter-meeting-may-2025",
      speakers: [
        {
-         id: "6",
+         id: "5",
          name: "Hardeep Singh ",
          role: "Security Architect",
          company: "-",
@@ -103,7 +128,7 @@ const pastEvents: Event[] = [
          imageUrl: "/api/placeholder/150/150"
        },
        {
-         id: "7",
+         id: "6",
          name: "Pavi Ramamurthy ",
          role: "Global CISO & CIO", 
          company: "Blackhawk Network",
@@ -111,7 +136,7 @@ const pastEvents: Event[] = [
          imageUrl: "/api/placeholder/150/150"
        },
        {
-         id: "8",
+         id: "7",
          name: "Varun Badhwar ",
          role: "Founder & CEO", 
          company: "Endor Labs",
@@ -119,7 +144,7 @@ const pastEvents: Event[] = [
          imageUrl: "/api/placeholder/150/150"
        },
        {
-        id: "9",
+        id: "8",
         name: "Anshu Gupta ",
         role: "Chief Information Security Officer/ Investor", 
         company: "SVCI - Silicon Valley CISO Investments",

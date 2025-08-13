@@ -30,4 +30,5 @@ export interface Event {
   description?: string;
   regUrl?: string;
   mapUrl?: string;
+  posterUrl?: string; // Optional promotional poster shown in Event Detail hero
 }
