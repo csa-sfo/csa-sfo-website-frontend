@@ -25,6 +25,7 @@ interface EventFormProps {
   onLocationChange: (location: string) => void;
   onParkingCheckInChange: (parkingCheckIn: string) => void;
   onExcerptChange: (excerpt: string) => void;
+  onPosterChange: (posterUrl: string) => void;
   onTagsChange: (tags: string) => void;
   onCapacityChange: (capacity: string) => void;
   onAttendeesChange: (attendees: string) => void;
@@ -47,6 +48,7 @@ const EventForm = memo(({
   onLocationChange,
   onParkingCheckInChange,
   onExcerptChange,
+  onPosterChange,
   onTagsChange,
   onCapacityChange,
   onAttendeesChange,
@@ -119,6 +121,22 @@ const EventForm = memo(({
           placeholder="Brief description of the event"
           rows={3}
         />
+      </div>
+
+      {/* Poster upload / URL */}
+      <div className="space-y-2">
+        <Label htmlFor="posterUrl">Poster Image URL (optional)</Label>
+        <Input
+          id="posterUrl"
+          value={formData.posterUrl || ""}
+          onChange={(e) => onPosterChange(e.target.value)}
+          placeholder="/public/Speaker-images/poster.png or https://..."
+        />
+        {formData.posterUrl && (
+          <div className="pt-2">
+            <img src={formData.posterUrl} alt="Event poster preview" className="max-h-56 rounded-md border" />
+          </div>
+        )}
       </div>
 
       {/* Agenda Section */}
@@ -442,7 +460,8 @@ export default function Admin() {
     tags: [],
     attendees: 0,
     capacity: 0,
-    agenda: []
+    agenda: [],
+    posterUrl: ""
   });
 
   const resetForm = () => {
@@ -457,7 +476,8 @@ export default function Admin() {
       tags: [],
       attendees: 0,
       capacity: 0,
-      agenda: []
+      agenda: [],
+      posterUrl: ""
     });
   };
 
@@ -502,7 +522,8 @@ export default function Admin() {
       tags: formData.tags || [],
       attendees: formData.attendees || 0,
       capacity: formData.capacity || 0,
-      agenda: formData.agenda || []
+      agenda: formData.agenda || [],
+      posterUrl: formData.posterUrl || ""
     };
 
     setEvents(prev => [...prev, newEvent]);
@@ -529,7 +550,8 @@ export default function Admin() {
       tags: formData.tags || [],
       attendees: formData.attendees || 0,
       capacity: formData.capacity || 0,
-      agenda: formData.agenda || []
+      agenda: formData.agenda || [],
+      posterUrl: formData.posterUrl || ""
     };
 
     setEvents(prev => prev.map(event => 
@@ -558,7 +580,8 @@ export default function Admin() {
       tags: event.tags,
       attendees: event.attendees,
       capacity: event.capacity,
-      agenda: event.agenda
+      agenda: event.agenda,
+      posterUrl: event.posterUrl
     });
   };
 
@@ -654,6 +677,10 @@ export default function Admin() {
 
   const handleExcerptChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, excerpt: value }));
+  }, []);
+
+  const handlePosterChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, posterUrl: value }));
   }, []);
 
   const handleCapacityChange = useCallback((value: string) => {
@@ -804,6 +831,7 @@ export default function Admin() {
                                       onLocationChange={handleLocationChange}
                                       onParkingCheckInChange={handleParkingCheckInChange}
                                       onExcerptChange={handleExcerptChange}
+                                      onPosterChange={handlePosterChange}
                                       onTagsChange={handleTagsChange}
                                       onCapacityChange={handleCapacityChange}
                                       onAttendeesChange={handleAttendeesChange}
@@ -879,6 +907,7 @@ export default function Admin() {
                   onLocationChange={handleLocationChange}
                   onParkingCheckInChange={handleParkingCheckInChange}
                   onExcerptChange={handleExcerptChange}
+                  onPosterChange={handlePosterChange}
                   onTagsChange={handleTagsChange}
                   onCapacityChange={handleCapacityChange}
                   onAttendeesChange={handleAttendeesChange}

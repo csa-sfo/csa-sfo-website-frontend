@@ -20,7 +20,7 @@ const eventData: Record<string, Event> = {
     id: "1",
     title: "CSA San Francisco Chapter Meeting - August 2025",
     date: "2025-08-27T16:30:00-08:00",
-    location: "3000 Tannery Way, Santa Clara, CA",
+    location: "3000 Tannery Way, Santa Clara, CA 95054",
     parkingCheckIn: "The west tower parking garage, East Tower lobby for check-in",
     excerpt: "Join us for an evening of networking with cybersecurity enthusiasts, learn about the latest industry trends, and share your own experiences.",
     slug: "csa-san-francisco-chapter-meeting-august-2025",
@@ -34,40 +34,65 @@ const eventData: Record<string, Event> = {
       },
       {
         id: "2",
-        duration: "6:00 PM - 6:15 PM",
+        duration: "6:10 PM - 6:30 PM",
         topic: "CSA Introduction",
         description: "CSA Introduction and upcoming events overview."
       },
       {
         id: "3",
-        duration: "6:15 PM - 7:00 PM",
-        topic: "TBD",
-        description: "TBD"
+        duration: "6:30 PM - 7:00 PM",
+        topic: "Keynote - Spencer Thellmann ",
+        description: "The Rise of Autonomous AI: Understanding the New Threat Landscape"
       },
       {
         id: "4",
-        duration: "7:00 PM - 7:40 PM",
-        topic: "TBD",
-        description: "TBD"
+        duration: "7:05 PM - 7:40 PM",
+        topic: "Panel Discussion - Debrup Ghosh, Sudesh Gadewar, Brent Ichien",
+        description: "AI/ML Policy & Governance: Who’s Watching the Watchers?"
       }
       
     ],
     speakers: [
       {
-        id: "1",
-        name: "TBD",
-        role: "TBD",
-        company: "TBD",
-        about: "TBD",
-        imageUrl: "/api/placeholder/150/150"
-      }
+        id: "9",
+        name: "Spencer Thellmann",
+        role: "Principal Product Manager",
+        company: "Palo Alto Networks",
+        about: "Spencer Thellmann is a Principal Product Manager at Palo Alto Networks, holding an MPhil in Technology Policy from the University of Cambridge, and leading efforts in AI runtime security—most recently advancing the Prisma AIRS platform and Python SDK to protect AI applications and agents from real-time threats.",
+        imageUrl: "/public/Speaker-images/Spencer.png"
+      },
+      {
+        id: "10",
+        name: "Debrup Ghosh",
+        role: "Principal Product Manager",
+        company: "F5",
+        about: "Debrup Ghosh is a product management leader—currently serving as Principal Product Manager at F5 Networks—renowned for driving innovative AI/ML-enabled Web Application and API Protection (WAAP) solutions, having previously led Synopsys’s Polaris application security platform to award-winning status and holding a computer-vision patent simplifying U.S. truck driver inspections.",
+        imageUrl: "/public/Speaker-images/Debrup.png"
+      },
+      {
+        id: "11",
+        name: "Sudesh Gadewar",
+        role: "President",
+        company: "CSA SF Chapter",
+        about: "Sudesh Gadewar is the President of the Cloud Security Alliance San Francisco Chapter, a global non-profit organization dedicated to advancing the adoption of best practices for securing the cloud. He is a recognized leader in the field of cybersecurity, with over 20 years of experience in the industry.",
+        imageUrl: "/public/lovable-uploads/members/sudeshgadewar.png"
+      },
+      {
+        id: "12",
+        name: "Brent Ichien",
+        role: "Regional Account Executive",
+        company: "Endor Labs",
+        about: "Brent Ichien is a Regional Account Executive at Endor Labs, specializing in Software Supply Chain Security since March 2024, and previously served as a Regional Sales Manager at Synopsys from November 2020 to March 2024",
+        imageUrl: "/public/Speaker-images/brent.png"
+      },
       
     ],
     tags: ["CSA","Cybersecurity","Cloud Security", "Networking"],
     attendees: 45,
     capacity: 60,
     regUrl: "https://www.eventbrite.com/e/csa-san-francisco-chapter-meeting-august-2025-tickets-11111111111",
-    mapUrl: "https://maps.google.com/?q=Adobe,345+Park+Avenue,San+Jose,CA"
+    mapUrl: "https://maps.google.com/?q=Adobe,345+Park+Avenue,San+Jose,CA",
+    posterUrl: "/public/posters/CSA-Sfo-August.png"
   },
   "csa-san-francisco-chapter-meeting-july-2025": {
     id: "2",
@@ -116,7 +141,7 @@ Whether you're a seasoned professional or new to the field, this meeting provide
         role: "Senior Manager, Cyber Threat Research & Intelligence",
         company: "Adobe",
         about: "Expert in Cyber Threat Research & Intelligence.",
-        imageUrl: "/api/placeholder/150/150"
+        imageUrl: "/public/Speaker-images/omkar-nimbalkar.png"
       },
       {
         id: "3",
@@ -140,18 +165,19 @@ Whether you're a seasoned professional or new to the field, this meeting provide
         role: "Technology & Cybersecurity Audit",
         company: "Delta Dental",
         about: "Specialist in technology and security reviews at Delta Dental of California, assessing effectiveness, identifying risks, and reporting findings to the Board of Directors and Senior Leadership",
-        imageUrl: "/api/placeholder/150/150"
+        imageUrl: "/public/Speaker-images/chris-oshaben.png"
       }
     ],
     tags: ["Cybersecurity", "Cloud Security", "Networking"],
     attendees: 55,
     capacity: 55,
-    mapUrl: "https://maps.google.com/?q=Adobe,345+Park+Avenue,San+Jose,CA"
+    mapUrl: "https://maps.google.com/?q=Adobe,345+Park+Avenue,San+Jose,CA",
+    posterUrl: "/public/posters/CSA-SFO-July.png"
   },
   "csa-san-francisco-chapter-meeting-may-2025": {
     id: "3",
-    title: "CSA San Francisco Chapter Meeting June - 2025",
-    date: "2024-06-25T16:30:00-08:00",
+    title: "CSA San Francisco Chapter Meeting May - 2025",
+    date: "2024-05-21T16:30:00-08:00",
     location: "Salesforce Tower, 415 Mission St, San Francisco, CA",
     parkingCheckIn: "Valet parking available at Salesforce Tower. Check in at the 34th floor Ohana reception desk.",
     excerpt: "Monthly chapter meeting focusing on Zero Trust architectures and enterprise security best practices.",
@@ -225,7 +251,8 @@ Join us for an engaging session that combines technical deep-dives with practica
     tags: ["CSA","Cybersecurity","Cloud Security", "Networking"],
     attendees: 40,
     capacity: 45,
-    mapUrl: "https://maps.google.com/?q=Salesforce+Tower,415+Mission+St,San+Francisco,CA"
+    mapUrl: "https://maps.google.com/?q=Salesforce+Tower,415+Mission+St,San+Francisco,CA",
+    posterUrl: "/public/posters/CSA-SFO-May.png"
   }
 };
 
@@ -325,7 +352,7 @@ END:VCALENDAR`;
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-csa-blue to-csa-navy text-white py-16">
+      <section className="bg-gradient-to-r from-csa-blue to-csa-navy text-white py-10 md:py-14">
         <div className="container-site">
           <div className="mb-6">
             <Button asChild className="bg-csa-accent hover:bg-csa-accent/90 text-white border-none">
@@ -335,9 +362,11 @@ END:VCALENDAR`;
               </Link>
             </Button>
           </div>
-          
-          <div className="max-w-4xl">
-            <div className="flex flex-wrap gap-2 mb-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-start">
+            {/* Left: Text */}
+            <div className="max-w-2xl order-2 md:order-1">
+              <div className="flex flex-wrap gap-2 mb-4 md:mb-5">
               {event.tags.map(tag => (
                 <Badge key={tag} variant="secondary" className="bg-white/20 text-white border-white/30">
                   {tag}
@@ -345,11 +374,11 @@ END:VCALENDAR`;
               ))}
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 leading-tight">
               {event.title}
             </h1>
             
-            <div className="grid md:grid-cols-3 gap-6 text-gray-100">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 text-gray-100">
               <div className="flex items-center space-x-3">
                 <Calendar className="h-5 w-5 text-csa-accent" />
                 <div>
@@ -396,6 +425,18 @@ END:VCALENDAR`;
                   </div>
                 </div>
               </div>
+            </div>
+            </div>
+
+            {/* Right: Poster */}
+            <div className="flex justify-center md:justify-end order-1 md:order-2">
+				{event.posterUrl && (
+					<img
+						src={event.posterUrl}
+						alt={`${event.title} poster`}
+                  className="w-full max-w-md sm:max-w-lg md:max-w-xl rounded-xl shadow-2xl border border-white/20 mt-2 md:mt-0"
+					/>
+				)}
             </div>
           </div>
         </div>
