@@ -91,7 +91,7 @@ const eventData: Record<string, Event> = {
     attendees: 45,
     capacity: 60,
     regUrl: "https://www.eventbrite.com/e/csa-san-francisco-chapter-meeting-august-2025-tickets-11111111111",
-    mapUrl: "https://maps.google.com/?q=Adobe,345+Park+Avenue,San+Jose,CA",
+    mapUrl: "https://maps.app.goo.gl/cgfA3zNLHyZEdWkCA",
     posterUrl: "/posters/CSA-Sfo-August.png"
   },
   "csa-san-francisco-chapter-meeting-july-2025": {
@@ -653,7 +653,7 @@ END:VCALENDAR`;
                     Add to Calendar
                   </Button>
                   
-                  <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
                     <a
                       href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${eventDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${new Date(eventDate.getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent(event.excerpt)}&location=${encodeURIComponent(event.location)}`}
                       target="_blank"
@@ -670,12 +670,7 @@ END:VCALENDAR`;
                     >
                       Outlook
                     </a>
-                    <button
-                      onClick={generateCalendarFile}
-                      className="text-center p-2 border rounded text-csa-blue hover:bg-csa-light transition-colors"
-                    >
-                      Apple
-                    </button>
+                    
                   </div>
                 </div>
               </CardContent>
