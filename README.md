@@ -60,6 +60,21 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## API Configuration
+
+This project uses environment variables to configure API endpoints. Create a `.env` file in the root directory with the following variables:
+
+```env
+# API Configuration
+VITE_DEV_API_URL=http://localhost:8000
+VITE_PROD_API_URL=https://your-production-api.com
+```
+
+The API endpoints are configured in `src/config/api.ts` and include:
+- `SEND_MESSAGE`: For chatbot message processing
+
+The application will use the development API URL by default. To switch to production, uncomment the production line in `src/config/api.ts`.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/4ea1161c-d912-42c8-a3f1-4713ea2b5cd6) and click on Share -> Publish.
