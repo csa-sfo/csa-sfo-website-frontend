@@ -149,7 +149,7 @@ Whether you're a seasoned professional or new to the field, this meeting provide
         role: "Global Sales Director",
         company: "RAD Security",
         about: "Specialist in Head day to day operations and ongoing strategy of the RAD Sales and Customer Success team.",
-        imageUrl: "/api/placeholder/150/150"
+        imageUrl: "/Speaker-images/louis.jpg"
       },
       {
         id: "4",
@@ -157,7 +157,7 @@ Whether you're a seasoned professional or new to the field, this meeting provide
         role: "Pre-Sales Technical Solutions Director",
         company: "Tanium",
         about: "Specialist in Technology Strategy & Innovation Focused Solution Producer.",
-        imageUrl: "/api/placeholder/150/150"
+        imageUrl: "/Speaker-images/mike.png"
       },
       {
         id: "5",
@@ -221,7 +221,7 @@ Join us for an engaging session that combines technical deep-dives with practica
         role: "Security Architect",
         company: "-",
         about: "Expert in Security for a cloud-native, AI-Driven world",
-        imageUrl: "/api/placeholder/150/150"
+        imageUrl: "/Speaker-images/hardeep.png"
       },
       {
         id: "7",
@@ -229,7 +229,7 @@ Join us for an engaging session that combines technical deep-dives with practica
         role: "Global CISO & CIO", 
         company: "Blackhawk Network",
         about: "Responsible for Information Security, Fraud & Risk, Corporate IT and Business Systems.",
-        imageUrl: "/api/placeholder/150/150"
+        imageUrl: "/Speaker-images/pavi.jpg"
       },
       {
         id: "8",
@@ -237,7 +237,7 @@ Join us for an engaging session that combines technical deep-dives with practica
         role: "Founder & CEO", 
         company: "Endor Labs",
         about: "Founder & CEO of Endor Labs which is a Application Security platform for the AI-driven software development revolution.",
-        imageUrl: "/api/placeholder/150/150"
+        imageUrl: "/Speaker-images/varun.jpg"
       },
       {
        id: "9",
@@ -245,7 +245,7 @@ Join us for an engaging session that combines technical deep-dives with practica
        role: "Chief Information Security Officer/ Investor", 
        company: "SVCI - Silicon Valley CISO Investments",
        about: "Information Security leader with experience working at startups, SaaS and eCommerce companies along with Big 4 experience at Ernst & Young LLP and KPMG LLP, delivering security & compliance advisory services to Fortune 500 companies.",
-       imageUrl: "/api/placeholder/150/150"
+       imageUrl: "/Speaker-images/anshu.jpg"
      }
     ],
     tags: ["CSA","Cybersecurity","Cloud Security", "Networking"],
