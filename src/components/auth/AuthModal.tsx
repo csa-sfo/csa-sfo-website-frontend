@@ -22,7 +22,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
   const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const { login, loading } = useAuth();
+  const { login, socialLogin, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +69,22 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
   const handleModeChange = (newMode: "login" | "signup") => {
     setError("");
     onModeChange(newMode);
+  };
+
+  const handleSocialLogin = async (provider: 'google' | 'linkedin') => {
+    setError("");
+    try {
+      const success = await socialLogin(provider);
+      if (success) {
+        toast.success(`Welcome! You've been signed in with ${provider === 'google' ? 'Google' : 'LinkedIn'}.`);
+        resetForm();
+        onClose();
+      } else {
+        setError(`Failed to sign in with ${provider === 'google' ? 'Google' : 'LinkedIn'}. Please try again.`);
+      }
+    } catch (error) {
+      setError(`An error occurred during ${provider === 'google' ? 'Google' : 'LinkedIn'} sign in. Please try again.`);
+    }
   };
 
   return (
@@ -126,7 +142,9 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           <div className="space-y-2">
             <Button
               variant="outline"
-              className="w-full flex items-center justify-center space-x-2 h-10 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] text-sm"
+              onClick={() => handleSocialLogin('google')}
+              disabled={loading}
+              className="w-full flex items-center justify-center space-x-2 h-10 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               <div className="w-4 h-4 bg-white rounded-sm flex items-center justify-center shadow-sm">
                 <span className="text-blue-600 font-bold text-xs">G</span>
@@ -136,7 +154,9 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
 
             <Button
               variant="outline"
-              className="w-full flex items-center justify-center space-x-2 h-10 bg-gradient-to-r from-blue-700 to-blue-800 text-white hover:from-blue-800 hover:to-blue-900 border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] text-sm"
+              onClick={() => handleSocialLogin('linkedin')}
+              disabled={loading}
+              className="w-full flex items-center justify-center space-x-2 h-10 bg-gradient-to-r from-blue-700 to-blue-800 text-white hover:from-blue-800 hover:to-blue-900 border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               <div className="w-4 h-4 bg-white rounded-sm flex items-center justify-center shadow-sm">
                 <span className="text-blue-700 font-bold text-xs">in</span>

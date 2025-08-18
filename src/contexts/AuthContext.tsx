@@ -5,6 +5,11 @@ interface User {
   email: string;
   name: string;
   role: 'admin' | 'user';
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  jobRole?: string;
+  profileCompleted?: boolean;
 }
 
 interface AuthContextType {
@@ -12,8 +17,16 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  socialLogin: (provider: 'google' | 'linkedin') => Promise<boolean>;
+  completeProfile: (profileData: {
+    firstName: string;
+    lastName: string;
+    companyName: string;
+    jobRole: string;
+  }) => void;
   logout: () => void;
   loading: boolean;
+  showProfileDialog: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,13 +39,19 @@ const ADMIN_CREDENTIALS = {
     id: '1',
     email: 'admin@csasf.org',
     name: 'CSA Admin',
-    role: 'admin' as const
+    role: 'admin' as const,
+    firstName: 'CSA',
+    lastName: 'Admin',
+    companyName: 'Cloud Security Alliance',
+    jobRole: 'Administrator',
+    profileCompleted: true
   }
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
 
   // Check for stored authentication on app load
   useEffect(() => {
@@ -41,6 +60,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
+        // Show profile dialog if user hasn't completed their profile
+        if (!parsedUser.profileCompleted) {
+          setShowProfileDialog(true);
+        }
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('csaUser');
@@ -69,10 +92,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: Date.now().toString(),
         email,
         name: email.split('@')[0],
-        role: 'user'
+        role: 'user',
+        profileCompleted: false
       };
       setUser(regularUser);
       localStorage.setItem('csaUser', JSON.stringify(regularUser));
+      setShowProfileDialog(true); // Show profile dialog for new users
       setLoading(false);
       return true;
     }
@@ -81,8 +106,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return false;
   };
 
+  const socialLogin = async (provider: 'google' | 'linkedin'): Promise<boolean> => {
+    setLoading(true);
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // For demo purposes, simulate successful social login
+    const socialUser: User = {
+      id: Date.now().toString(),
+      email: `user@${provider}.example.com`,
+      name: `${provider} User`,
+      role: 'user',
+      profileCompleted: false
+    };
+    
+    setUser(socialUser);
+    localStorage.setItem('csaUser', JSON.stringify(socialUser));
+    setShowProfileDialog(true); // Show profile dialog for social login users
+    setLoading(false);
+    return true;
+  };
+
+  const completeProfile = (profileData: {
+    firstName: string;
+    lastName: string;
+    companyName: string;
+    jobRole: string;
+  }) => {
+    if (!user) return;
+    
+    const updatedUser: User = {
+      ...user,
+      firstName: profileData.firstName,
+      lastName: profileData.lastName,
+      companyName: profileData.companyName,
+      jobRole: profileData.jobRole,
+      profileCompleted: true,
+      name: `${profileData.firstName} ${profileData.lastName}`
+    };
+    
+    setUser(updatedUser);
+    localStorage.setItem('csaUser', JSON.stringify(updatedUser));
+    setShowProfileDialog(false);
+  };
+
   const logout = () => {
     setUser(null);
+    setShowProfileDialog(false);
     localStorage.removeItem('csaUser');
   };
 
@@ -91,8 +162,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
     login,
+    socialLogin,
+    completeProfile,
     logout,
-    loading
+    loading,
+    showProfileDialog
   };
 
   return (
