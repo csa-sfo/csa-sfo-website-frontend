@@ -19,8 +19,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   socialLogin: (provider: 'google' | 'linkedin') => Promise<boolean>;
   completeProfile: (profileData: {
-    firstName: string;
-    lastName: string;
     companyName: string;
     jobRole: string;
   }) => void;
@@ -40,8 +38,6 @@ const ADMIN_CREDENTIALS = {
     email: 'admin@csasf.org',
     name: 'CSA Admin',
     role: 'admin' as const,
-    firstName: 'CSA',
-    lastName: 'Admin',
     companyName: 'Cloud Security Alliance',
     jobRole: 'Administrator',
     profileCompleted: true
@@ -129,8 +125,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const completeProfile = (profileData: {
-    firstName: string;
-    lastName: string;
     companyName: string;
     jobRole: string;
   }) => {
@@ -138,12 +132,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     const updatedUser: User = {
       ...user,
-      firstName: profileData.firstName,
-      lastName: profileData.lastName,
       companyName: profileData.companyName,
       jobRole: profileData.jobRole,
-      profileCompleted: true,
-      name: `${profileData.firstName} ${profileData.lastName}`
+      profileCompleted: true
     };
     
     setUser(updatedUser);
