@@ -3,13 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Building, Briefcase, AlertCircle } from "lucide-react";
+import { Building, Briefcase, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserProfileData {
-  firstName: string;
-  lastName: string;
   companyName: string;
   jobRole: string;
 }
@@ -21,25 +18,7 @@ interface UserProfileDialogProps {
   loading?: boolean;
 }
 
-const jobRoles = [
-  "Software Engineer",
-  "DevOps Engineer",
-  "Security Engineer", 
-  "Cloud Architect",
-  "Security Analyst",
-  "IT Manager",
-  "CISO/Security Director",
-  "Product Manager",
-  "Data Engineer",
-  "System Administrator",
-  "Consultant",
-  "Student",
-  "Other"
-];
-
 export function UserProfileDialog({ isOpen, onClose, onSave, loading = false }: UserProfileDialogProps) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [jobRole, setJobRole] = useState("");
   const [error, setError] = useState("");
@@ -48,16 +27,14 @@ export function UserProfileDialog({ isOpen, onClose, onSave, loading = false }: 
     e.preventDefault();
     setError("");
 
-    if (!firstName.trim() || !lastName.trim() || !companyName.trim() || !jobRole) {
+    if (!companyName.trim() || !jobRole.trim()) {
       setError("Please fill in all required fields");
       return;
     }
 
     const profileData: UserProfileData = {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
       companyName: companyName.trim(),
-      jobRole
+      jobRole: jobRole.trim()
     };
 
     try {
@@ -70,8 +47,6 @@ export function UserProfileDialog({ isOpen, onClose, onSave, loading = false }: 
   };
 
   const resetForm = () => {
-    setFirstName("");
-    setLastName("");
     setCompanyName("");
     setJobRole("");
     setError("");
@@ -114,44 +89,6 @@ export function UserProfileDialog({ isOpen, onClose, onSave, loading = false }: 
 
           {/* Profile Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* First Name */}
-            <div className="space-y-2">
-              <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
-                First Name <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative group">
-                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
-                <Input
-                  id="firstName"
-                  type="text"
-                  placeholder="Enter your first name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="pl-10 h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500 rounded-lg transition-all duration-200 text-sm"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Last Name */}
-            <div className="space-y-2">
-              <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
-                Last Name <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative group">
-                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
-                <Input
-                  id="lastName"
-                  type="text"
-                  placeholder="Enter your last name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="pl-10 h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500 rounded-lg transition-all duration-200 text-sm"
-                  required
-                />
-              </div>
-            </div>
-
             {/* Company Name */}
             <div className="space-y-2">
               <Label htmlFor="companyName" className="text-sm font-medium text-gray-700">
@@ -177,19 +114,16 @@ export function UserProfileDialog({ isOpen, onClose, onSave, loading = false }: 
                 Role <span className="text-red-500">*</span>
               </Label>
               <div className="relative group">
-                <Briefcase className="absolute left-3 top-3 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors z-10" />
-                <Select value={jobRole} onValueChange={setJobRole} required>
-                  <SelectTrigger className="pl-10 h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500 rounded-lg transition-all duration-200 text-sm">
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {jobRoles.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Briefcase className="absolute left-3 top-3 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+                <Input
+                  id="jobRole"
+                  type="text"
+                  placeholder="Enter your role"
+                  value={jobRole}
+                  onChange={(e) => setJobRole(e.target.value)}
+                  className="pl-10 h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500 rounded-lg transition-all duration-200 text-sm"
+                  required
+                />
               </div>
             </div>
 
