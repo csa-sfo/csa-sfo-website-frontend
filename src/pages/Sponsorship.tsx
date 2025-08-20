@@ -169,7 +169,7 @@ export default function Sponsorship() {
       const cancelUrl = `${baseUrl}/sponsorship`;
       
       // Call our backend to create a checkout session
-      const response = await fetch(`${import.meta.env.VITE_DEV_API_URL}/api/v1/payments/create-checkout-session`, {
+      const response = await fetch(`${import.meta.env.VITE_PROD_API_URL}/api/v1/payments/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
