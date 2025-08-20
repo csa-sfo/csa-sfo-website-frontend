@@ -81,10 +81,10 @@ export default function Contact() {
                           Questions about events, membership, or general chapter information.
                         </p>
                         <a 
-                          href="mailto:sanfrancisco@cloudsecurityalliance.org"
+                          href="mailto:csasanfranciscochapter@gmail.com"
                           className="text-csa-blue hover:underline"
                         >
-                          sanfrancisco@cloudsecurityalliance.org
+                          csasanfranciscochapter@gmail.com
                         </a>
                       </div>
                     </div>
@@ -101,10 +101,10 @@ export default function Contact() {
                           Interested in sponsoring events or partnering with our chapter.
                         </p>
                         <a 
-                          href="mailto:partnerships.sf@cloudsecurityalliance.org"
+                          href="mailto:csasanfranciscochapter@gmail.com"
                           className="text-csa-blue hover:underline"
                         >
-                          partnerships.sf@cloudsecurityalliance.org
+                          csasanfranciscochapter@gmail.com
                         </a>
                       </div>
                     </div>
@@ -121,10 +121,10 @@ export default function Contact() {
                           Join our team and help shape the future of cloud security.
                         </p>
                         <a 
-                          href="mailto:volunteer.sf@cloudsecurityalliance.org"
+                          href="mailto:csasanfranciscochapter@gmail.com"
                           className="text-csa-blue hover:underline"
                         >
-                          volunteer.sf@cloudsecurityalliance.org
+                          csasanfranciscochapter@gmail.com
                         </a>
                       </div>
                     </div>

@@ -104,8 +104,8 @@ const sponsorshipTiers = [
   },
   {
     name: "Silver",
-    price: "$1,500",
-    priceValue: 1500,
+    price: "$2,000",
+    priceValue: 2000,
     stripeProductId: "prod_SsGnN8qQFvV2Ai",
     stripePriceId: "price_1RwWG11UuWDRyCc1vEOrEbOa",
     stripePaymentLink: "https://buy.stripe.com/aFaeV614v0nS6eL31Q6sw07",
@@ -380,7 +380,7 @@ export default function Sponsorship() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sponsorshipTiers.map((tier, index) => (
               <Card key={index} className={`relative transform transition-all duration-300 hover:scale-105 hover:shadow-xl ${tier.popular ? 'border-csa-blue shadow-lg ring-2 ring-csa-blue/20' : 'hover:border-csa-blue/30'}`}>
                 {tier.popular && (

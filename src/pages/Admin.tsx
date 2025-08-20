@@ -23,7 +23,9 @@ interface EventFormProps {
   onDateChange: (date: string) => void;
   onSlugChange: (slug: string) => void;
   onLocationChange: (location: string) => void;
+  onParkingCheckInChange: (parkingCheckIn: string) => void;
   onExcerptChange: (excerpt: string) => void;
+  onPosterChange: (posterUrl: string) => void;
   onTagsChange: (tags: string) => void;
   onCapacityChange: (capacity: string) => void;
   onAttendeesChange: (attendees: string) => void;
@@ -44,7 +46,9 @@ const EventForm = memo(({
   onDateChange,
   onSlugChange,
   onLocationChange,
+  onParkingCheckInChange,
   onExcerptChange,
+  onPosterChange,
   onTagsChange,
   onCapacityChange,
   onAttendeesChange,
@@ -99,6 +103,16 @@ const EventForm = memo(({
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="parkingCheckIn">Parking/Check In</Label>
+        <Input
+          id="parkingCheckIn"
+          value={formData.parkingCheckIn || ""}
+          onChange={(e) => onParkingCheckInChange(e.target.value)}
+          placeholder="Parking instructions and check-in details"
+        />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="excerpt">Description</Label>
         <Textarea
           id="excerpt"
@@ -107,6 +121,22 @@ const EventForm = memo(({
           placeholder="Brief description of the event"
           rows={3}
         />
+      </div>
+
+      {/* Poster upload / URL */}
+      <div className="space-y-2">
+        <Label htmlFor="posterUrl">Poster Image URL (optional)</Label>
+        <Input
+          id="posterUrl"
+          value={formData.posterUrl || ""}
+          onChange={(e) => onPosterChange(e.target.value)}
+          placeholder="/public/Speaker-images/poster.png or https://..."
+        />
+        {formData.posterUrl && (
+          <div className="pt-2">
+            <img src={formData.posterUrl} alt="Event poster preview" className="max-h-56 rounded-md border" />
+          </div>
+        )}
       </div>
 
       {/* Agenda Section */}
@@ -324,6 +354,7 @@ const initialEvents: Event[] = [
     title: "Zero Trust Architecture: Implementing Mature Security Models",
     date: "2025-01-28T17:30:00-08:00",
     location: "Adobe, 345 Park Avenue, San Jose, CA",
+    parkingCheckIn: "Free parking available in the Adobe campus garage. Check in at the main lobby reception.",
     excerpt: "Join us for an evening of networking and expert insights on implementing Zero Trust security frameworks in enterprise environments.",
     slug: "zero-trust-architecture-jan-2025",
     speakers: [
@@ -373,6 +404,7 @@ const initialEvents: Event[] = [
     title: "Cloud Security Mesh: Next-Gen Architecture Patterns",
     date: "2025-02-25T17:30:00-08:00",
     location: "Salesforce Tower, 415 Mission St, San Francisco, CA",
+    parkingCheckIn: "Valet parking available at Salesforce Tower. Check in at the 34th floor Ohana reception desk.",
     excerpt: "Explore the latest cloud security mesh patterns and how they're reshaping enterprise security architectures.",
     slug: "cloud-security-mesh-feb-2025",
     speakers: [
@@ -421,13 +453,15 @@ export default function Admin() {
     title: "",
     date: "",
     location: "",
+    parkingCheckIn: "",
     excerpt: "",
     slug: "",
     speakers: [],
     tags: [],
     attendees: 0,
     capacity: 0,
-    agenda: []
+    agenda: [],
+    posterUrl: ""
   });
 
   const resetForm = () => {
@@ -435,13 +469,15 @@ export default function Admin() {
       title: "",
       date: "",
       location: "",
+      parkingCheckIn: "",
       excerpt: "",
       slug: "",
       speakers: [],
       tags: [],
       attendees: 0,
       capacity: 0,
-      agenda: []
+      agenda: [],
+      posterUrl: ""
     });
   };
 
@@ -479,13 +515,15 @@ export default function Admin() {
       title: formData.title!,
       date: formData.date!,
       location: formData.location!,
+      parkingCheckIn: formData.parkingCheckIn,
       excerpt: formData.excerpt || "",
       slug: formData.slug!,
       speakers: formData.speakers || [],
       tags: formData.tags || [],
       attendees: formData.attendees || 0,
       capacity: formData.capacity || 0,
-      agenda: formData.agenda || []
+      agenda: formData.agenda || [],
+      posterUrl: formData.posterUrl || ""
     };
 
     setEvents(prev => [...prev, newEvent]);
@@ -505,13 +543,15 @@ export default function Admin() {
       title: formData.title!,
       date: formData.date!,
       location: formData.location!,
+      parkingCheckIn: formData.parkingCheckIn,
       excerpt: formData.excerpt || "",
       slug: formData.slug!,
       speakers: formData.speakers || [],
       tags: formData.tags || [],
       attendees: formData.attendees || 0,
       capacity: formData.capacity || 0,
-      agenda: formData.agenda || []
+      agenda: formData.agenda || [],
+      posterUrl: formData.posterUrl || ""
     };
 
     setEvents(prev => prev.map(event => 
@@ -533,13 +573,15 @@ export default function Admin() {
       title: event.title,
       date: event.date,
       location: event.location,
+      parkingCheckIn: event.parkingCheckIn,
       excerpt: event.excerpt,
       slug: event.slug,
       speakers: event.speakers,
       tags: event.tags,
       attendees: event.attendees,
       capacity: event.capacity,
-      agenda: event.agenda
+      agenda: event.agenda,
+      posterUrl: event.posterUrl
     });
   };
 
@@ -629,8 +671,16 @@ export default function Admin() {
     setFormData(prev => ({ ...prev, location: value }));
   }, []);
 
+  const handleParkingCheckInChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, parkingCheckIn: value }));
+  }, []);
+
   const handleExcerptChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, excerpt: value }));
+  }, []);
+
+  const handlePosterChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, posterUrl: value }));
   }, []);
 
   const handleCapacityChange = useCallback((value: string) => {
@@ -779,7 +829,9 @@ export default function Admin() {
                                       onDateChange={handleDateChange}
                                       onSlugChange={handleSlugChange}
                                       onLocationChange={handleLocationChange}
+                                      onParkingCheckInChange={handleParkingCheckInChange}
                                       onExcerptChange={handleExcerptChange}
+                                      onPosterChange={handlePosterChange}
                                       onTagsChange={handleTagsChange}
                                       onCapacityChange={handleCapacityChange}
                                       onAttendeesChange={handleAttendeesChange}
@@ -853,7 +905,9 @@ export default function Admin() {
                   onDateChange={handleDateChange}
                   onSlugChange={handleSlugChange}
                   onLocationChange={handleLocationChange}
+                  onParkingCheckInChange={handleParkingCheckInChange}
                   onExcerptChange={handleExcerptChange}
+                  onPosterChange={handlePosterChange}
                   onTagsChange={handleTagsChange}
                   onCapacityChange={handleCapacityChange}
                   onAttendeesChange={handleAttendeesChange}

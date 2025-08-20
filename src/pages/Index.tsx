@@ -90,13 +90,18 @@ const usePageVisitsCounter = () => {
 };
 
 const upcomingEvent = {
-  title: "Zero Trust Architecture: Implementing Mature Security Models",
-  date: "2025-01-28T17:30:00-08:00",
-  location: "Adobe, 345 Park Avenue, San Jose, CA",
-  excerpt: "Join us for an evening of networking and expert insights on implementing Zero Trust security frameworks in enterprise environments.",
-  slug: "zero-trust-architecture-jan-2025",
-  speakers: ["Satish Govindappa", "Dr. Sarah Chen"],
-  tags: ["Zero Trust", "Enterprise Security"]
+  title: "CSA San Francisco Chapter Meeting - August 2025",
+  date: "2025-08-27T16:30:00-08:00",
+  location: "3000 Tannery Way, Santa Clara, CA",
+  excerpt: "Join us for an evening of networking with cybersecurity enthusiasts, learn about the latest industry trends, and share your own experiences.",
+  slug: "csa-san-francisco-chapter-meeting-august-2025",
+  speakers: [
+    "Spencer Thellmann",
+    "Debrup Ghosh",
+    "Sudesh Gadewar",
+    "Brent Ichien"
+  ],
+  tags: ["CSA", "Cybersecurity", "Cloud Security", "Networking"]
 };
 
 const technicalPartner = [
@@ -153,14 +158,6 @@ export default function Index() {
             {/* Left Column - Text Content */}
             <div className="space-y-6 lg:space-y-8 animate-fade-in pt-0 lg:pt-0">
               <div className="space-y-4 lg:space-y-6">
-                {/* CSA Chapter of Excellence Logo - Above main heading */}
-                <div className="flex justify-start -mt-2">
-                  <img 
-                    src="/lovable-uploads/CSA-Chapter-of-Excellence.png"
-                    alt="CSA Chapter of Excellence"
-                    className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 object-contain opacity-90 hover:opacity-100 transition-opacity"
-                  />
-                </div>
                 <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight text-secondary">
                   <div className="text-secondary">Advancing Cloud Security</div>
                   <div>in the <span className="text-csa-accent">Bay Area</span></div>
@@ -187,6 +184,15 @@ export default function Index() {
                 >
                   <Link to="/get-involved">Join Our Community</Link>
                 </Button>
+              </div>
+              
+              {/* CSA Chapter of Excellence Logo - Below buttons */}
+              <div className="flex justify-start">
+                <img 
+                  src="/lovable-uploads/CSA-Chapter-of-Excellence.png"
+                  alt="CSA Chapter of Excellence"
+                  className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 object-contain opacity-90 hover:opacity-100 transition-opacity"
+                />
               </div>
             </div>
 

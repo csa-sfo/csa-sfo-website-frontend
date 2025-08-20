@@ -19,6 +19,7 @@ export interface Event {
   title: string;
   date: string;
   location: string;
+  parkingCheckIn?: string;
   excerpt: string;
   slug: string;
   speakers: Speaker[];
@@ -29,4 +30,5 @@ export interface Event {
   description?: string;
   regUrl?: string;
   mapUrl?: string;
+  posterUrl?: string; // Optional promotional poster shown in Event Detail hero
 }
