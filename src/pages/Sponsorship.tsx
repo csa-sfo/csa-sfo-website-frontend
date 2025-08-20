@@ -119,22 +119,6 @@ const sponsorshipTiers = [
       "Member directory access"
     ],
     popular: false
-  },
-  {
-    name: "Bronze",
-    price: "$500",
-    priceValue: 500,
-    stripeProductId: "prod_SsGEjQdbWU2DC9",
-    stripePriceId: "price_1RwViV1UuWDRyCc1rHVzBGN5",
-    stripePaymentLink: "https://buy.stripe.com/9B6fZafZp8Uo1Yv45U6sw04",
-    description: "Community support and brand awareness",
-    features: [
-      "Logo on website sponsor page",
-      "Social media mention",
-      "Newsletter acknowledgment",
-      "Event networking opportunities"
-    ],
-    popular: false
   }
 ];
 
