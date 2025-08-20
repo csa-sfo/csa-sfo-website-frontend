@@ -44,23 +44,39 @@ export default function SponsorshipSuccess() {
 
   const fetchSessionDetails = async (sessionId: string) => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_DEV_API_URL}/api/v1/payments/session/${sessionId}`);
-      if (response.data.payment_intent) {
+      const response = await axios.get(`${import.meta.env.VITE_PROD_API_URL}/api/v1/payments/session/${sessionId}`);
+      if (response.data && response.data.payment_intent) {
         setPaymentIntentId(response.data.payment_intent);
         fetchInvoiceUrl(response.data.payment_intent);
       } else {
-        console.warn('No payment intent found in session');
+        console.warn('No payment intent found in session data:', response.data);
+        toast.warning('Payment details are still processing. Please check back later.');
       }
     } catch (error) {
       console.error('Error fetching session details:', error);
-      // Continue without invoice download if there's an error
-      toast.error('Could not load invoice details. You can still access it from your email.');
+      // Provide more specific error message
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // Server responded with an error status code
+          toast.error(`Error: ${error.response.data?.detail || 'Failed to load payment details'}`);
+        } else if (error.request) {
+          // Request was made but no response received
+          toast.error('Unable to connect to the server. Please check your connection.');
+        }
+      } else {
+        toast.error('An unexpected error occurred. Please try again later.');
+      }
     }
   };
 
   const fetchInvoiceUrl = async (intentId: string) => {
+    if (!intentId) {
+      console.warn('No payment intent ID provided for invoice URL');
+      return;
+    }
+    
     try {
-      const response = await axios.get(`${import.meta.env.VITE_DEV_API_URL}/api/v1/payments/get-invoice-url`, {
+      const response = await axios.get(`${import.meta.env.VITE_PROD_API_URL}/api/v1/payments/get-invoice-url`, {
         params: { payment_intent_id: intentId }
       });
       

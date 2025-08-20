@@ -186,27 +186,27 @@ export default function Sponsorship() {
         })
       });
       
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to create checkout session');
+        throw new Error(responseData.detail || 'Failed to create checkout session');
       }
       
-      const { sessionId } = await response.json();
-      
-      // Redirect to Stripe Checkout
+      // Initialize Stripe
       const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
       if (!stripe) {
         throw new Error('Stripe failed to initialize');
       }
-      
+
+      // Redirect to Stripe Checkout
       const { error } = await stripe.redirectToCheckout({
-        sessionId,
+        sessionId: responseData.sessionId,
       });
-      
+
       if (error) {
+        console.error('Stripe redirect error:', error);
         throw error;
       }
-      
     } catch (error) {
       console.error('Error during checkout:', error);
       // Handle error (e.g., show error message to user)
