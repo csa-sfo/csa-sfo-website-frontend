@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+
 import { API_ENDPOINTS } from '@/config/api';
 
 interface User {
@@ -58,10 +59,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        if (!parsedUser.profileCompleted) {
-          setShowProfileDialog(true);
-        }
+        // Set default values if they don't exist
+        const userWithDefaults = {
+          ...parsedUser,
+          companyName: parsedUser.companyName || 'Event Aug 27',
+          jobRole: parsedUser.jobRole || 'Participant',
+          profileCompleted: true
+        };
+        setUser(userWithDefaults);
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('csaUser');
@@ -145,7 +150,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
       setUser(nextUser);
       persistState(nextUser, nextTokens);
-      setShowProfileDialog(true);
+      
+      // Automatically complete profile with default values
+      try {
+        const profileData = {
+          company_name: 'Event Aug 27',
+          role: 'Participant'
+        };
+        
+        const res = await fetch(API_ENDPOINTS.SIGNUP_DETAILS, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${signupToken}`,
+          },
+          body: JSON.stringify(profileData),
+        });
+        
+        if (res.ok) {
+          // Profile completed successfully, now login with the stored credentials
+          const pending = localStorage.getItem('csaPendingSignup');
+          if (pending) {
+            const { email, password } = JSON.parse(pending);
+            localStorage.removeItem('csaPendingSignup');
+            await login(email, password);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to auto-complete profile:', error);
+      }
+      
       localStorage.setItem('csaPendingSignup', JSON.stringify({ email, password }));
       return true;
     } catch {
@@ -172,7 +206,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     setUser(socialUser);
     localStorage.setItem('csaUser', JSON.stringify(socialUser));
-    setShowProfileDialog(true); // Show profile dialog for social login users
+    
+    // Automatically complete profile for social login users
+    const updatedUser: User = {
+      ...socialUser,
+      companyName: 'Event Aug 27',
+      jobRole: 'Participant',
+      profileCompleted: true,
+    };
+    setUser(updatedUser);
+    localStorage.setItem('csaUser', JSON.stringify(updatedUser));
+    
     setLoading(false);
     return true;
   };

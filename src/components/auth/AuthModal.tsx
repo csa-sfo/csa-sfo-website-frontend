@@ -1,13 +1,13 @@
-
-import { useState } from "react";
+import { AlertCircle, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Mail, Lock, User, Eye, EyeOff, AlertCircle } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -163,6 +163,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
               <span className="font-medium">Continue with Google</span>
             </Button>
 
+            {/* LinkedIn button commented out
             <Button
               variant="outline"
               onClick={() => handleSocialLogin('linkedin')}
@@ -174,6 +175,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
               </div>
               <span className="font-medium">Continue with LinkedIn</span>
             </Button>
+            */}
           </div>
 
           <div className="relative">
