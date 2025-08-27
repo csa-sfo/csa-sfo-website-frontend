@@ -22,7 +22,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
   const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const { login, socialLogin, loading } = useAuth();
+  const { login, signup, socialLogin, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,18 +39,29 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
     }
 
     try {
-      const success = await login(email, password);
+      let success = false;
+      if (mode === "login") {
+        success = await login(email, password);
+        if (success) {
+          toast.success(`Welcome back! You've been signed in successfully.`);
+        }
+      } else {
+        success = await signup(name, email, password);
+        if (success) {
+          toast.success(`Account created. Complete your profile to finish sign up.`);
+        }
+      }
+
       if (success) {
-        toast.success(`Welcome back! You've been signed in successfully.`);
         setEmail("");
         setPassword("");
         setName("");
         onClose();
       } else {
-        setError("Invalid email or password. Please try again.");
+        setError(mode === "login" ? "Invalid email or password. Please try again." : "Sign up failed. Please try again.");
       }
     } catch (error) {
-      setError("An error occurred during sign in. Please try again.");
+      setError(mode === "login" ? "An error occurred during sign in. Please try again." : "An error occurred during sign up. Please try again.");
     }
   };
 
