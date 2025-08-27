@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '@/config/api';
 
 interface User {
   id: string;
   email: string;
-  name: string;
+  name?: string;
   role: 'admin' | 'user';
-  firstName?: string;
-  lastName?: string;
   companyName?: string;
   jobRole?: string;
   profileCompleted?: boolean;
@@ -17,11 +16,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  socialLogin: (provider: 'google' | 'linkedin') => Promise<boolean>;
-  completeProfile: (profileData: {
-    companyName: string;
-    jobRole: string;
-  }) => void;
+  signup: (name: string, email: string, password: string) => Promise<boolean>;
+  completeProfile: (profileData: { companyName: string; jobRole: string }) => Promise<void>;
   logout: () => void;
   loading: boolean;
   showProfileDialog: boolean;
@@ -44,8 +40,15 @@ const ADMIN_CREDENTIALS = {
   }
 };
 
+type Tokens = {
+  accessToken?: string;
+  refreshToken?: string;
+  signupToken?: string;
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [tokens, setTokens] = useState<Tokens>({});
   const [loading, setLoading] = useState(true);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
 
@@ -56,7 +59,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
-        // Show profile dialog if user hasn't completed their profile
         if (!parsedUser.profileCompleted) {
           setShowProfileDialog(true);
         }
@@ -65,41 +67,92 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('csaUser');
       }
     }
+    const storedTokens = localStorage.getItem('csaTokens');
+    if (storedTokens) {
+      try {
+        setTokens(JSON.parse(storedTokens));
+      } catch {
+        localStorage.removeItem('csaTokens');
+      }
+    }
     setLoading(false);
   }, []);
 
+  const persistState = (nextUser: User | null, nextTokens?: Tokens) => {
+    if (nextUser) localStorage.setItem('csaUser', JSON.stringify(nextUser));
+    else localStorage.removeItem('csaUser');
+    if (nextTokens) {
+      setTokens(nextTokens);
+      localStorage.setItem('csaTokens', JSON.stringify(nextTokens));
+    }
+  };
+
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Check admin credentials
-    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
-      setUser(ADMIN_CREDENTIALS.user);
-      localStorage.setItem('csaUser', JSON.stringify(ADMIN_CREDENTIALS.user));
-      setLoading(false);
+    try {
+      const res = await fetch(API_ENDPOINTS.LOGIN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      const u = data.user as any;
+      const nextUser: User = {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: (u.type === 'admin' ? 'admin' : 'user'),
+        companyName: u.company_name,
+        jobRole: u.role,
+        profileCompleted: !!u.profile_completed || (!!u.company_name && !!u.role)
+      };
+      const nextTokens: Tokens = {
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+      };
+      setUser(nextUser);
+      persistState(nextUser, nextTokens);
+      setShowProfileDialog(!nextUser.profileCompleted);
       return true;
+    } catch {
+      return false;
+    } finally {
+      setLoading(false);
     }
-    
-    // For demo purposes, allow any other email with a simple password
-    if (email && password && password.length >= 6) {
-      const regularUser: User = {
+  };
+
+  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
+    setLoading(true);
+    try {
+      const res = await fetch(API_ENDPOINTS.SIGNUP_BASIC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      const signupToken = data.token as string | undefined;
+      if (!signupToken) return false;
+
+      const nextTokens: Tokens = { signupToken };
+      const nextUser: User = {
         id: Date.now().toString(),
         email,
-        name: email.split('@')[0],
+        name,
         role: 'user',
-        profileCompleted: false
+        profileCompleted: false,
       };
-      setUser(regularUser);
-      localStorage.setItem('csaUser', JSON.stringify(regularUser));
-      setShowProfileDialog(true); // Show profile dialog for new users
-      setLoading(false);
+      setUser(nextUser);
+      persistState(nextUser, nextTokens);
+      setShowProfileDialog(true);
+      localStorage.setItem('csaPendingSignup', JSON.stringify({ email, password }));
       return true;
+    } catch {
+      return false;
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
-    return false;
   };
 
   const socialLogin = async (provider: 'google' | 'linkedin'): Promise<boolean> => {
@@ -124,28 +177,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return true;
   };
 
-  const completeProfile = (profileData: {
-    companyName: string;
-    jobRole: string;
-  }) => {
+  const completeProfile = async (profileData: { companyName: string; jobRole: string }) => {
     if (!user) return;
-    
-    const updatedUser: User = {
-      ...user,
-      companyName: profileData.companyName,
-      jobRole: profileData.jobRole,
-      profileCompleted: true
-    };
-    
-    setUser(updatedUser);
-    localStorage.setItem('csaUser', JSON.stringify(updatedUser));
-    setShowProfileDialog(false);
+    setLoading(true);
+    try {
+      const current = tokens;
+      if (current.signupToken) {
+        const res = await fetch(API_ENDPOINTS.SIGNUP_DETAILS, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${current.signupToken}`,
+          },
+          body: JSON.stringify({
+            company_name: profileData.companyName,
+            role: profileData.jobRole,
+          }),
+        });
+        if (!res.ok) throw new Error('Failed to store details during signup');
+        const pending = localStorage.getItem('csaPendingSignup');
+        if (pending) {
+          const { email, password } = JSON.parse(pending);
+          localStorage.removeItem('csaPendingSignup');
+          await login(email, password);
+        }
+        const nextTokens: Tokens = { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
+        persistState(user, nextTokens);
+      } else if (tokens.accessToken) {
+        const res = await fetch(API_ENDPOINTS.USER_DETAILS, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${tokens.accessToken}`,
+          },
+          body: JSON.stringify({
+            company_name: profileData.companyName,
+            role: profileData.jobRole,
+          }),
+        });
+        if (!res.ok) throw new Error('Failed to update details');
+        const updatedUser: User = {
+          ...user,
+          companyName: profileData.companyName,
+          jobRole: profileData.jobRole,
+          profileCompleted: true,
+        };
+        setUser(updatedUser);
+        persistState(updatedUser, tokens);
+      } else {
+        const updatedUser: User = {
+          ...user,
+          companyName: profileData.companyName,
+          jobRole: profileData.jobRole,
+          profileCompleted: true,
+        };
+        setUser(updatedUser);
+        persistState(updatedUser, tokens);
+      }
+      setShowProfileDialog(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
     setUser(null);
     setShowProfileDialog(false);
+    setTokens({});
     localStorage.removeItem('csaUser');
+    localStorage.removeItem('csaTokens');
+    localStorage.removeItem('csaPendingSignup');
   };
 
   const value: AuthContextType = {
@@ -153,7 +254,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
     login,
-    socialLogin,
+    signup,
     completeProfile,
     logout,
     loading,
