@@ -1,26 +1,26 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import ChatBotWrapper from "@/components/chatbot/ChatBotWrapper";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { AdminRoute } from "@/components/auth/ProtectedRoute";
-import { UserProfileDialog } from "@/components/auth/UserProfileDialog";
-import Index from "./pages/Index";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import About from "./pages/About";
-import Events from "./pages/Events";
-import EventDetail from "./pages/EventDetail";
+import Admin from "./pages/Admin";
+import { AdminRoute } from "@/components/auth/ProtectedRoute";
 import Archive from "./pages/Archive";
+import ChatBotWrapper from "@/components/chatbot/ChatBotWrapper";
+import Contact from "./pages/Contact";
+import EventDetail from "./pages/EventDetail";
+import Events from "./pages/Events";
+import { Footer } from "@/components/layout/Footer";
 import GetInvolved from "./pages/GetInvolved";
+import { Header } from "@/components/layout/Header";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 import Sponsorship from "./pages/Sponsorship";
 import SponsorshipSuccess from "./pages/SponsorshipSuccess";
-import Contact from "./pages/Contact";
-import Admin from "./pages/Admin";
-import NotFound from "./pages/NotFound";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { UserProfileDialog } from "@/components/auth/UserProfileDialog";
 
 const queryClient = new QueryClient();
 
@@ -57,12 +57,12 @@ const AppContent = () => {
           <ChatBotWrapper />
         </div>
       </BrowserRouter>
-      <UserProfileDialog
+      {/* <UserProfileDialog
         isOpen={showProfileDialog}
         onClose={() => {}} // Profile completion is required, so no close button
         onSave={completeProfile}
         loading={loading}
-      />
+      /> */}
     </>
   );
 };
