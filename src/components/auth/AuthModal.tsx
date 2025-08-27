@@ -23,6 +23,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const { login, signup, socialLogin, loading } = useAuth();
+  const { login, signup, socialLogin, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,31 +40,29 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
     }
 
     try {
-      if (mode === "signup") {
-        const success = await signup({ email, password, name });
+      let success = false;
+      if (mode === "login") {
+        success = await login(email, password);
         if (success) {
-          toast.success("Account created successfully! Welcome to CSA San Francisco.");
-          setEmail("");
-          setPassword("");
-          setName("");
-          onClose();
+          toast.success(`Welcome back! You've been signed in successfully.`);
         }
       } else {
-        const success = await login(email, password);
+        success = await signup(name, email, password);
         if (success) {
-          toast.success("Welcome back! You've been signed in successfully.");
-          setEmail("");
-          setPassword("");
-          setName("");
-          onClose();
-        } else {
-          setError("Invalid email or password. Please try again.");
+          toast.success(`Account created. Complete your profile to finish sign up.`);
         }
       }
-    } catch (error: any) {
-      const errorMessage = error?.message || 
-        (mode === "signup" ? "An error occurred during sign up." : "An error occurred during sign in.");
-      setError(errorMessage);
+
+      if (success) {
+        setEmail("");
+        setPassword("");
+        setName("");
+        onClose();
+      } else {
+        setError(mode === "login" ? "Invalid email or password. Please try again." : "Sign up failed. Please try again.");
+      }
+    } catch (error) {
+      setError(mode === "login" ? "An error occurred during sign in. Please try again." : "An error occurred during sign up. Please try again.");
     }
   };
 
