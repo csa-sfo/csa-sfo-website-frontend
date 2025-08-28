@@ -11,4 +11,6 @@ export const API_ENDPOINTS = {
   SIGNUP_BASIC: `${API_BASE_URL}/v1/routes/signup/basic`,
   SIGNUP_DETAILS: `${API_BASE_URL}/v1/routes/signup/details`,
   USER_DETAILS: `${API_BASE_URL}/v1/routes/user/details`,
+  GOOGLE_LOGIN: `${API_BASE_URL}/v1/routes/google-login`,
+  VERIFY_PROFILE_COMPLETION: `${API_BASE_URL}/v1/routes/is-profile-completed`,
 }; 

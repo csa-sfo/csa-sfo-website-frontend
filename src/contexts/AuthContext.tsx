@@ -22,6 +22,7 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   showProfileDialog: boolean;
+  socialLogin : (provider: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,6 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           profileCompleted: true
         };
         setUser(userWithDefaults);
+        if (!parsedUser.profileCompleted) {
+          setShowProfileDialog(true);
+        }
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('csaUser');
@@ -302,7 +306,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     completeProfile,
     logout,
     loading,
-    showProfileDialog
+    showProfileDialog,
+    socialLogin
   };
 
   return (

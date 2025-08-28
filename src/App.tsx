@@ -21,6 +21,7 @@ import SponsorshipSuccess from "./pages/SponsorshipSuccess";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UserProfileDialog } from "@/components/auth/UserProfileDialog";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const AppContent = () => {
               <Route path="/events/:slug" element={<EventDetail />} />
               <Route path="/archive" element={<Archive />} />
               <Route path="/get-involved" element={<GetInvolved />} />
+              <Route path="/google-callback" element={<AuthCallback />} />
               <Route path="/sponsorship" element={<Sponsorship />} />
                 <Route path="/sponsorship/success" element={<SponsorshipSuccess />} />
               <Route path="/contact" element={<Contact />} />
@@ -57,12 +59,12 @@ const AppContent = () => {
           <ChatBotWrapper />
         </div>
       </BrowserRouter>
-      {/* <UserProfileDialog
+      <UserProfileDialog
         isOpen={showProfileDialog}
         onClose={() => {}} // Profile completion is required, so no close button
         onSave={completeProfile}
         loading={loading}
-      /> */}
+      />
     </>
   );
 };
