@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
+import { API_ENDPOINTS } from '@/config/api';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -98,6 +99,10 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
     }
   };
 
+  const handleGoogleLogin = async () => {
+    window.location.href = API_ENDPOINTS.GOOGLE_LOGIN
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="w-[95vw] max-w-sm mx-auto bg-white border-0 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -153,7 +158,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           <div className="space-y-2">
             <Button
               variant="outline"
-              onClick={() => handleSocialLogin('google')}
+              onClick={handleGoogleLogin}
               disabled={loading}
               className="w-full flex items-center justify-center space-x-2 h-10 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
