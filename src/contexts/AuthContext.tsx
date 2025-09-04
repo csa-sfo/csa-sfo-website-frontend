@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 import { API_ENDPOINTS } from '@/config/api';
+import { supabase } from '@/lib/supabase';
 
 interface User {
   id: string;
@@ -17,7 +18,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (name: string, email: string, password: string) => Promise<boolean>;
+  signup: (name: string, email: string, password: string, organization: string) => Promise<boolean>;
+  loginWithOtp: (supabaseUser: any) => Promise<boolean>;
+  signupWithOtp: (supabaseUser: any) => Promise<boolean>;
   completeProfile: (profileData: { companyName: string; jobRole: string }) => Promise<void>;
   logout: () => void;
   loading: boolean;
@@ -63,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Set default values if they don't exist
         const userWithDefaults = {
           ...parsedUser,
-          companyName: parsedUser.companyName || 'Event Aug 27',
+          companyName: parsedUser.companyName || parsedUser.organization,
           jobRole: parsedUser.jobRole || 'Participant',
           profileCompleted: true
         };
@@ -131,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
+  const signup = async (name: string, email: string, password: string, organization: string): Promise<boolean> => {
     setLoading(true);
     try {
       const res = await fetch(API_ENDPOINTS.SIGNUP_BASIC, {
@@ -155,10 +158,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(nextUser);
       persistState(nextUser, nextTokens);
       
-      // Automatically complete profile with default values
+      // Automatically complete profile with provided organization
       try {
         const profileData = {
-          company_name: 'Event Aug 27',
+          company_name: organization,
           role: 'Participant'
         };
         
@@ -187,6 +190,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('csaPendingSignup', JSON.stringify({ email, password }));
       return true;
     } catch {
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginWithOtp = async (supabaseUser: any): Promise<boolean> => {
+    setLoading(true);
+    console.log('loginWithOtp called with user:', supabaseUser);
+    console.log('User metadata:', supabaseUser.user_metadata);
+    
+    try {
+      // Create user from Supabase user_metadata (standard practice)
+      const frontendUser: User = {
+        id: supabaseUser.id,
+        email: supabaseUser.email,
+        name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || supabaseUser.email.split('@')[0],
+        role: 'user',
+        companyName: (supabaseUser.user_metadata as any)?.organization,
+        jobRole: 'Participant',
+        profileCompleted: true
+      };
+      
+      setUser(frontendUser);
+      persistState(frontendUser, {});
+      console.log('Frontend login successful, user set:', frontendUser);
+      return true;
+      
+    } catch (error) {
+      console.error('Login with OTP error:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signupWithOtp = async (supabaseUser: any): Promise<boolean> => {
+    setLoading(true);
+    console.log('signupWithOtp called with user:', supabaseUser);
+    console.log('User metadata:', supabaseUser.user_metadata);
+    
+    try {
+      // Create user from Supabase user_metadata (standard practice)
+      const frontendUser: User = {
+        id: supabaseUser.id,
+        email: supabaseUser.email,
+        name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || supabaseUser.email.split('@')[0],
+        role: 'user',
+        companyName: (supabaseUser.user_metadata as any)?.organization,
+        jobRole: 'Participant',
+        profileCompleted: true
+      };
+      
+      setUser(frontendUser);
+      persistState(frontendUser, {});
+      console.log('Frontend signup successful, user set:', frontendUser);
+      return true;
+      
+    } catch (error) {
+      console.error('Signup with OTP error:', error);
       return false;
     } finally {
       setLoading(false);
@@ -288,13 +351,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null);
     setShowProfileDialog(false);
     setTokens({});
     localStorage.removeItem('csaUser');
     localStorage.removeItem('csaTokens');
     localStorage.removeItem('csaPendingSignup');
+    
+    // Sign out from Supabase
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Supabase signout error:', error);
+    }
   };
 
   const value: AuthContextType = {
@@ -303,6 +373,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin: user?.role === 'admin',
     login,
     signup,
+    loginWithOtp,
+    signupWithOtp,
     completeProfile,
     logout,
     loading,

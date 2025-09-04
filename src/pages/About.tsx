@@ -17,7 +17,7 @@ const boardMembers = [
   },
   {
     name: "Megha Satish",
-    role: "Program Manager ",
+    role: "Treasurer and Program Manager ",
     linkedin: "https://www.linkedin.com/in/megha-satish22/",
     image: "/lovable-uploads/members/meghasatish.png"
   },
