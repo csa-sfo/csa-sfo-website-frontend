@@ -1,14 +1,14 @@
-import { AlertCircle, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { AlertCircle, Mail, User, Building, Clock, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
-import { API_ENDPOINTS } from '@/config/api';
+import { useState, useEffect } from "react";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/otp-input";
+import { sendOTP, verifyOTP, updateUserMetadata, supabase } from "@/lib/supabase";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -19,18 +19,148 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProps) {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [organization, setOrganization] = useState("");
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
-  const { login, signup, socialLogin, loading } = useAuth();
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
+  const [canResend, setCanResend] = useState(false);
+  const { loginWithOtp, signupWithOtp, loading } = useAuth();
+
+  // OTP Timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [otpTimer]);
+
+  const sendOtpToEmail = async (email: string, signupData?: { name: string; organization: string }) => {
+    try {
+      // Pass user data to Supabase for signup to store in user_metadata
+      const result = await sendOTP(email, signupData);
+      console.log('Send OTP result:', result);
+      
+      return true;
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      return false;
+    }
+  };
+
+  const handleOtpVerification = async () => {
+    if (!otp || otp.length !== 6) {
+      setError("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    setError(""); // Clear any previous errors
+    console.log("Starting OTP verification for:", email);
+
+    try {
+      const result = await verifyOTP(email, otp);
+      console.log("OTP verification result:", result);
+      
+      if (result?.user) {
+        const user = result.user;
+        console.log("OTP verified successfully, user:", user);
+        console.log("User metadata:", user.user_metadata);
+        
+        if (mode === "signup") {
+          console.log("Processing signup...");
+          
+          // For signup, ensure user metadata is properly set
+          if (!user.user_metadata?.name && (name || organization)) {
+            console.log("Updating user metadata with form data");
+            try {
+              await updateUserMetadata({ name, organization });
+              // Get updated user session
+              const { data: sessionData } = await supabase.auth.getSession();
+              if (sessionData.session?.user) {
+                Object.assign(user, sessionData.session.user);
+              }
+            } catch (updateError) {
+              console.error('Failed to update user metadata:', updateError);
+            }
+          }
+          
+          const success = await signupWithOtp(user);
+          console.log("Signup result:", success);
+          
+          if (success) {
+            toast.success("Account created successfully!");
+            resetForm();
+            onClose();
+          } else {
+            setError("Failed to create account. Please try again.");
+          }
+        } else {
+          console.log("Processing login...");
+          const success = await loginWithOtp(user);
+          console.log("Login result:", success);
+          
+          if (success) {
+            toast.success("Welcome back! You've been signed in successfully.");
+            resetForm();
+            onClose();
+          } else {
+            setError("Failed to sign in. Please try again.");
+          }
+        }
+      } else {
+        console.error("No user returned from OTP verification");
+        setError("Invalid OTP. Please try again.");
+      }
+    } catch (error: any) {
+      console.error('OTP verification error:', error);
+      setError(`Invalid or expired OTP. Please try again.`);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (canResend) {
+      const signupData = mode === "signup" ? { name, organization } : undefined;
+      const success = await sendOtpToEmail(email, signupData);
+      if (success) {
+        setOtpTimer(300);
+        setCanResend(false);
+        toast.success("OTP resent successfully!");
+      } else {
+        setError("Failed to resend OTP. Please try again.");
+      }
+    }
+  };
+
+  const goBackToForm = () => {
+    setIsOtpSent(false);
+    setOtp("");
+    setError("");
+    setOtpTimer(0);
+    setCanResend(false);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!email || !password) {
-      setError("Please fill in all required fields");
+    if (!email) {
+      setError("Please enter your email address");
       return;
     }
 
@@ -39,38 +169,36 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
       return;
     }
 
-    try {
-      let success = false;
-      if (mode === "login") {
-        success = await login(email, password);
-        if (success) {
-          toast.success(`Welcome back! You've been signed in successfully.`);
-        }
-      } else {
-        success = await signup(name, email, password);
-        if (success) {
-          toast.success(`Account created. Complete your profile to finish sign up.`);
-        }
-      }
+    if (mode === "signup" && !organization) {
+      setError("Please enter your organization");
+      return;
+    }
 
+    try {
+      // Send OTP to email
+      const success = await sendOtpToEmail(email, mode === "signup" ? { name, organization } : undefined);
       if (success) {
-        setEmail("");
-        setPassword("");
-        setName("");
-        onClose();
+        setIsOtpSent(true);
+        setOtpTimer(300); // 5 minutes
+        setCanResend(false);
+        toast.success(`OTP sent to ${email}. Please check your email.`);
       } else {
-        setError(mode === "login" ? "Invalid email or password. Please try again." : "Sign up failed. Please try again.");
+        setError("Failed to send OTP. Please try again.");
       }
     } catch (error) {
-      setError(mode === "login" ? "An error occurred during sign in. Please try again." : "An error occurred during sign up. Please try again.");
+      setError("An error occurred while sending OTP. Please try again.");
     }
   };
 
   const resetForm = () => {
     setEmail("");
-    setPassword("");
     setName("");
+    setOrganization("");
+    setOtp("");
     setError("");
+    setIsOtpSent(false);
+    setOtpTimer(0);
+    setCanResend(false);
   };
 
   const handleClose = () => {
@@ -79,29 +207,10 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
   };
 
   const handleModeChange = (newMode: "login" | "signup") => {
-    setError("");
+    resetForm();
     onModeChange(newMode);
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'linkedin') => {
-    setError("");
-    try {
-      const success = await socialLogin(provider);
-      if (success) {
-        toast.success(`Welcome! You've been signed in with ${provider === 'google' ? 'Google' : 'LinkedIn'}.`);
-        resetForm();
-        onClose();
-      } else {
-        setError(`Failed to sign in with ${provider === 'google' ? 'Google' : 'LinkedIn'}. Please try again.`);
-      }
-    } catch (error) {
-      setError(`An error occurred during ${provider === 'google' ? 'Google' : 'LinkedIn'} sign in. Please try again.`);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    window.location.href = API_ENDPOINTS.GOOGLE_LOGIN
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -119,7 +228,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3">
+        <div className="space-y-3 relative min-h-[300px]">
           {/* Tab Navigation */}
           <div className="flex bg-gray-50 rounded-lg p-1">
             <button
@@ -154,135 +263,160 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
             </div>
           )}
 
-          {/* Social Login Buttons */}
-          <div className="space-y-2">
-            <Button
-              variant="outline"
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className="w-full flex items-center justify-center space-x-2 h-10 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              <div className="w-4 h-4 bg-white rounded-sm flex items-center justify-center shadow-sm">
-                <span className="text-blue-600 font-bold text-xs">G</span>
-              </div>
-              <span className="font-medium">Continue with Google</span>
-            </Button>
 
-            {/* LinkedIn button commented out
-            <Button
-              variant="outline"
-              onClick={() => handleSocialLogin('linkedin')}
-              disabled={loading}
-              className="w-full flex items-center justify-center space-x-2 h-10 bg-gradient-to-r from-blue-700 to-blue-800 text-white hover:from-blue-800 hover:to-blue-900 border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              <div className="w-4 h-4 bg-white rounded-sm flex items-center justify-center shadow-sm">
-                <span className="text-blue-700 font-bold text-xs">in</span>
-              </div>
-              <span className="font-medium">Continue with LinkedIn</span>
-            </Button>
-            */}
-          </div>
+          <div className={`transition-all duration-300 ${isOtpSent ? 'opacity-0 translate-x-[-20px] pointer-events-none absolute' : 'opacity-100 translate-x-0'}`}>
+            {!isOtpSent && (
+              /* Initial Form */
+              <form onSubmit={handleSubmit} className="space-y-3">
+              {mode === "signup" && (
+                <>
+                  <div className="space-y-1">
+                    <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                      Full Name
+                    </Label>
+                    <div className="relative group">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="pl-10 h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500 rounded-lg transition-all duration-200 text-sm"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label htmlFor="organization" className="text-sm font-medium text-gray-700">
+                      Organization
+                    </Label>
+                    <div className="relative group">
+                      <Building className="absolute left-3 top-3 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+                      <Input
+                        id="organization"
+                        type="text"
+                        placeholder="Enter your organization"
+                        value={organization}
+                        onChange={(e) => setOrganization(e.target.value)}
+                        className="pl-10 h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500 rounded-lg transition-all duration-200 text-sm"
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
-          <div className="relative">
-            <Separator className="my-3" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="bg-white px-3 text-xs text-gray-500 font-medium">
-                or continue with email
-              </span>
-            </div>
-          </div>
-
-          {/* Email/Password Form */}
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {mode === "signup" && (
               <div className="space-y-1">
-                <Label htmlFor="name" className="text-sm font-medium text-gray-700">
-                  Full Name
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  Email Address
                 </Label>
                 <div className="relative group">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
                   <Input
-                    id="name"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500 rounded-lg transition-all duration-200 text-sm"
                     required
                   />
                 </div>
               </div>
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-10 bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {loading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Sending OTP...</span>
+                  </div>
+                ) : (
+                  "Send OTP"
+                )}
+              </Button>
+              </form>
             )}
+          </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email Address
-              </Label>
-              <div className="relative group">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500 rounded-lg transition-all duration-200 text-sm"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Password
-              </Label>
-              <div className="relative group">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500 rounded-lg transition-all duration-200 text-sm"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+          <div className={`transition-all duration-300 ${!isOtpSent ? 'opacity-0 translate-x-[20px] pointer-events-none absolute' : 'opacity-100 translate-x-0'}`}>
+            {isOtpSent && (
+              /* OTP Verification Form */
+              <div className="space-y-4">
+              <div className="text-center space-y-2 relative">
+                <Button
+                  variant="ghost"
+                  onClick={goBackToForm}
+                  className="absolute left-0 top-0 p-2 h-auto text-gray-500 hover:text-gray-700"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <h3 className="text-lg font-semibold text-gray-900">Verify Your Email</h3>
+                <p className="text-sm text-gray-600">
+                  We've sent a 6-digit verification code to<br />
+                  <span className="font-medium text-gray-900">{email}</span>
+                </p>
               </div>
-            </div>
 
-            {mode === "login" && (
-              <div className="text-right">
-                <button
-                  type="button"
-                  className="text-sm text-orange-600 hover:text-orange-700 font-medium transition-colors"
-                >
-                  Forgot your password?
-                </button>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-10 bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              {loading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Signing In...</span>
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={otp}
+                    onChange={(value) => setOtp(value)}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
                 </div>
-              ) : (
-                mode === "login" ? "Sign In" : "Create Account"
-              )}
-            </Button>
-          </form>
+
+                {otpTimer > 0 && (
+                  <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+                    <Clock className="h-4 w-4" />
+                    <span>Code expires in {formatTime(otpTimer)}</span>
+                  </div>
+                )}
+
+                <Button
+                  onClick={handleOtpVerification}
+                  disabled={loading || otp.length !== 6}
+                  className="w-full h-10 bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  {loading ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Verifying...</span>
+                    </div>
+                  ) : (
+                    "Verify OTP"
+                  )}
+                </Button>
+
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={!canResend || loading}
+                    className="text-sm text-orange-600 hover:text-orange-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {canResend ? "Resend OTP" : `Resend in ${formatTime(otpTimer)}`}
+                  </button>
+                </div>
+              </div>
+              </div>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

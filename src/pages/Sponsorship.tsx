@@ -65,21 +65,19 @@ const partners = [
 const sponsorshipTiers = [
   {
     name: "Platinum",
-    price: "$5,000",
+    price: "$5,000+",
     priceValue: 5000,
     stripeProductId: "prod_SsGltIYNy9s7jO",
     stripePriceId: "price_1RwWDp1UuWDRyCc1pQUeirdz",
     stripePaymentLink: "https://buy.stripe.com/bJe4gs3cD0nSbz531Q6sw05",
     description: "Maximum visibility and engagement opportunities",
     features: [
-      "Logo prominently displayed on all event materials",
-      "Speaking opportunity at quarterly events",
-      "Dedicated booth space at all events",
-      "Logo on website homepage with link",
-      "Social media mentions and promotion",
-      "Access to member directory",
-      "Quarterly newsletter inclusion",
-      "Co-marketing opportunities"
+      "Premium logo placement on all event materials and CSA SF website",
+      "Opportunity to deliver a keynote or moderate a panel",
+      "Opportunity for a speaking slot in the events",
+      "Featured mention in CSA SF LinkedIn promotions",
+      "Registration list shared"
+      
     ],
     popular: true
   },
@@ -92,13 +90,11 @@ const sponsorshipTiers = [
     stripePaymentLink: "https://buy.stripe.com/cNi14g9B13A47iP7i66sw06",
     description: "Strong brand presence and networking access",
     features: [
-      "Logo on event materials and presentations",
-      "Booth space at major events",
-      "Website logo placement",
-      "Social media acknowledgment",
-      "Newsletter mentions",
-      "Member networking access",
-      "Event presentation opportunities"
+      "Logo placement on CSA SF event slides and website",
+      "Opportunity for a speaking slot in the events",
+      "Mention during event welcome remarks",
+      "Event sponsor covers the cost of food and refereshments",
+      "Registration list shared"
     ],
     popular: false
   },
@@ -111,12 +107,11 @@ const sponsorshipTiers = [
     stripePaymentLink: "https://buy.stripe.com/aFaeV614v0nS6eL31Q6sw07",
     description: "Brand recognition and community support",
     features: [
-      "Logo on select event materials",
-      "Website sponsor page listing",
-      "Social media recognition",
-      "Newsletter acknowledgment",
-      "Networking event invitations",
-      "Member directory access"
+      "Logo placement on CSA SF event slides and website",
+      "Opportunity for a speaking slot in the events",
+      "Mention during event welcome remarks",
+      "Event sponsor covers the cost of food and refreshments"
+      
     ],
     popular: false
   }
