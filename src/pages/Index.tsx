@@ -104,7 +104,7 @@ const upcomingEvent = {
   tags: ["CSA", "Cybersecurity", "Cloud Security", "Networking"]
 };
 
-const technicalPartner = [
+const executiveMember = [
   { name: "Indrasol", logo: "/lovable-uploads/83c978ae-a49f-42da-9c88-adc23bf34dc3.png" },
 ];
 
@@ -319,7 +319,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Technical Partner Section */}
+      {/* Executive Member Section */}
       <section className="py-6 sm:py-8 lg:py-12 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden">
         {/* Background decorative elements - adjusted for mobile */}
         <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 bg-csa-accent/5 rounded-full blur-2xl sm:blur-3xl"></div>
@@ -329,10 +329,10 @@ export default function Index() {
           <div className="text-center mb-4 sm:mb-6">
             <div className="inline-flex items-center gap-1.5 bg-csa-accent/10 px-2.5 py-1 rounded-full mb-3">
               <div className="w-1.5 h-1.5 bg-csa-accent rounded-full animate-pulse"></div>
-              <span className="text-csa-accent font-semibold text-xs uppercase tracking-wider">Partnership</span>
+              <span className="text-csa-accent font-semibold text-xs uppercase tracking-wider">Membership</span>
             </div>
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-secondary mb-2">
-              Technical Partner
+              Executive Member
             </h2>
             <p className="text-sm sm:text-base text-gray-600 max-w-3xl mx-auto px-4 sm:px-6">
               Indrasol has developed AI-powered features for the CSA SFO website, including a context-aware AI voice assistant that guides visitors using live website updates, an AI chatbot, and integrated Stripe payments.
@@ -351,7 +351,7 @@ export default function Index() {
                   <div className="relative z-10 w-full space-y-4 sm:space-y-6 lg:space-y-8 text-center">
                     {/* Main Logo */}
                     <div className="flex justify-center">
-                      {technicalPartner.map((partner, index) => (
+                      {executiveMember.map((partner, index) => (
                         <a
                           key={partner.name}
                           href="https://indrasol.com/"
@@ -392,8 +392,8 @@ export default function Index() {
                       <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-csa-accent/10 to-primary/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-csa-accent/20">
                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0"></div>
                         <span className="text-xs sm:text-sm font-medium text-gray-700">
-                          <span className="hidden sm:inline">Technical Partner since 2023</span>
-                          <span className="sm:hidden">Partner since 2023</span>
+                          <span className="hidden sm:inline">Executive Member since 2023</span>
+                          <span className="sm:hidden">Member since 2023</span>
                         </span>
                       </div>
                     </div>
