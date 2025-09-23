@@ -52,8 +52,8 @@ export function Header() {
               />
             </Link>
 
-            {/* Phone Number */}
-            <div className="flex items-center space-x-1.5 sm:space-x-2 bg-gradient-to-r from-primary/5 to-csa-accent/5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full border border-primary/10 hover:border-primary/20 transition-all duration-300 mb-1">
+            {/* Phone Number - Commented out */}
+            {/* <div className="flex items-center space-x-1.5 sm:space-x-2 bg-gradient-to-r from-primary/5 to-csa-accent/5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full border border-primary/10 hover:border-primary/20 transition-all duration-300 mb-1">
               <div className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-primary/10 rounded-full">
                 <Phone className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
               </div>
@@ -63,7 +63,7 @@ export function Header() {
               >
                 +1 415 417 0991
               </a>
-            </div>
+            </div> */}
           </div>
 
           {/* Desktop Navigation - Center Aligned */}

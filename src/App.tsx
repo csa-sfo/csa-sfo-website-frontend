@@ -6,7 +6,7 @@ import About from "./pages/About";
 import Admin from "./pages/Admin";
 import { AdminRoute } from "@/components/auth/ProtectedRoute";
 import Archive from "./pages/Archive";
-import ChatBotWrapper from "@/components/chatbot/ChatBotWrapper";
+// import ChatBotWrapper from "@/components/chatbot/ChatBotWrapper";
 import Contact from "./pages/Contact";
 import EventDetail from "./pages/EventDetail";
 import Events from "./pages/Events";
@@ -56,7 +56,7 @@ const AppContent = () => {
             </Routes>
           </main>
           <Footer />
-          <ChatBotWrapper />
+          {/* <ChatBotWrapper /> */}
         </div>
       </BrowserRouter>
       <UserProfileDialog

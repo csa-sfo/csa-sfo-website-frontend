@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, MapPin, Users, Car, X } from "lucide-react";
 import { Event } from "@/types/event";
 
-const upcomingEvents: Event[] = [
+// All events data - will be dynamically categorized as upcoming or past
+const allEvents: Event[] = [
   {
-    id: "1",
+    id: "1dd7038a-8ef4-415c-8078-24ae2307ab2b",
     title: "CSA San Francisco Chapter Meeting - August 2025",
     date: "2025-08-27T16:30:00-08:00",
     location: "3000 Tannery Way, Santa Clara, CA",
@@ -32,7 +33,7 @@ const upcomingEvents: Event[] = [
         name: "Debrup Ghosh",
         role: "Principal Product Manager",
         company: "F5",
-        about: "Debrup Ghosh is a product management leader—currently serving as Principal Product Manager at F5 Networks—renowned for driving innovative AI/ML-enabled Web Application and API Protection (WAAP) solutions, having previously led Synopsys’s Polaris application security platform to award-winning status and holding a computer-vision patent simplifying U.S. truck driver inspections.",
+        about: "Debrup Ghosh is a product management leader—currently serving as Principal Product Manager at F5 Networks—renowned for driving innovative AI/ML-enabled Web Application and API Protection (WAAP) solutions, having previously led Synopsys's Polaris application security platform to award-winning status and holding a computer-vision patent simplifying U.S. truck driver inspections.",
         imageUrl: "/public/Speaker-images/Debrup.png"
       },
       {
@@ -58,13 +59,9 @@ const upcomingEvents: Event[] = [
     attendees: 45,
     capacity: 60,
     agenda: []
-  }
-  
-];
-
-const pastEvents: Event[] = [
+  },
   {
-    id: "2",
+    id: "fe806e0e-791a-48f0-8910-51b2c5edc58d",
     title: "CSA San Francisco Chapter Meeting July - 2025",
     date: "2024-07-23T16:30:00-08:00",
     location: "Room Names: San Jose State, UC Berkeley & Stanford ,Adobe World Headquarters : 345 Park Avenue San Jose, CA 95110, West Tower, 6th Floor",
@@ -111,7 +108,7 @@ const pastEvents: Event[] = [
      agenda: []
    },
    {
-     id: "3",
+     id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
      title: "CSA San Francisco Chapter Meeting May - 2025",
      date: "2025-05-21T16:30:00-08:00",
      location: "Blackhawk Network - 6220 Stoneridge Mall Road Pleasanton, CA 94588",
@@ -156,13 +153,129 @@ const pastEvents: Event[] = [
      attendees: 40,
      capacity: 45,
      agenda: []
+   },
+    {
+      id: "d41184c8-4964-4453-a23b-d1c5009600aa",
+      title: "CSA San Francisco Chapter & OWASP Bay Area Meeting",
+     date: "2025-09-23T17:00:00-07:00",
+     location: "Blackhawk Network, 6220 Stoneridge Mall Rd, Pleasanton, CA 94588",
+     parkingCheckIn: "Parking available at Stoneridge Mall",
+     excerpt: "Join us for an evening of knowledge sharing, innovation, and networking in collaboration with OWASP Bay Area Chapter. Featuring technical talks on AI, MCP Security, and a panel discussion on building trust in AI.",
+     slug: "csa-san-francisco-chapter-owasp-bay-area-meeting-september-2025",
+     speakers: [
+       {
+         id: "13",
+         name: "Badari Kalagi",
+         role: "Panelist",
+         company: "Vagaro",
+         about: "Expert in AI implementation and security",
+         imageUrl: "/Speaker-images/badari.jpg"
+       },
+       {
+         id: "14",
+         name: "Ahmad Sadeddin",
+         role: "Panelist",
+         company: "Corgea",
+         about: "Expert in AI and creativity applications",
+         imageUrl: "/Speaker-images/Ahmad.jpg"
+       },
+       {
+         id: "15",
+         name: "Abhishek Bansal",
+         role: "Panelist",
+         company: "Autharva",
+         about: "Specialist in AI security and trust building",
+         imageUrl: "/Speaker-images/abhishek.jpg"
+       },
+       {
+         id: "16",
+         name: "Eugene Weiss",
+         role: "Speaker",
+         company: "Stash Global Inc",
+         about: "Technical expert in MCP Security",
+         imageUrl: "/Speaker-images/Eugene.jpg"
+       },
+       {
+         id: "17",
+         name: "Brent Ichien",
+         role: "Moderator",
+         company: "Endor Labs",
+         about: "Regional Account Executive at Endor Labs, specializing in Software Supply Chain Security",
+         imageUrl: "/Speaker-images/brent.png"
+       }
+     ],
+     tags: ["CSA", "OWASP", "AI", "Cybersecurity", "Networking", "Panel Discussion"],
+     attendees: 0,
+     capacity: 100,
+     agenda: [
+       {
+         id: "1",
+         duration: "5:00 PM - 5:30 PM",
+         topic: "Networking",
+         description: "Welcome and networking session"
+       },
+       {
+         id: "2",
+         duration: "5:30 PM - 5:40 PM",
+         topic: "Keynote Speaker",
+         description: "Sudesh Gadewar - CSA San Francisco Chapter"
+       },
+       {
+         id: "3",
+         duration: "5:40 PM - 6:25 PM",
+         topic: "Vibe Coding in Action: When AI Meets Creativity",
+         description: "Ahmad Sadeddin - Corgea"
+       },
+       {
+         id: "4",
+         duration: "6:25 PM - 7:10 PM",
+         topic: "Technical Talk: How to do MCP Security Right, Part a",
+         description: "Eugene Weiss - Stash Global Inc"
+       },
+       {
+         id: "5",
+         duration: "7:10 PM - 7:55 PM",
+         topic: "Panel Discussion: AI on Day One: Building Trust, Busting Myths, and Dodging Pitfalls",
+         description: "Abhishek Bansal, Ahmad Sadeddin & Badari Kalagi"
+       }
+     ],
+     regUrl: "https://lnkd.in/gFApuHZ2",
+     description: "We're thrilled to announce our next chapter meeting in collaboration with OWASP Bay Area Chapter, for an evening of knowledge sharing, innovation, and networking! Huge thanks to our sponsor Corgea and our host Blackhawk Network for making this possible. Let's build stronger bridges across the security community together!"
    }
 ];
 
 export default function Events() {
-  const [selectedYear, setSelectedYear] = useState("2025");
+  const [selectedYear, setSelectedYear] = useState("all");
   const [selectedTopic, setSelectedTopic] = useState("all");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [attendeeCounts, setAttendeeCounts] = useState<Record<string, number>>({});
+
+  // Fetch attendee counts for all events
+  const fetchAttendeeCounts = async () => {
+    const counts: Record<string, number> = {};
+    
+    for (const event of allEvents) {
+      try {
+        const response = await fetch(`http://localhost:8000/v1/routes/event-attendees/${event.id}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          counts[event.id] = data.attendees;
+        } else {
+          counts[event.id] = event.attendees;
+        }
+      } catch (error) {
+        counts[event.id] = event.attendees;
+      }
+    }
+    
+    setAttendeeCounts(counts);
+  };
+
+  // Fetch attendee counts on component mount
+  useEffect(() => {
+    fetchAttendeeCounts();
+  }, []);
 
   // Event images array for the modal
   const eventImages = [
@@ -174,24 +287,85 @@ export default function Events() {
     "/Events-pictures/PXL_20250522_024915629.MP.jpg"
   ];
 
+  // Function to categorize events as upcoming or past based on current date
+  const categorizeEvents = () => {
+    const now = new Date();
+    const upcoming: Event[] = [];
+    const past: Event[] = [];
+
+    allEvents.forEach(event => {
+      const eventDate = new Date(event.date);
+      if (eventDate >= now) {
+        upcoming.push(event);
+      } else {
+        past.push(event);
+      }
+    });
+
+    // Sort upcoming events by date (earliest first)
+    upcoming.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    // Sort past events by date (most recent first)
+    past.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return { upcoming, past };
+  };
+
+  const { upcoming: upcomingEvents, past: pastEvents } = categorizeEvents();
+
   const allTags = Array.from(new Set([
     ...upcomingEvents.flatMap(e => e.tags),
     ...pastEvents.flatMap(e => e.tags)
   ]));
 
+  // Filter events based on selected year and topic
+  const filterEvents = (events: Event[]) => {
+    return events.filter(event => {
+      const eventYear = new Date(event.date).getFullYear().toString();
+      const yearMatch = selectedYear === "all" || eventYear === selectedYear;
+      const topicMatch = selectedTopic === "all" || event.tags.some(tag => 
+        tag.toLowerCase() === selectedTopic.toLowerCase()
+      );
+      return yearMatch && topicMatch;
+    });
+  };
+
+  const filteredUpcomingEvents = filterEvents(upcomingEvents);
+  const filteredPastEvents = filterEvents(pastEvents);
+
+  // Get unique years from all events for the year filter
+  const availableYears = Array.from(new Set(
+    allEvents.map(event => new Date(event.date).getFullYear().toString())
+  )).sort((a, b) => b.localeCompare(a)); // Sort descending (newest first)
+
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);
     return {
-      day: date.toLocaleDateString('en-US', { weekday: 'short' }),
-      date: date.getDate(),
-      month: date.toLocaleDateString('en-US', { month: 'short' }),
-      time: date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })
+      day: date.toLocaleDateString('en-US', { 
+        weekday: 'short',
+        timeZone: 'America/Los_Angeles'
+      }),
+      date: date.toLocaleDateString('en-US', { 
+        day: 'numeric',
+        timeZone: 'America/Los_Angeles'
+      }),
+      month: date.toLocaleDateString('en-US', { 
+        month: 'short',
+        timeZone: 'America/Los_Angeles'
+      }),
+      time: date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit', 
+        timeZoneName: 'short',
+        timeZone: 'America/Los_Angeles'
+      }).replace('PDT', 'PDT').replace('PST', 'PDT')
     };
   };
 
   const EventCard = ({ event, showRegistration = false }: { event: Event, showRegistration?: boolean }) => {
     const dateInfo = formatEventDate(event.date);
-    const spotsLeft = event.capacity - event.attendees;
+    const currentAttendees = attendeeCounts[event.id] ?? event.attendees;
+    const spotsLeft = event.capacity - currentAttendees;
 
     return (
       <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
@@ -225,7 +399,7 @@ export default function Events() {
             </div>
             <div className="flex items-center space-x-2">
               <Users className="h-4 w-4 text-csa-blue" />
-              <span>{event.attendees}/{event.capacity}</span>
+              <span>{currentAttendees}/{event.capacity}</span>
             </div>
           </div>
           
@@ -497,9 +671,10 @@ export default function Events() {
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="2025">2025</SelectItem>
-                    <SelectItem value="2024">2024</SelectItem>
-                    <SelectItem value="2023">2023</SelectItem>
+                    <SelectItem value="all">All Years</SelectItem>
+                    {availableYears.map(year => (
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
@@ -521,11 +696,11 @@ export default function Events() {
 
             <TabsContent value="upcoming" className="space-y-6">
               <div className="grid gap-6">
-                {upcomingEvents.map(event => (
+                {filteredUpcomingEvents.map(event => (
                   <EventCard key={event.id} event={event} showRegistration={true} />
                 ))}
               </div>
-              {upcomingEvents.length === 0 && (
+              {filteredUpcomingEvents.length === 0 && (
                 <div className="text-center py-12">
                   <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-600 mb-2">No upcoming events</h3>
@@ -536,10 +711,17 @@ export default function Events() {
 
             <TabsContent value="past" className="space-y-6">
               <div className="grid gap-6">
-                {pastEvents.map(event => (
+                {filteredPastEvents.map(event => (
                   <EventCard key={event.id} event={event} />
                 ))}
               </div>
+              {filteredPastEvents.length === 0 && (
+                <div className="text-center py-12">
+                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-600 mb-2">No past events found</h3>
+                  <p className="text-gray-500">No events match your current filters.</p>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>
