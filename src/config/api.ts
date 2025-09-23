@@ -2,7 +2,7 @@
 const API_BASE_URL_DEV = import.meta.env.VITE_DEV_API_URL || "http://localhost:8000";
 const API_BASE_URL_PROD = import.meta.env.VITE_PROD_API_URL;
 
-// const API_BASE_URL = API_BASE_URL_DEV
+// Use production URL by default, fallback to dev for local development
 const API_BASE_URL = API_BASE_URL_PROD
 
 export const API_ENDPOINTS = {
@@ -13,4 +13,8 @@ export const API_ENDPOINTS = {
   USER_DETAILS: `${API_BASE_URL}/v1/routes/user/details`,
   GOOGLE_LOGIN: `${API_BASE_URL}/v1/routes/google-login`,
   VERIFY_PROFILE_COMPLETION: `${API_BASE_URL}/v1/routes/is-profile-completed`,
+  // Event Registration Endpoints
+  EVENT_REGISTRATIONS: `${API_BASE_URL}/v1/routes/event-registrations`,
+  EVENT_ATTENDEES: `${API_BASE_URL}/v1/routes/event-attendees`,
+  SIMPLE_REGISTRATION: `${API_BASE_URL}/v1/routes/simple-registration`,
 }; 
