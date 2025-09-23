@@ -8,6 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { API_ENDPOINTS } from "@/config/api";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, MapPin, Users, Clock, ExternalLink, ArrowLeft, Download, CheckCircle, User } from "lucide-react";
@@ -399,7 +400,7 @@ export default function EventDetail() {
       
       const userId = user.id || "5be05254-c5e2-4eba-bece-d75393b911f2";
       
-      const response = await fetch(`http://localhost:8000/v1/routes/event-registrations/${userId}`, {
+      const response = await fetch(`${API_ENDPOINTS.EVENT_REGISTRATIONS}/${userId}`, {
         headers: {
           ...(token && { 'Authorization': `Bearer ${token}` })
         }
@@ -407,19 +408,27 @@ export default function EventDetail() {
 
       
       if (response.ok) {
-        const responseData = await response.json();
-        
-        const registrations = responseData.registrations || [];
-        
-        const isUserRegistered = registrations.some((reg: any) => reg.event_id === event.id);
-        setIsRegistered(isUserRegistered);
-        
-        // Update localStorage to match backend status for performance
-        const registrationKey = `registered_${user.id}_${event.id}`;
-        if (isUserRegistered) {
-          localStorage.setItem(registrationKey, 'true');
+        // Check if response is JSON before parsing
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const responseData = await response.json();
+          
+          const registrations = responseData.registrations || [];
+          
+          const isUserRegistered = registrations.some((reg: any) => reg.event_id === event.id);
+          
+          setIsRegistered(isUserRegistered);
+          
+          // Update localStorage to match backend status for performance
+          const registrationKey = `registered_${user.id}_${event.id}`;
+          if (isUserRegistered) {
+            localStorage.setItem(registrationKey, 'true');
+          } else {
+            localStorage.removeItem(registrationKey);
+          }
         } else {
-          localStorage.removeItem(registrationKey);
+          const text = await response.text();
+          setIsRegistered(false);
         }
       } else {
         setIsRegistered(false);
@@ -433,7 +442,7 @@ export default function EventDetail() {
   const updateAttendeesCount = async () => {
     try {
       // Fetch updated attendee count from backend
-      const response = await fetch(`http://localhost:8000/v1/routes/event-attendees/${event.id}`);
+      const response = await fetch(`${API_ENDPOINTS.EVENT_ATTENDEES}/${event.id}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -481,7 +490,7 @@ export default function EventDetail() {
       };
       
       // API call to register user for event
-      const response = await fetch(`http://localhost:8000/v1/routes/simple-registration`, {
+      const response = await fetch(API_ENDPOINTS.SIMPLE_REGISTRATION, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -490,12 +499,24 @@ export default function EventDetail() {
         body: JSON.stringify(requestBody)
       });
 
-      const result = await response.json();
+      // Check if response is JSON before parsing
+      let result;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          result = await response.json();
+        } else {
+          const text = await response.text();
+          throw new Error(`Expected JSON but received ${contentType || 'unknown content type'}`);
+        }
+      } catch (parseError) {
+        throw new Error(`Failed to parse response: ${parseError.message}`);
+      }
 
       if (!response.ok) {
         
         // If the error is due to invalid user ID, clear localStorage and redirect to signup
-        if (result.detail && result.detail.includes('not present in table "users"')) {
+        if (result && result.detail && result.detail.includes('not present in table "users"')) {
           localStorage.removeItem('csaUser');
           localStorage.removeItem('csaTokens');
           localStorage.removeItem('csaPendingSignup');
