@@ -67,9 +67,9 @@ const sponsorshipTiers = [
     name: "Platinum",
     price: "$5,000+",
     priceValue: 5000,
-    stripeProductId: "prod_SsGltIYNy9s7jO",
-    stripePriceId: "price_1RwWDp1UuWDRyCc1pQUeirdz",
-    stripePaymentLink: "https://buy.stripe.com/bJe4gs3cD0nSbz531Q6sw05",
+    stripeProductId: "prod_SsCCvAwsBE9mPE",
+    stripePriceId: "price_1RwRoL1UuWDRyCc1UZWBec7B",
+    stripePaymentLink: "https://buy.stripe.com/eVq4gs14vfiMav17i66sw00",
     description: "Maximum visibility and engagement opportunities",
     features: [
       "Premium logo placement on all event materials and CSA SF website",
@@ -85,9 +85,9 @@ const sponsorshipTiers = [
     name: "Gold",
     price: "$3,000",
     priceValue: 3000,
-    stripeProductId: "prod_SsGmv3dINB0mBG",
-    stripePriceId: "price_1RwWEa1UuWDRyCc14Scy6728",
-    stripePaymentLink: "https://buy.stripe.com/cNi14g9B13A47iP7i66sw06",
+    stripeProductId: "prod_SsCDl33DNshyt6",
+    stripePriceId: "price_1RwRor1UuWDRyCc1GNRJ65ZX",
+    stripePaymentLink: "https://buy.stripe.com/00weV628z7Qk5aH6e26sw01",
     description: "Strong brand presence and networking access",
     features: [
       "Logo placement on CSA SF event slides and website",
@@ -102,9 +102,9 @@ const sponsorshipTiers = [
     name: "Silver",
     price: "$2,000",
     priceValue: 2000,
-    stripeProductId: "prod_SsGnN8qQFvV2Ai",
-    stripePriceId: "price_1RwWG11UuWDRyCc1vEOrEbOa",
-    stripePaymentLink: "https://buy.stripe.com/aFaeV614v0nS6eL31Q6sw07",
+    stripeProductId: "prod_SsCE0iUAHFIOMz",
+    stripePriceId: "price_1SAEpm1UuWDRyCc19Ep1USNx",
+    stripePaymentLink: "https://buy.stripe.com/7sY3codRh5Ic9qX31Q6sw02",
     description: "Brand recognition and community support",
     features: [
       "Logo placement on CSA SF event slides and website",
@@ -351,7 +351,7 @@ export default function Sponsorship() {
         <div className="container-site">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-csa-navy mb-4">
-              Sponsorship Opportunities
+              Annual Sponsorship Opportunities
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Choose the sponsorship level that best fits your organization's 
