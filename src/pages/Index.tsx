@@ -4,6 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, Award, TrendingUp, ExternalLink, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
+import { API_ENDPOINTS } from "@/config/api";
+import { Event } from "@/types/event";
+import { allEvents } from "./Events";
 
 // Custom hook for real-time page visits counter
 const usePageVisitsCounter = () => {
@@ -125,8 +128,52 @@ const partners = [
 ];
 
 export default function Index() {
-  const eventDate = new Date(upcomingEvent.date);
+  const [upcomingEventData, setUpcomingEventData] = useState<Event | null>(null);
+  const [attendeesCount, setAttendeesCount] = useState<number>(0);
   const pageVisits = usePageVisitsCounter();
+
+  // Fetch upcoming events and get the first one
+  useEffect(() => {
+    const fetchUpcomingEvent = async () => {
+      try {
+        // Filter upcoming events (events with future dates)
+        const now = new Date();
+        const upcomingEvents = allEvents.filter(event => {
+          const eventDate = new Date(event.date);
+          return eventDate > now;
+        });
+        
+        // Sort by date and get the first upcoming event
+        const sortedUpcomingEvents = upcomingEvents.sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+        
+        if (sortedUpcomingEvents.length > 0) {
+          const firstUpcomingEvent = sortedUpcomingEvents[0];
+          setUpcomingEventData(firstUpcomingEvent);
+          
+          // Fetch attendees count for this event
+          try {
+            const response = await fetch(`${API_ENDPOINTS.EVENT_ATTENDEES}/${firstUpcomingEvent.id}`);
+            if (response.ok) {
+              const data = await response.json();
+              setAttendeesCount(data.attendees || 0);
+            }
+          } catch (error) {
+            console.error('Error fetching attendees count:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching upcoming event:', error);
+      }
+    };
+
+    fetchUpcomingEvent();
+  }, []);
+
+  // Use dynamic event data if available, otherwise fallback to hardcoded data
+  const displayEvent = upcomingEventData || upcomingEvent;
+  const eventDate = new Date(displayEvent.date);
   
   const stats = [
     { label: "Active Members", value: "1000+", icon: Users },
@@ -254,9 +301,9 @@ export default function Index() {
               <CardHeader className="bg-gradient-to-r from-primary to-secondary text-white">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   <div>
-                    <CardTitle className="text-2xl mb-2">{upcomingEvent.title}</CardTitle>
+                    <CardTitle className="text-2xl mb-2">{displayEvent.title}</CardTitle>
                     <CardDescription className="text-gray-200">
-                      {upcomingEvent.excerpt}
+                      {displayEvent.excerpt}
                     </CardDescription>
                   </div>
                   <Button 
@@ -264,7 +311,7 @@ export default function Index() {
                     size="lg"
                     className="bg-csa-accent hover:bg-csa-accent/90 text-white whitespace-nowrap"
                   >
-                    <Link to={`/events/${upcomingEvent.slug}`}>
+                    <Link to={`/events/${displayEvent.slug}`}>
                       Register Now
                     </Link>
                   </Button>
@@ -289,22 +336,30 @@ export default function Index() {
                     </div>
                     <div className="flex items-start space-x-3 text-gray-700">
                       <MapPin className="h-5 w-5 text-primary mt-0.5" />
-                      <span>{upcomingEvent.location}</span>
+                      <span>{displayEvent.location}</span>
                     </div>
+                    {attendeesCount > 0 && (
+                      <div className="flex items-center space-x-3 text-gray-700">
+                        <Users className="h-5 w-5 text-primary" />
+                        <span className="font-medium">{attendeesCount} attendees registered</span>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-4">
                     <div>
                       <h4 className="font-semibold text-secondary mb-2">Featured Speakers</h4>
                       <div className="space-y-1">
-                        {upcomingEvent.speakers.map(speaker => (
-                          <div key={speaker} className="text-gray-700">{speaker}</div>
+                        {displayEvent.speakers.map((speaker, index) => (
+                          <div key={typeof speaker === 'string' ? `speaker-${index}-${speaker}` : `speaker-${speaker.id || index}-${speaker.name}`} className="text-gray-700">
+                            {typeof speaker === 'string' ? speaker : speaker.name}
+                          </div>
                         ))}
                       </div>
                     </div>
                     <div>
                       <h4 className="font-semibold text-secondary mb-2">Topics</h4>
                       <div className="flex flex-wrap gap-2">
-                        {upcomingEvent.tags.map(tag => (
+                        {displayEvent.tags.map(tag => (
                           <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary">
                             {tag}
                           </Badge>

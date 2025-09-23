@@ -8,9 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, MapPin, Users, Car, X } from "lucide-react";
 import { Event } from "@/types/event";
+import { API_ENDPOINTS } from "@/config/api";
 
 // All events data - will be dynamically categorized as upcoming or past
-const allEvents: Event[] = [
+export const allEvents: Event[] = [
   {
     id: "1dd7038a-8ef4-415c-8078-24ae2307ab2b",
     title: "CSA San Francisco Chapter Meeting - August 2025",
@@ -256,7 +257,7 @@ export default function Events() {
     
     for (const event of allEvents) {
       try {
-        const response = await fetch(`http://localhost:8000/v1/routes/event-attendees/${event.id}`);
+        const response = await fetch(`${API_ENDPOINTS.EVENT_ATTENDEES}/${event.id}`);
         
         if (response.ok) {
           const data = await response.json();

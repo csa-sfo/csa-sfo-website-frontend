@@ -8,6 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { API_ENDPOINTS } from "@/config/api";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, MapPin, Users, Clock, ExternalLink, ArrowLeft, Download, CheckCircle, User } from "lucide-react";
@@ -399,7 +400,13 @@ export default function EventDetail() {
       
       const userId = user.id || "5be05254-c5e2-4eba-bece-d75393b911f2";
       
-      const response = await fetch(`http://localhost:8000/v1/routes/event-registrations/${userId}`, {
+      console.log('🔍 Checking registration status for:', {
+        userId,
+        eventId: event.id,
+        apiUrl: `${API_ENDPOINTS.EVENT_REGISTRATIONS}/${userId}`
+      });
+      
+      const response = await fetch(`${API_ENDPOINTS.EVENT_REGISTRATIONS}/${userId}`, {
         headers: {
           ...(token && { 'Authorization': `Bearer ${token}` })
         }
@@ -409,9 +416,18 @@ export default function EventDetail() {
       if (response.ok) {
         const responseData = await response.json();
         
+        console.log('📋 Registration response:', responseData);
+        
         const registrations = responseData.registrations || [];
         
         const isUserRegistered = registrations.some((reg: any) => reg.event_id === event.id);
+        
+        console.log('✅ Registration status:', {
+          isUserRegistered,
+          registrations,
+          matchingRegistration: registrations.find((reg: any) => reg.event_id === event.id)
+        });
+        
         setIsRegistered(isUserRegistered);
         
         // Update localStorage to match backend status for performance
@@ -422,9 +438,11 @@ export default function EventDetail() {
           localStorage.removeItem(registrationKey);
         }
       } else {
+        console.error('❌ Registration check failed:', response.status, response.statusText);
         setIsRegistered(false);
       }
     } catch (error) {
+      console.error('❌ Registration check error:', error);
       setIsRegistered(false);
     }
   };
@@ -433,7 +451,7 @@ export default function EventDetail() {
   const updateAttendeesCount = async () => {
     try {
       // Fetch updated attendee count from backend
-      const response = await fetch(`http://localhost:8000/v1/routes/event-attendees/${event.id}`);
+      const response = await fetch(`${API_ENDPOINTS.EVENT_ATTENDEES}/${event.id}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -481,7 +499,7 @@ export default function EventDetail() {
       };
       
       // API call to register user for event
-      const response = await fetch(`http://localhost:8000/v1/routes/simple-registration`, {
+      const response = await fetch(API_ENDPOINTS.SIMPLE_REGISTRATION, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
