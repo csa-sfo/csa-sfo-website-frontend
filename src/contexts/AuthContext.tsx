@@ -22,7 +22,8 @@ interface AuthContextType {
   loginWithOtp: (supabaseUser: any) => Promise<boolean>;
   signupWithOtp: (supabaseUser: any) => Promise<boolean>;
   completeProfile: (profileData: { companyName: string; jobRole: string }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  clearDemoData: () => void;
   loading: boolean;
   showProfileDialog: boolean;
   socialLogin : (provider: string) => Promise<boolean>;
@@ -63,6 +64,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
+        
+        // Check if this is demo user data (not a real UUID)
+        if (parsedUser.id && !parsedUser.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          console.warn('Demo user data detected, clearing localStorage');
+          localStorage.removeItem('csaUser');
+          localStorage.removeItem('csaTokens');
+          setUser(null);
+          return;
+        }
+        
         // Set default values if they don't exist
         const userWithDefaults = {
           ...parsedUser,
@@ -107,7 +118,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      if (!res.ok) return false;
+      
+      if (!res.ok) {
+        if (res.status === 403) {
+          // User doesn't exist in database, redirect to signup
+          console.warn('User not found in database, please signup first');
+          // You could trigger a signup modal or redirect here
+          return false;
+        }
+        return false;
+      }
       const data = await res.json();
       const u = data.user as any;
       const nextUser: User = {
@@ -148,15 +168,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!signupToken) return false;
 
       const nextTokens: Tokens = { signupToken };
-      const nextUser: User = {
-        id: Date.now().toString(),
-        email,
-        name,
-        role: 'user',
-        profileCompleted: false,
-      };
-      setUser(nextUser);
-      persistState(nextUser, nextTokens);
+      // Don't create a demo user - wait for real authentication
+      // The user will be properly authenticated after profile completion
+      setUser(null);
+      // Don't persist demo user data
       
       // Automatically complete profile with provided organization
       try {
@@ -262,27 +277,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // For demo purposes, simulate successful social login
-    const socialUser: User = {
-      id: Date.now().toString(),
-      email: `user@${provider}.example.com`,
-      name: `${provider} User`,
-      role: 'user',
-      profileCompleted: false
-    };
     
-    setUser(socialUser);
-    localStorage.setItem('csaUser', JSON.stringify(socialUser));
-    
-    // Automatically complete profile for social login users
-    const updatedUser: User = {
-      ...socialUser,
-      companyName: 'Event Aug 27',
-      jobRole: 'Participant',
-      profileCompleted: true,
-    };
-    setUser(updatedUser);
-    localStorage.setItem('csaUser', JSON.stringify(updatedUser));
+    // Don't create demo users - require real authentication
+    console.warn('Social login not implemented - please use email/password login');
+    setUser(null);
+    // Don't persist demo user data
     
     setLoading(false);
     return true;
@@ -367,6 +366,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const clearDemoData = () => {
+    console.warn('Clearing all demo user data and forcing fresh authentication');
+    setUser(null);
+    setTokens({});
+    localStorage.removeItem('csaUser');
+    localStorage.removeItem('csaTokens');
+    localStorage.removeItem('csaPendingSignup');
+    setShowProfileDialog(false);
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
@@ -377,6 +386,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signupWithOtp,
     completeProfile,
     logout,
+    clearDemoData,
     loading,
     showProfileDialog,
     socialLogin

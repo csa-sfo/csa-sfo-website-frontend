@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,14 +10,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Users, Clock, ExternalLink, ArrowLeft, Download } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, ExternalLink, ArrowLeft, Download, CheckCircle, User } from "lucide-react";
 import { toast } from "sonner";
 import { Event } from "@/types/event";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 // Mock event data - in real app this would come from CMS/API or shared state
 const eventData: Record<string, Event> = {
   "csa-san-francisco-chapter-meeting-august-2025": {
-    id: "1",
+    id: "1dd7038a-8ef4-415c-8078-24ae2307ab2b",
     title: "CSA San Francisco Chapter Meeting - August 2025",
     date: "2025-08-27T16:30:00-08:00",
     location: "3000 Tannery Way, Santa Clara, CA 95054",
@@ -95,7 +97,7 @@ const eventData: Record<string, Event> = {
     posterUrl: "/posters/CSA-Sfo-August.png"
   },
   "csa-san-francisco-chapter-meeting-july-2025": {
-    id: "2",
+    id: "fe806e0e-791a-48f0-8910-51b2c5edc58d",
     title: "CSA San Francisco Chapter Meeting July - 2025",
     date: "2024-07-23T16:30:00-08:00",
     location: "Room Names: San Jose State, UC Berkeley & Stanford, Adobe World Headquarters: 345 Park Avenue San Jose, CA 95110, West Tower, 6th Floor",
@@ -175,7 +177,7 @@ Whether you're a seasoned professional or new to the field, this meeting provide
     posterUrl: "/posters/CSA-SFO-July.png"
   },
   "csa-san-francisco-chapter-meeting-may-2025": {
-    id: "3",
+    id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     title: "CSA San Francisco Chapter Meeting May - 2025",
     date: "2024-05-21T16:30:00-08:00",
     location: "Salesforce Tower, 415 Mission St, San Francisco, CA",
@@ -253,23 +255,113 @@ Join us for an engaging session that combines technical deep-dives with practica
     capacity: 45,
     mapUrl: "https://maps.google.com/?q=Salesforce+Tower,415+Mission+St,San+Francisco,CA",
     posterUrl: "/posters/CSA-SFO-May.png"
+  },
+  "csa-san-francisco-chapter-owasp-bay-area-meeting-september-2025": {
+    id: "d41184c8-4964-4453-a23b-d1c5009600aa",
+    title: "CSA San Francisco Chapter & OWASP Bay Area Meeting",
+    date: "2025-09-23T17:00:00-07:00",
+    location: "Blackhawk Network, 6220 Stoneridge Mall Rd, Pleasanton, CA 94588",
+    parkingCheckIn: "Parking available at Stoneridge Mall",
+    excerpt: "Join us for an evening of knowledge sharing, innovation, and networking in collaboration with OWASP Bay Area Chapter. Featuring technical talks on AI, MCP Security, and a panel discussion on building trust in AI.",
+    slug: "csa-san-francisco-chapter-owasp-bay-area-meeting-september-2025",
+    description: `We're thrilled to announce our next chapter meeting in collaboration with OWASP Bay Area Chapter, for an evening of knowledge sharing, innovation, and networking! Huge thanks to our sponsor Corgea and our host Blackhawk Network for making this possible. Let's build stronger bridges across the security community together!
+
+This special collaboration brings together two leading cybersecurity organizations to explore the intersection of AI and security. The evening will feature cutting-edge technical presentations, interactive panel discussions, and valuable networking opportunities.
+
+Whether you're interested in AI security, MCP (Model Context Protocol) security, or building trust in AI systems, this event offers insights from industry experts and thought leaders.`,
+    agenda: [
+      {
+        id: "1",
+        duration: "5:00 PM - 5:30 PM",
+        topic: "Networking",
+        description: "Welcome and networking session"
+      },
+      {
+        id: "2",
+        duration: "5:30 PM - 5:40 PM",
+        topic: "Keynote Speaker",
+        description: "Sudesh Gadewar - CSA San Francisco Chapter"
+      },
+      {
+        id: "3",
+        duration: "5:40 PM - 6:25 PM",
+        topic: "Vibe Coding in Action: When AI Meets Creativity",
+        description: "Ahmad Sadeddin - Corgea"
+      },
+      {
+        id: "4",
+        duration: "6:25 PM - 7:10 PM",
+        topic: "Technical Talk: How to do MCP Security Right, Part a",
+        description: "Eugene Weiss - Stash Global Inc"
+      },
+      {
+        id: "5",
+        duration: "7:10 PM - 7:55 PM",
+        topic: "Panel Discussion: AI on Day One: Building Trust, Busting Myths, and Dodging Pitfalls",
+        description: "Abhishek Bansal, Ahmad Sadeddin & Badari Kalagi"
+      }
+    ],
+    speakers: [
+      {
+        id: "13",
+        name: "Badari Kalagi",
+        role: "Panelist",
+        company: "Vagaro",
+        about: "Expert in AI implementation and security",
+        imageUrl: "/Speaker-images/badari.jpg"
+      },
+      {
+        id: "14",
+        name: "Ahmad Sadeddin",
+        role: "Panelist",
+        company: "Corgea",
+        about: "Expert in AI and creativity applications",
+        imageUrl: "/Speaker-images/Ahmad.jpg"
+      },
+      {
+        id: "15",
+        name: "Abhishek Bansal",
+        role: "Panelist",
+        company: "Autharva",
+        about: "Specialist in AI security and trust building",
+        imageUrl: "/Speaker-images/abhishek.jpg"
+      },
+      {
+        id: "16",
+        name: "Eugene Weiss",
+        role: "Speaker",
+        company: "Stash Global Inc",
+        about: "Technical expert in MCP Security",
+        imageUrl: "/Speaker-images/Eugene.jpg"
+      },
+      {
+        id: "17",
+        name: "Brent Ichien",
+        role: "Moderator",
+        company: "Endor Labs",
+        about: "Regional Account Executive at Endor Labs, specializing in Software Supply Chain Security",
+        imageUrl: "/Speaker-images/brent.png"
+      }
+    ],
+    tags: ["CSA", "OWASP", "AI", "Cybersecurity", "Networking", "Panel Discussion"],
+    attendees: 0,
+    capacity: 100,
+    regUrl: "https://lnkd.in/gFApuHZ2",
+    mapUrl: "https://maps.google.com/?q=Blackhawk+Network,6220+Stoneridge+Mall+Rd,Pleasanton,CA+94588",
+    posterUrl: "/posters/CSA-Sfo-September.png"
   }
 };
 
 export default function EventDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const { isAuthenticated, user } = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    company: "",
-    title: "",
-    dietaryRestrictions: "",
-    comments: ""
-  });
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
 
   const event = slug ? eventData[slug as keyof typeof eventData] : null;
+  const [attendeesCount, setAttendeesCount] = useState(event?.attendees || 0);
 
   if (!event) {
     return (
@@ -289,33 +381,153 @@ export default function EventDetail() {
   }
 
   const eventDate = new Date(event.date);
-  const spotsLeft = event.capacity - event.attendees;
+  const spotsLeft = event.capacity - attendeesCount;
   const isFullyBooked = spotsLeft <= 0;
 
-  const handleRegistration = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Check if user is already registered for this event
+  const checkRegistrationStatus = async () => {
+    
+    if (!isAuthenticated || !user) {
+      setIsRegistered(false);
+      return;
+    }
+
+    // Always get data from Supabase backend
+    try {
+      const tokenData = localStorage.getItem('csaTokens');
+      const token = tokenData ? JSON.parse(tokenData).accessToken : null;
+      
+      const userId = user.id || "5be05254-c5e2-4eba-bece-d75393b911f2";
+      
+      const response = await fetch(`http://localhost:8000/v1/routes/event-registrations/${userId}`, {
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        }
+      });
+
+      
+      if (response.ok) {
+        const responseData = await response.json();
+        
+        const registrations = responseData.registrations || [];
+        
+        const isUserRegistered = registrations.some((reg: any) => reg.event_id === event.id);
+        setIsRegistered(isUserRegistered);
+        
+        // Update localStorage to match backend status for performance
+        const registrationKey = `registered_${user.id}_${event.id}`;
+        if (isUserRegistered) {
+          localStorage.setItem(registrationKey, 'true');
+        } else {
+          localStorage.removeItem(registrationKey);
+        }
+      } else {
+        setIsRegistered(false);
+      }
+    } catch (error) {
+      setIsRegistered(false);
+    }
+  };
+
+  // Update attendees count after registration
+  const updateAttendeesCount = async () => {
+    try {
+      // Fetch updated attendee count from backend
+      const response = await fetch(`http://localhost:8000/v1/routes/event-attendees/${event.id}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAttendeesCount(data.attendees);
+      } else {
+        // Fallback: increment locally if backend fails
+        setAttendeesCount(prev => {
+          const newCount = prev + 1;
+          return newCount;
+        });
+      }
+    } catch (error) {
+      // Fallback: increment locally if backend fails
+      setAttendeesCount(prev => {
+        const newCount = prev + 1;
+        return newCount;
+      });
+    }
+  };
+
+
+  // Check registration status on component mount
+  useEffect(() => {
+    checkRegistrationStatus();
+    updateAttendeesCount();
+  }, [isAuthenticated, user, event.id]);
+
+
+  const handleRegistration = async () => {
+    
+    if (!isAuthenticated || !user) {
+      setShowAuthModal(true);
+      return;
+    }
     setIsRegistering(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Get token safely
+      const tokenData = localStorage.getItem('csaTokens');
+      const token = tokenData ? JSON.parse(tokenData).accessToken : null;
+      
+      const requestBody = {
+        user_id: user.id || "5be05254-c5e2-4eba-bece-d75393b911f2", // Fallback to valid user ID for testing
+        event_id: event.id
+      };
+      
+      // API call to register user for event
+      const response = await fetch(`http://localhost:8000/v1/routes/simple-registration`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify(requestBody)
+      });
 
-    toast.success(
-      isFullyBooked 
-        ? "You've been added to the waitlist!" 
-        : "Registration successful! Check your email for confirmation."
-    );
-    
+      const result = await response.json();
+
+      if (!response.ok) {
+        
+        // If the error is due to invalid user ID, clear localStorage and redirect to signup
+        if (result.detail && result.detail.includes('not present in table "users"')) {
+          localStorage.removeItem('csaUser');
+          localStorage.removeItem('csaTokens');
+          localStorage.removeItem('csaPendingSignup');
+          setShowAuthModal(true);
+          setAuthMode('signup');
+          toast.error('User not found in database. Please signup first.');
+          return;
+        }
+        
+        toast.error(result.detail || `Registration failed: ${response.status}`);
+        return;
+      }
+      
+      // toast.success("Registration successful! Check your email for confirmation.");
+      toast.success("Registered successfully");
+      setIsRegistered(true);
+      
+      // Store registration status in localStorage
+      const registrationKey = `registered_${user.id}_${event.id}`;
+      localStorage.setItem(registrationKey, 'true');
+      
+      // Update attendees count after successful registration
+      await updateAttendeesCount();
+      
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error(`Registration failed: ${error.message}`);
+    } finally {
     setIsRegistering(false);
-    setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      company: "",
-      title: "",
-      dietaryRestrictions: "",
-      comments: ""
-    });
+    }
   };
+
 
   const generateCalendarFile = () => {
     const startDate = new Date(event.date);
@@ -387,15 +599,17 @@ END:VCALENDAR`;
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
-                      day: 'numeric'
+                      day: 'numeric',
+                      timeZone: 'America/Los_Angeles'
                     })}
                   </div>
                   <div className="text-sm">
                     {eventDate.toLocaleTimeString('en-US', {
                       hour: 'numeric',
                       minute: '2-digit',
-                      timeZoneName: 'short'
-                    })}
+                      timeZoneName: 'short',
+                      timeZone: 'America/Los_Angeles'
+                    }).replace('PDT', 'PDT').replace('PST', 'PDT')}
                   </div>
                 </div>
               </div>
@@ -418,7 +632,7 @@ END:VCALENDAR`;
                 <Users className="h-5 w-5 text-csa-accent" />
                 <div>
                   <div className="font-medium">
-                    {event.attendees}/{event.capacity} registered
+                    {attendeesCount}/{event.capacity} registered
                   </div>
                   <div className="text-sm">
                     {isFullyBooked ? "Waitlist available" : `${spotsLeft} spots remaining`}
@@ -517,10 +731,12 @@ END:VCALENDAR`;
             <Card className="sticky top-24">
               <CardHeader>
                 <CardTitle className="text-csa-navy">
-                  {isFullyBooked ? "Join Waitlist" : "Register Now"}
+                  {isRegistered ? "Registration Confirmed" : (isFullyBooked ? "Join Waitlist" : "Register Now")}
                 </CardTitle>
                 <CardDescription>
-                  {isFullyBooked 
+                  {isRegistered 
+                    ? "You're successfully registered for this event."
+                    : isFullyBooked 
                     ? "This event is fully booked, but you can join the waitlist."
                     : "Secure your spot for this exclusive event."
                   }
@@ -529,119 +745,48 @@ END:VCALENDAR`;
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-csa-light rounded-lg">
                   <span className="font-medium text-csa-navy">Status:</span>
-                  <span className={`font-medium ${isFullyBooked ? 'text-red-600' : 'text-green-600'}`}>
-                    {isFullyBooked ? "Waitlist Only" : `${spotsLeft} spots left`}
+                  <span className={`font-medium ${isRegistered ? 'text-green-600' : (isFullyBooked ? 'text-red-600' : 'text-green-600')}`}>
+                    {isRegistered ? "Registered" : (isFullyBooked ? "Waitlist Only" : `${spotsLeft} spots left`)}
                   </span>
                 </div>
 
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button className="w-full bg-csa-blue hover:bg-csa-blue/90" size="lg">
-                      {isFullyBooked ? "Join Waitlist" : "Register Now"}
+                {isRegistered ? (
+                  <div className="text-center py-4">
+                    <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
+                    <p className="text-green-600 font-medium mb-2">Registration Confirmed!</p>
+                    {/* <p className="text-sm text-gray-600">You'll receive a confirmation email shortly.</p> */}
+                  </div>
+                ) : !isAuthenticated ? (
+                  <div className="space-y-4">
+                    <div className="text-center py-4">
+                      <User className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-600 mb-4">Please sign in to register for this event.</p>
+                    </div>
+                    <Button 
+                      onClick={() => setShowAuthModal(true)}
+                      className="w-full bg-csa-blue hover:bg-csa-blue/90" 
+                      size="lg"
+                    >
+                      Sign In to Register
                     </Button>
-                  </SheetTrigger>
-                  <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
-                    <SheetHeader>
-                      <SheetTitle>
-                        {isFullyBooked ? "Join Waitlist" : "Event Registration"}
-                      </SheetTitle>
-                      <SheetDescription>
-                        {isFullyBooked 
-                          ? "We'll notify you if a spot becomes available."
-                          : "Please fill out the form below to register for this event."
-                        }
-                      </SheetDescription>
-                    </SheetHeader>
-                    
-                    <form onSubmit={handleRegistration} className="space-y-6 mt-6">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="firstName">First Name *</Label>
-                          <Input
-                            id="firstName"
-                            value={formData.firstName}
-                            onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                            required
-                          />
                         </div>
-                        <div>
-                          <Label htmlFor="lastName">Last Name *</Label>
-                          <Input
-                            id="lastName"
-                            value={formData.lastName}
-                            onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                            required
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="email">Email Address *</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="company">Company *</Label>
-                        <Input
-                          id="company"
-                          value={formData.company}
-                          onChange={(e) => setFormData({...formData, company: e.target.value})}
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="title">Job Title *</Label>
-                        <Input
-                          id="title"
-                          value={formData.title}
-                          onChange={(e) => setFormData({...formData, title: e.target.value})}
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="dietary">Dietary Restrictions</Label>
-                        <Textarea
-                          id="dietary"
-                          value={formData.dietaryRestrictions}
-                          onChange={(e) => setFormData({...formData, dietaryRestrictions: e.target.value})}
-                          placeholder="Please let us know of any dietary restrictions..."
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="comments">Additional Comments</Label>
-                        <Textarea
-                          id="comments"
-                          value={formData.comments}
-                          onChange={(e) => setFormData({...formData, comments: e.target.value})}
-                          placeholder="Any questions or special requirements..."
-                        />
-                      </div>
-                      
+                ) : (
+                  <div className="space-y-4">
+                    {/* Registration button */}
                       <Button 
-                        type="submit" 
+                      onClick={handleRegistration}
                         className="w-full bg-csa-blue hover:bg-csa-blue/90" 
                         size="lg"
                         disabled={isRegistering}
                       >
                         {isRegistering 
                           ? "Processing..." 
-                          : isFullyBooked 
-                            ? "Join Waitlist" 
-                            : "Complete Registration"
+                        : "Register Now"
                         }
                       </Button>
-                    </form>
-                  </SheetContent>
-                </Sheet>
+                    
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Button 
@@ -706,6 +851,14 @@ END:VCALENDAR`;
           </div>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        mode={authMode}
+        onModeChange={setAuthMode}
+      />
     </div>
   );
 }
