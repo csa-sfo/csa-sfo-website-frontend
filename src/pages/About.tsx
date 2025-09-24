@@ -53,22 +53,10 @@ const advisoryMembers = [
 
 const volunteers = [
   {
-    name: "Volunteer Name 1",
+    name: "Kannan Ramamoorthy",
     role: "Community Volunteer",
-    linkedin: "https://www.linkedin.com/in/volunteer1",
-    image: "/api/placeholder/150/150"
-  },
-  {
-    name: "Volunteer Name 2", 
-    role: "Event Coordinator Volunteer",
-    linkedin: "https://www.linkedin.com/in/volunteer2",
-    image: "/api/placeholder/150/150"
-  },
-  {
-    name: "Volunteer Name 3",
-    role: "Technical Volunteer",
-    linkedin: "https://www.linkedin.com/in/volunteer3",
-    image: "/api/placeholder/150/150"
+    linkedin: "https://www.linkedin.com/in/kannan-ramamoorthy-oscp-ceh-75477a62/",
+    image: "/Volunteers-pictures/volunteer1.jpg"
   }
 ];
 
@@ -290,13 +278,14 @@ export default function About() {
           </div>
 
           <div className="flex justify-center">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl">
+            <div className="flex justify-center">
+              <div className="grid grid-cols-1 gap-8 max-w-sm">
               {volunteers.map((volunteer, index) => (
-                <Card key={volunteer.name} className="text-center overflow-hidden h-full">
+                <Card key={`volunteer-${index}`} className="text-center overflow-hidden h-full">
                   <CardContent className="pt-8 pb-6">
                     <img
                       src={volunteer.image}
-                      alt={`${volunteer.name} profile`}
+                      alt="Volunteer profile"
                       className="w-40 h-40 rounded-full mx-auto mb-6 object-cover shadow-lg"
                     />
                     <h3 className="text-xl font-semibold text-csa-navy mb-2">
@@ -308,7 +297,7 @@ export default function About() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center w-10 h-10 bg-[#0077b5] text-white rounded hover:bg-[#005885] transition-colors"
-                      aria-label={`Visit ${volunteer.name}'s LinkedIn profile`}
+                      aria-label="Visit volunteer's LinkedIn profile"
                     >
                       <svg 
                         className="w-6 h-6" 
@@ -321,6 +310,7 @@ export default function About() {
                   </CardContent>
                 </Card>
               ))}
+              </div>
             </div>
           </div>
         </div>
