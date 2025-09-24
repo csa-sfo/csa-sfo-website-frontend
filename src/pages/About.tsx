@@ -53,8 +53,9 @@ const advisoryMembers = [
 
 const volunteers = [
   {
+    name: "Kannan Ramamoorthy",
     role: "Community Volunteer",
-    linkedin: "https://www.linkedin.com/in/volunteer1",
+    linkedin: "https://www.linkedin.com/in/kannan-ramamoorthy-oscp-ceh-75477a62/",
     image: "/Volunteers-pictures/volunteer1.jpg"
   }
 ];
@@ -288,7 +289,7 @@ export default function About() {
                       className="w-40 h-40 rounded-full mx-auto mb-6 object-cover shadow-lg"
                     />
                     <h3 className="text-xl font-semibold text-csa-navy mb-2">
-                      Volunteer
+                      {volunteer.name}
                     </h3>
                     <p className="text-csa-blue font-medium mb-4 text-sm leading-tight">{volunteer.role}</p>
                     <a
