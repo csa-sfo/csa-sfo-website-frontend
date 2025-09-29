@@ -11,15 +11,15 @@ export interface Speaker {
   role: string;
   company: string;
   about: string;
-  imageUrl: string;
+  image_url: string;
 }
 
 export interface Event {
   id: string;
   title: string;
-  date: string;
+  date_time: string;
   location: string;
-  parkingCheckIn?: string;
+  checkins?: string;
   excerpt: string;
   slug: string;
   speakers: Speaker[];
@@ -28,7 +28,7 @@ export interface Event {
   capacity: number;
   agenda: AgendaItem[];
   description?: string;
-  regUrl?: string;
-  mapUrl?: string;
-  posterUrl?: string; // Optional promotional poster shown in Event Detail hero
+  reg_url?: string;
+  map_url?: string;
+  poster_url?: string;
 }

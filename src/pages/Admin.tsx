@@ -12,11 +12,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Calendar, MapPin, Users, Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { Event, AgendaItem, Speaker } from "@/types/event";
+import { API_BASE_URL, API_ENDPOINTS } from "@/config/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { handleApiError, handleAuthError } from "@/utils/authUtils";
 
 // Separate EventForm component to prevent re-renders
 interface EventFormProps {
   formData: Partial<Event>;
   isEditing: boolean;
+  isLoading: boolean;
   onSave: () => void;
   onCancel: () => void;
   onTitleChange: (title: string) => void;
@@ -24,7 +28,7 @@ interface EventFormProps {
   onSlugChange: (slug: string) => void;
   onLocationChange: (location: string) => void;
   onParkingCheckInChange: (parkingCheckIn: string) => void;
-  onExcerptChange: (excerpt: string) => void;
+  onDescriptionChange: (description: string) => void;
   onPosterChange: (posterUrl: string) => void;
   onTagsChange: (tags: string) => void;
   onCapacityChange: (capacity: string) => void;
@@ -40,6 +44,7 @@ interface EventFormProps {
 const EventForm = memo(({
   formData,
   isEditing,
+  isLoading,
   onSave,
   onCancel,
   onTitleChange,
@@ -47,7 +52,7 @@ const EventForm = memo(({
   onSlugChange,
   onLocationChange,
   onParkingCheckInChange,
-  onExcerptChange,
+  onDescriptionChange,
   onPosterChange,
   onTagsChange,
   onCapacityChange,
@@ -77,7 +82,7 @@ const EventForm = memo(({
           <Input
             id="date"
             type="datetime-local"
-            value={formData.date || ""}
+            value={formData.date_time || ""}
             onChange={(e) => onDateChange(e.target.value)}
           />
         </div>
@@ -105,21 +110,21 @@ const EventForm = memo(({
       <div className="space-y-2">
         <Label htmlFor="parkingCheckIn">Parking/Check In</Label>
         <Input
-          id="parkingCheckIn"
-          value={formData.parkingCheckIn || ""}
+          id="checkins"
+          value={formData.checkins || ""}
           onChange={(e) => onParkingCheckInChange(e.target.value)}
           placeholder="Parking instructions and check-in details"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="excerpt">Description</Label>
+        <Label htmlFor="description">Description</Label>
         <Textarea
-          id="excerpt"
-          value={formData.excerpt || ""}
-          onChange={(e) => onExcerptChange(e.target.value)}
-          placeholder="Brief description of the event"
-          rows={3}
+          id="description"
+          value={formData.description || ""}
+          onChange={(e) => onDescriptionChange(e.target.value)}
+          placeholder="Event description (will be used for both excerpt and description)"
+          rows={4}
         />
       </div>
 
@@ -128,13 +133,13 @@ const EventForm = memo(({
         <Label htmlFor="posterUrl">Poster Image URL (optional)</Label>
         <Input
           id="posterUrl"
-          value={formData.posterUrl || ""}
+          value={formData.poster_url || ""}
           onChange={(e) => onPosterChange(e.target.value)}
           placeholder="/public/Speaker-images/poster.png or https://..."
         />
-        {formData.posterUrl && (
+        {formData.poster_url && (
           <div className="pt-2">
-            <img src={formData.posterUrl} alt="Event poster preview" className="max-h-56 rounded-md border" />
+            <img src={formData.poster_url} alt="Event poster preview" className="max-h-56 rounded-md border" />
           </div>
         )}
       </div>
@@ -275,8 +280,8 @@ const EventForm = memo(({
                     <Label htmlFor={`speaker-image-${speaker.id}`}>Image URL</Label>
                     <Input
                       id={`speaker-image-${speaker.id}`}
-                      value={speaker.imageUrl}
-                      onChange={(e) => onUpdateSpeaker(speaker.id, 'imageUrl', e.target.value)}
+                      value={speaker.image_url}
+                      onChange={(e) => onUpdateSpeaker(speaker.id, 'image_url', e.target.value)}
                       placeholder="https://... or /path/to/image.jpg"
                     />
                   </div>
@@ -305,9 +310,33 @@ const EventForm = memo(({
         <Label htmlFor="tags">Tags (comma separated)</Label>
         <Input
           id="tags"
-          value={formData.tags?.join(', ') || ""}
-          onChange={(e) => onTagsChange(e.target.value)}
-          placeholder="Cloud Security, Zero Trust"
+          placeholder="Cloud Security, Zero Trust, Enterprise Security"
+          defaultValue={formData.tags ? formData.tags.join(', ') : ''}
+          onBlur={(e) => {
+            // Parse tags when user finishes typing (on blur)
+            const tagsString = e.target.value.trim();
+            if (tagsString) {
+              const tags = tagsString
+                .split(',')
+                .map(tag => tag.trim())
+                .filter(tag => tag.length > 0);
+              onTagsChange(tags.join(', '));
+            }
+          }}
+          onKeyDown={(e) => {
+            // Also parse when user presses Enter
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              const tagsString = e.currentTarget.value.trim();
+              if (tagsString) {
+                const tags = tagsString
+                  .split(',')
+                  .map(tag => tag.trim())
+                  .filter(tag => tag.length > 0);
+                onTagsChange(tags.join(', '));
+              }
+            }
+          }}
         />
       </div>
 
@@ -323,22 +352,35 @@ const EventForm = memo(({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="attendees">Current Attendees</Label>
+          <Label htmlFor="attendees">Initial Attendees Count</Label>
           <Input
             id="attendees"
             type="number"
-            value={formData.attendees || ""}
+            value={formData.attendees ?? ""}
             onChange={(e) => onAttendeesChange(e.target.value)}
-            placeholder="0"
+            placeholder="Enter initial attendees count"
           />
         </div>
       </div>
     </div>
 
     <div className="flex gap-4 pt-4">
-      <Button onClick={onSave} className="bg-csa-blue hover:bg-csa-blue/90">
-        <Save className="h-4 w-4 mr-2" />
-        {isEditing ? "Update Event" : "Add Event"}
+      <Button 
+        onClick={onSave} 
+        disabled={isLoading}
+        className="bg-csa-blue hover:bg-csa-blue/90 disabled:opacity-50"
+      >
+            {isLoading ? (
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>{isEditing ? "Updating..." : "Saving..."}</span>
+              </div>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                {isEditing ? "Update Event" : "Add Event"}
+              </>
+            )}
       </Button>
       <Button variant="outline" onClick={onCancel}>
         <X className="h-4 w-4 mr-2" />
@@ -348,138 +390,239 @@ const EventForm = memo(({
   </div>
 ));
 
-const initialEvents: Event[] = [
-  {
-    id: "1",
-    title: "Zero Trust Architecture: Implementing Mature Security Models",
-    date: "2025-01-28T17:30:00-08:00",
-    location: "Adobe, 345 Park Avenue, San Jose, CA",
-    parkingCheckIn: "Free parking available in the Adobe campus garage. Check in at the main lobby reception.",
-    excerpt: "Join us for an evening of networking and expert insights on implementing Zero Trust security frameworks in enterprise environments.",
-    slug: "zero-trust-architecture-jan-2025",
-    speakers: [
-      {
-        id: "1",
-        name: "Satish Govindappa",
-        role: "Chapter Chair",
-        company: "Oracle",
-        about: "Cloud security architect with 15+ years in enterprise security and cloud transformation.",
-        imageUrl: "/api/placeholder/150/150"
-      },
-      {
-        id: "2",
-        name: "Dr. Sarah Chen",
-        role: "Principal Security Architect",
-        company: "Salesforce",
-        about: "Research scientist specializing in zero trust architectures and identity management.",
-        imageUrl: "/api/placeholder/150/150"
-      }
-    ],
-    tags: ["Zero Trust", "Enterprise Security"],
-    attendees: 45,
-    capacity: 60,
-    agenda: [
-      {
-        id: "1",
-        duration: "5:30 PM - 6:00 PM",
-        topic: "Registration & Networking",
-        description: "Welcome reception with light refreshments and networking opportunities."
-      },
-      {
-        id: "2",
-        duration: "6:00 PM - 6:15 PM",
-        topic: "Welcome & Chapter Updates",
-        description: "Chapter updates and upcoming events overview."
-      },
-      {
-        id: "3",
-        duration: "6:15 PM - 7:00 PM",
-        topic: "Zero Trust Implementation",
-        description: "Real-world case study and lessons learned from implementing Zero Trust at scale."
-      }
-    ]
-  },
-  {
-    id: "2", 
-    title: "Cloud Security Mesh: Next-Gen Architecture Patterns",
-    date: "2025-02-25T17:30:00-08:00",
-    location: "Salesforce Tower, 415 Mission St, San Francisco, CA",
-    parkingCheckIn: "Valet parking available at Salesforce Tower. Check in at the 34th floor Ohana reception desk.",
-    excerpt: "Explore the latest cloud security mesh patterns and how they're reshaping enterprise security architectures.",
-    slug: "cloud-security-mesh-feb-2025",
-    speakers: [
-      {
-        id: "3",
-        name: "Maria Rodriguez",
-        role: "Security Architect",
-        company: "Google Cloud",
-        about: "Cloud security specialist focusing on mesh architectures and distributed security models.",
-        imageUrl: "/api/placeholder/150/150"
-      },
-      {
-        id: "4",
-        name: "Alex Kim",
-        role: "Principal Engineer",
-        company: "AWS",
-        about: "Expert in cloud infrastructure and security patterns with focus on service mesh technologies.",
-        imageUrl: "/api/placeholder/150/150"
-      }
-    ],
-    tags: ["Cloud Architecture", "Security Mesh"],
-    attendees: 32,
-    capacity: 50,
-    agenda: [
-      {
-        id: "4",
-        duration: "5:30 PM - 6:00 PM",
-        topic: "Registration & Welcome",
-        description: "Registration and welcome networking session."
-      },
-      {
-        id: "5",
-        duration: "6:00 PM - 7:00 PM",
-        topic: "Cloud Security Mesh Patterns",
-        description: "Deep dive into next-generation security mesh architectures."
-      }
-    ]
-  }
-];
+// const initialEvents: Event[] = [
+//   {
+//     id: "1",
+//     title: "Zero Trust Architecture: Implementing Mature Security Models",
+//     date_time: "2025-01-28T17:30:00-08:00",
+//     location: "Adobe, 345 Park Avenue, San Jose, CA",
+//     checkins: "Free parking available in the Adobe campus garage. Check in at the main lobby reception.",
+//     excerpt: "Join us for an evening of networking and expert insights on implementing Zero Trust security frameworks in enterprise environments.",
+//     slug: "zero-trust-architecture-jan-2025",
+//     speakers: [
+//       {
+//         id: "1",
+//         name: "Satish Govindappa",
+//         role: "Chapter Chair",
+//         company: "Oracle",
+//         about: "Cloud security architect with 15+ years in enterprise security and cloud transformation.",
+//         image_url: "/api/placeholder/150/150"
+//       },
+//       {
+//         id: "2",
+//         name: "Dr. Sarah Chen",
+//         role: "Principal Security Architect",
+//         company: "Salesforce",
+//         about: "Research scientist specializing in zero trust architectures and identity management.",
+//         image_url: "/api/placeholder/150/150"
+//       }
+//     ],
+//     tags: ["Zero Trust", "Enterprise Security"],
+//     attendees: 45,
+//     capacity: 60,
+//     agenda: [
+//       {
+//         id: "1",
+//         duration: "5:30 PM - 6:00 PM",
+//         topic: "Registration & Networking",
+//         description: "Welcome reception with light refreshments and networking opportunities."
+//       },
+//       {
+//         id: "2",
+//         duration: "6:00 PM - 6:15 PM",
+//         topic: "Welcome & Chapter Updates",
+//         description: "Chapter updates and upcoming events overview."
+//       },
+//       {
+//         id: "3",
+//         duration: "6:15 PM - 7:00 PM",
+//         topic: "Zero Trust Implementation",
+//         description: "Real-world case study and lessons learned from implementing Zero Trust at scale."
+//       }
+//     ]
+//   },
+//   {
+//     id: "2", 
+//     title: "Cloud Security Mesh: Next-Gen Architecture Patterns",
+//     date_time: "2025-02-25T17:30:00-08:00",
+//     location: "Salesforce Tower, 415 Mission St, San Francisco, CA",
+//     checkins: "Valet parking available at Salesforce Tower. Check in at the 34th floor Ohana reception desk.",
+//     excerpt: "Explore the latest cloud security mesh patterns and how they're reshaping enterprise security architectures.",
+//     slug: "cloud-security-mesh-feb-2025",
+//     speakers: [
+//       {
+//         id: "3",
+//         name: "Maria Rodriguez",
+//         role: "Security Architect",
+//         company: "Google Cloud",
+//         about: "Cloud security specialist focusing on mesh architectures and distributed security models.",
+//         image_url: "/api/placeholder/150/150"
+//       },
+//       {
+//         id: "4",
+//         name: "Alex Kim",
+//         role: "Principal Engineer",
+//         company: "AWS",
+//         about: "Expert in cloud infrastructure and security patterns with focus on service mesh technologies.",
+//         image_url: "/api/placeholder/150/150"
+//       }
+//     ],
+//     tags: ["Cloud Architecture", "Security Mesh"],
+//     attendees: 32,
+//     capacity: 50,
+//     agenda: [
+//       {
+//         id: "4",
+//         duration: "5:30 PM - 6:00 PM",
+//         topic: "Registration & Welcome",
+//         description: "Registration and welcome networking session."
+//       },
+//       {
+//         id: "5",
+//         duration: "6:00 PM - 7:00 PM",
+//         topic: "Cloud Security Mesh Patterns",
+//         description: "Deep dive into next-generation security mesh architectures."
+//       }
+//     ]
+//   }
+// ];
 
 export default function Admin() {
-  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const { user, isAdmin, fetchUserDetails } = useAuth();
+  const [events, setEvents] = useState<Event[]>([]);
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [updatingEventId, setUpdatingEventId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<Event>>({
     title: "",
-    date: "",
+    date_time: "",
     location: "",
-    parkingCheckIn: "",
+    checkins: "",
     excerpt: "",
     slug: "",
     speakers: [],
     tags: [],
-    attendees: 0,
+    attendees: undefined,
     capacity: 0,
     agenda: [],
-    posterUrl: ""
+    poster_url: ""
   });
 
   const resetForm = () => {
     setFormData({
       title: "",
-      date: "",
+      date_time: "",
       location: "",
-      parkingCheckIn: "",
+      checkins: "",
       excerpt: "",
       slug: "",
       speakers: [],
       tags: [],
-      attendees: 0,
+      attendees: undefined,
       capacity: 0,
       agenda: [],
-      posterUrl: ""
+      poster_url: ""
     });
   };
+
+  // Function to fetch all events from the backend
+  const fetchEvents = async () => {
+    if (!isAdmin) {
+      return;
+    }
+
+    setIsLoadingEvents(true);
+    try {
+      // Get authentication token
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        console.warn('No authentication token found, skipping events fetch');
+        // setEvents(initialEvents);
+        setEvents([]);
+        return;
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      let accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        // Try to get a fresh admin token if user is admin but no token found
+        if (user && user.role === 'admin') {
+          try {
+            const adminCheckResponse = await fetch(`${API_BASE_URL}/v1/routes/admin/check`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ email: user.email }),
+            });
+            
+            if (adminCheckResponse.ok) {
+              const adminResult = await adminCheckResponse.json();
+              if (adminResult.is_admin && adminResult.admin_token) {
+                const freshTokens = { accessToken: adminResult.admin_token };
+                localStorage.setItem('csaTokens', JSON.stringify(freshTokens));
+                accessToken = adminResult.admin_token;
+              }
+            }
+          } catch (error) {
+            console.error('Failed to get fresh admin token:', error);
+          }
+        }
+        
+        if (!accessToken) {
+          console.warn('No access token available, skipping events fetch');
+          // setEvents(initialEvents);
+          setEvents([]);
+          return;
+        }
+      }
+
+      // Call the events/all endpoint
+      const response = await fetch(API_ENDPOINTS.EVENTS_ALL, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (handleApiError(response, 'Failed to fetch events')) {
+          return; // Error was handled (token expired)
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch events');
+      }
+
+          const result = await response.json();
+          
+          // Use backend events directly (no mapping needed)
+          const backendEvents = result.events;
+
+          setEvents(backendEvents);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      handleAuthError(error);
+      // Fallback to initial events if API fails
+      // setEvents(initialEvents);
+      setEvents([]);
+    } finally {
+      setIsLoadingEvents(false);
+    }
+  };
+
+  // Fetch events when component mounts
+  useEffect(() => {
+    if (isAdmin && user) {
+      fetchEvents();
+    }
+  }, [isAdmin, user]);
+
 
   const generateSlug = (title: string) => {
     return title
@@ -500,88 +643,359 @@ export default function Admin() {
 
 
   const handleTagsChange = useCallback((tagsString: string) => {
-    const tags = tagsString.split(',').map(t => t.trim()).filter(t => t);
+    // Split by comma and clean up each tag
+    const tags = tagsString
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0); // Remove empty tags
+    
     setFormData(prev => ({ ...prev, tags }));
   }, []);
 
-  const handleAddEvent = () => {
-    if (!formData.title || !formData.date || !formData.location) {
+  const handleAddEvent = async () => {
+    if (!formData.title || !formData.date_time || !formData.location) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    const newEvent: Event = {
-      id: Date.now().toString(),
-      title: formData.title!,
-      date: formData.date!,
-      location: formData.location!,
-      parkingCheckIn: formData.parkingCheckIn,
-      excerpt: formData.excerpt || "",
-      slug: formData.slug!,
-      speakers: formData.speakers || [],
-      tags: formData.tags || [],
-      attendees: formData.attendees || 0,
-      capacity: formData.capacity || 0,
-      agenda: formData.agenda || [],
-      posterUrl: formData.posterUrl || ""
-    };
+    if (!isAdmin) {
+      toast.error("Admin access required to create events");
+      return;
+    }
 
-    setEvents(prev => [...prev, newEvent]);
-    resetForm();
-    setIsAddingEvent(false);
-    toast.success("Event added successfully!");
+    setIsLoading(true);
+    try {
+      // Get authentication token (handle both admin and regular user tokens)
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      
+      // Admin tokens are stored as accessToken, regular user tokens might be different
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        console.error('Available token keys:', Object.keys(tokens)); // Debug log
+        
+        // Try to get a fresh admin token if user is admin but no token found
+        if (user && user.role === 'admin') {
+          try {
+            const adminCheckResponse = await fetch(`${API_BASE_URL}/v1/routes/admin/check`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ email: user.email }),
+            });
+            
+            if (adminCheckResponse.ok) {
+              const adminResult = await adminCheckResponse.json();
+              if (adminResult.is_admin && adminResult.admin_token) {
+                const freshTokens = { accessToken: adminResult.admin_token };
+                localStorage.setItem('csaTokens', JSON.stringify(freshTokens));
+                // Retry with fresh token
+                const freshAccessToken = adminResult.admin_token;
+                if (freshAccessToken) {
+                  // Continue with the API call using fresh token
+                  const response = await fetch(API_ENDPOINTS.EVENT_CREATE, {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${freshAccessToken}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                  });
+                  
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to create event');
+                  }
+                  
+                  const result = await response.json();
+                  
+          // Create event object with the returned ID
+          const newEvent: Event = {
+            id: result.event_id,
+            title: formData.title!,
+            date_time: formData.date_time!,
+            location: formData.location!,
+            checkins: formData.checkins,
+            excerpt: formData.excerpt || "",
+            slug: formData.slug!,
+            speakers: formData.speakers || [],
+            tags: formData.tags || [],
+            attendees: formData.attendees ?? 0,
+            capacity: formData.capacity || 0,
+            agenda: formData.agenda || [],
+            poster_url: formData.poster_url || ""
+          };
+
+                  setEvents(prev => [...prev, newEvent]);
+                  resetForm();
+                  setIsAddingEvent(false);
+                  toast.success(`Event created successfully!`);
+                  
+                  // Refresh events list to get the latest data
+                  fetchEvents();
+                  return;
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Failed to get fresh admin token:', error);
+          }
+        }
+        
+        toast.error('Authentication token not found. Please log out and log in again.');
+        throw new Error('No access token found. Please log in again.');
+      }
+
+          // Prepare data for backend (convert date_time string to ISO format and ensure all required fields)
+          const backendData = {
+            title: formData.title || "",
+            date_time: formData.date_time ? new Date(formData.date_time).toISOString() : new Date().toISOString(),
+            slug: formData.slug || "",
+            location: formData.location || "",
+            checkins: formData.checkins || "",
+            excerpt: formData.description || "", // Use description for both excerpt and description
+            description: formData.description || "",
+            agenda: formData.agenda || [],
+            speakers: formData.speakers || [],
+            tags: formData.tags || [],
+            reg_url: formData.reg_url || null,
+            map_url: formData.map_url || null,
+            poster_url: formData.poster_url || null,
+            capacity: formData.capacity || 0,
+            attendees: formData.attendees ?? 0
+          };
+
+          // Call backend API directly with converted data
+          const response = await fetch(API_ENDPOINTS.EVENT_CREATE, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(backendData),
+          });
+
+      if (!response.ok) {
+        if (handleApiError(response, 'Failed to create event')) {
+          return; // Error was handled (token expired)
+        }
+        const errorData = await response.json();
+        console.error('Backend error response:', errorData);
+        throw new Error(JSON.stringify(errorData) || 'Failed to create event');
+      }
+
+      const result = await response.json();
+      
+          // Create event object with the returned ID
+          const newEvent: Event = {
+            id: result.event_id,
+            title: formData.title!,
+            date_time: formData.date_time!,
+            location: formData.location!,
+            checkins: formData.checkins,
+            excerpt: formData.excerpt || "",
+            slug: formData.slug!,
+            speakers: formData.speakers || [],
+            tags: formData.tags || [],
+            attendees: formData.attendees ?? 0,
+            capacity: formData.capacity || 0,
+            agenda: formData.agenda || [],
+            poster_url: formData.poster_url || ""
+          };
+
+      setEvents(prev => [...prev, newEvent]);
+      resetForm();
+      setIsAddingEvent(false);
+      toast.success(`Event created successfully!`);
+      
+      // Refresh events list to get the latest data
+      fetchEvents();
+    } catch (error) {
+      console.error('Error creating event:', error);
+      handleAuthError(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleEditEvent = () => {
-    if (!editingEvent || !formData.title || !formData.date || !formData.location) {
+  const handleEditEvent = async () => {
+    if (!editingEvent || !formData.title || !formData.date_time || !formData.location) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    const updatedEvent: Event = {
-      ...editingEvent,
-      title: formData.title!,
-      date: formData.date!,
-      location: formData.location!,
-      parkingCheckIn: formData.parkingCheckIn,
-      excerpt: formData.excerpt || "",
-      slug: formData.slug!,
-      speakers: formData.speakers || [],
-      tags: formData.tags || [],
-      attendees: formData.attendees || 0,
-      capacity: formData.capacity || 0,
-      agenda: formData.agenda || [],
-      posterUrl: formData.posterUrl || ""
-    };
+    if (!isAdmin) {
+      toast.error("Admin access required to update events");
+      return;
+    }
 
-    setEvents(prev => prev.map(event => 
-      event.id === editingEvent.id ? updatedEvent : event
-    ));
-    resetForm();
-    setEditingEvent(null);
-    toast.success("Event updated successfully!");
+    setIsLoading(true);
+    setUpdatingEventId(editingEvent.id);
+    try {
+      // Get authentication token
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        throw new Error('No authentication token found');
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        throw new Error('No access token found');
+      }
+
+          // Prepare data for backend (convert date_time string to ISO format and ensure all required fields)
+          const backendData = {
+            title: formData.title || "",
+            date_time: formData.date_time ? new Date(formData.date_time).toISOString() : new Date().toISOString(),
+            slug: formData.slug || "",
+            location: formData.location || "",
+            checkins: formData.checkins || "",
+            excerpt: formData.description || "", // Use description for both excerpt and description
+            description: formData.description || "",
+            agenda: formData.agenda || [],
+            speakers: formData.speakers || [],
+            tags: formData.tags || [],
+            reg_url: formData.reg_url || null,
+            map_url: formData.map_url || null,
+            poster_url: formData.poster_url || null,
+            capacity: formData.capacity || 0,
+            attendees: formData.attendees ?? 0
+          };
+
+          // Call backend update endpoint with converted data
+          const response = await fetch(`${API_ENDPOINTS.EVENT_UPDATE}/${editingEvent.id}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(backendData),
+          });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update event');
+      }
+
+      const result = await response.json();
+      
+          // Update local state
+          const updatedEvent: Event = {
+            ...editingEvent,
+            title: formData.title!,
+            date_time: formData.date_time!,
+            location: formData.location!,
+            checkins: formData.checkins,
+            excerpt: formData.excerpt || "",
+            slug: formData.slug!,
+            speakers: formData.speakers || [],
+            tags: formData.tags || [],
+            attendees: formData.attendees ?? 0,
+            capacity: formData.capacity || 0,
+            agenda: formData.agenda || [],
+            poster_url: formData.poster_url || ""
+          };
+
+      setEvents(prev => prev.map(event => 
+        event.id === editingEvent.id ? updatedEvent : event
+      ));
+      resetForm();
+      setEditingEvent(null);
+      setIsEditDialogOpen(false);
+      toast.success("Event updated successfully!");
+      
+    } catch (error) {
+      console.error('Error updating event:', error);
+      toast.error(`Failed to update event: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsLoading(false);
+      setUpdatingEventId(null);
+    }
   };
 
-  const handleDeleteEvent = (eventId: string) => {
-    setEvents(prev => prev.filter(event => event.id !== eventId));
-    toast.success("Event deleted successfully!");
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!isAdmin) {
+      toast.error("Admin access required to delete events");
+      return;
+    }
+
+    setDeletingEventId(eventId);
+    try {
+      // Get authentication token
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        throw new Error('No authentication token found');
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        throw new Error('No access token found');
+      }
+
+      // Call backend delete endpoint
+      const response = await fetch(`${API_ENDPOINTS.EVENT_DELETE}/${eventId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to delete event');
+      }
+
+      // Update local state
+      setEvents(prev => prev.filter(event => event.id !== eventId));
+      toast.success("Event deleted successfully!");
+      
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast.error(`Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setDeletingEventId(null);
+    }
+  };
+
+  const formatDateForInput = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    // Convert to datetime-local format (YYYY-MM-DDTHH:MM)
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   const startEditing = (event: Event) => {
     setEditingEvent(event);
+    setIsEditDialogOpen(true);
     setFormData({
       title: event.title,
-      date: event.date,
+      date_time: formatDateForInput(event.date_time),
       location: event.location,
-      parkingCheckIn: event.parkingCheckIn,
-      excerpt: event.excerpt,
+      checkins: event.checkins,
+      description: event.description || event.excerpt,
       slug: event.slug,
-      speakers: event.speakers,
-      tags: event.tags,
+      speakers: event.speakers || [],
+      tags: event.tags || [],
       attendees: event.attendees,
       capacity: event.capacity,
-      agenda: event.agenda,
-      posterUrl: event.posterUrl
+      agenda: event.agenda || [],
+      poster_url: event.poster_url
     });
   };
 
@@ -634,7 +1048,7 @@ export default function Admin() {
       role: "",
       company: "",
       about: "",
-      imageUrl: ""
+      image_url: ""
     };
     setFormData(prev => ({
       ...prev,
@@ -660,7 +1074,7 @@ export default function Admin() {
 
   // Create stable event handlers for basic form fields
   const handleDateChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, date: value }));
+    setFormData(prev => ({ ...prev, date_time: value }));
   }, []);
 
   const handleSlugChange = useCallback((value: string) => {
@@ -672,15 +1086,15 @@ export default function Admin() {
   }, []);
 
   const handleParkingCheckInChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, parkingCheckIn: value }));
+    setFormData(prev => ({ ...prev, checkins: value }));
   }, []);
 
-  const handleExcerptChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, excerpt: value }));
+  const handleDescriptionChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, description: value }));
   }, []);
 
   const handlePosterChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, posterUrl: value }));
+    setFormData(prev => ({ ...prev, poster_url: value }));
   }, []);
 
   const handleCapacityChange = useCallback((value: string) => {
@@ -688,10 +1102,35 @@ export default function Admin() {
   }, []);
 
   const handleAttendeesChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, attendees: parseInt(value) || 0 }));
+    setFormData(prev => ({ ...prev, attendees: parseInt(value) || undefined }));
   }, []);
 
 
+
+  // Check if user is admin
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
+          <p className="text-gray-600">You need admin privileges to access this page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state while fetching events
+  if (isLoadingEvents) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-csa-blue mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Events</h2>
+          <p className="text-gray-600">Please wait while we fetch your events...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -723,16 +1162,43 @@ export default function Admin() {
           <TabsContent value="manage" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-csa-blue" />
-                  Current Events
-                </CardTitle>
-                <CardDescription>
-                  View and manage all events in the system
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-csa-blue" />
+                      Current Events
+                    </CardTitle>
+                    <CardDescription>
+                      View and manage all events in the system
+                    </CardDescription>
+                  </div>
+                  <Button
+                    onClick={fetchEvents}
+                    disabled={isLoadingEvents}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    {isLoadingEvents ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                    ) : (
+                      <Calendar className="h-4 w-4" />
+                    )}
+                    {isLoadingEvents ? "Loading..." : "Refresh"}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                {events.length === 0 ? (
+                {isLoadingEvents ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : events.length === 0 ? (
                   <div className="text-center py-12">
                     <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-600 mb-2">No events found</h3>
@@ -757,13 +1223,13 @@ export default function Admin() {
                             <TableCell>
                               <div>
                                 <div className="font-medium text-csa-navy">{event.title}</div>
-                                <div className="text-sm text-gray-500">{event.speakers.map(s => s.name).join(", ")}</div>
+                                <div className="text-sm text-gray-500">{(event.speakers || []).map(s => s.name).join(", ")}</div>
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4 text-csa-blue" />
-                                <span className="text-sm">{formatEventDate(event.date)}</span>
+                                <span className="text-sm">{formatEventDate(event.date_time)}</span>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -786,21 +1252,27 @@ export default function Admin() {
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-1">
-                                {event.tags.slice(0, 2).map(tag => (
+                                {(event.tags || []).slice(0, 2).map(tag => (
                                   <Badge key={tag} variant="outline" className="text-xs">
                                     {tag}
                                   </Badge>
                                 ))}
-                                {event.tags.length > 2 && (
+                                {(event.tags || []).length > 2 && (
                                   <Badge variant="outline" className="text-xs">
-                                    +{event.tags.length - 2}
+                                    +{(event.tags || []).length - 2}
                                   </Badge>
                                 )}
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-2">
-                                <Dialog>
+                                <Dialog open={isEditDialogOpen && editingEvent?.id === event.id} onOpenChange={(open) => {
+                                  if (!open) {
+                                    setIsEditDialogOpen(false);
+                                    setEditingEvent(null);
+                                    resetForm();
+                                  }
+                                }}>
                                   <DialogTrigger asChild>
                                     <Button
                                       variant="outline"
@@ -821,16 +1293,18 @@ export default function Admin() {
                                       formData={formData}
                                       isEditing={true}
                                       onSave={handleEditEvent}
+                                      isLoading={isLoading}
                                       onCancel={() => {
                                         setEditingEvent(null);
                                         resetForm();
+                                        setIsEditDialogOpen(false);
                                       }}
                                       onTitleChange={handleTitleChange}
                                       onDateChange={handleDateChange}
                                       onSlugChange={handleSlugChange}
                                       onLocationChange={handleLocationChange}
                                       onParkingCheckInChange={handleParkingCheckInChange}
-                                      onExcerptChange={handleExcerptChange}
+                                      onDescriptionChange={handleDescriptionChange}
                                       onPosterChange={handlePosterChange}
                                       onTagsChange={handleTagsChange}
                                       onCapacityChange={handleCapacityChange}
@@ -862,9 +1336,17 @@ export default function Admin() {
                                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                                       <AlertDialogAction 
                                         onClick={() => handleDeleteEvent(event.id)}
-                                        className="bg-red-600 hover:bg-red-700"
+                                        disabled={deletingEventId === event.id}
+                                        className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
                                       >
-                                        Delete
+                                        {deletingEventId === event.id ? (
+                                          <div className="flex items-center space-x-2">
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            <span>Deleting...</span>
+                                          </div>
+                                        ) : (
+                                          "Delete"
+                                        )}
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
@@ -897,6 +1379,7 @@ export default function Admin() {
                   formData={formData}
                   isEditing={false}
                   onSave={handleAddEvent}
+                  isLoading={isLoading}
                   onCancel={() => {
                     resetForm();
                     setIsAddingEvent(false);
@@ -906,7 +1389,7 @@ export default function Admin() {
                   onSlugChange={handleSlugChange}
                   onLocationChange={handleLocationChange}
                   onParkingCheckInChange={handleParkingCheckInChange}
-                  onExcerptChange={handleExcerptChange}
+                  onDescriptionChange={handleDescriptionChange}
                   onPosterChange={handlePosterChange}
                   onTagsChange={handleTagsChange}
                   onCapacityChange={handleCapacityChange}

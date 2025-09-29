@@ -9,12 +9,12 @@ import { loadStripe } from "@stripe/stripe-js";
 
 // Slider data for hero section
 const heroSlides = [
-  {
-    image: "/sponsor-benefit/Picture01.png",
-    title: "Brand Visibility & Recognition",
-    subtitle: "Platinum Tier Benefits",
-    description: "Maximize your brand exposure with prominent logo placement across all event materials, presentations, and digital platforms. Reach thousands of cloud security professionals and decision-makers."
-  },
+  // {
+  //   image: "/sponsor-benefit/Picture01.png",
+  //   title: "Brand Visibility & Recognition",
+  //   subtitle: "Platinum Tier Benefits",
+  //   description: "Maximize your brand exposure with prominent logo placement across all event materials, presentations, and digital platforms. Reach thousands of cloud security professionals and decision-makers."
+  // },
   {
     image: "/sponsor-benefit/Picture02.png",
     title: "Networking & Business Development",

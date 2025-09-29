@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,6 @@ import { Calendar, MapPin, Users, Award, TrendingUp, ExternalLink, Eye } from "l
 import { useState, useEffect } from "react";
 import { API_ENDPOINTS } from "@/config/api";
 import { Event } from "@/types/event";
-import { allEvents } from "./Events";
 
 // Custom hook for real-time page visits counter
 const usePageVisitsCounter = () => {
@@ -94,7 +93,7 @@ const usePageVisitsCounter = () => {
 
 const upcomingEvent = {
   title: "CSA San Francisco Chapter Meeting - August 2025",
-  date: "2025-08-27T16:30:00-08:00",
+  date_time: "2025-08-27T16:30:00-08:00",
   location: "3000 Tannery Way, Santa Clara, CA",
   excerpt: "Join us for an evening of networking with cybersecurity enthusiasts, learn about the latest industry trends, and share your own experiences.",
   slug: "csa-san-francisco-chapter-meeting-august-2025",
@@ -128,6 +127,7 @@ const partners = [
 ];
 
 export default function Index() {
+  const navigate = useNavigate();
   const [upcomingEventData, setUpcomingEventData] = useState<Event | null>(null);
   const [attendeesCount, setAttendeesCount] = useState<number>(0);
   const pageVisits = usePageVisitsCounter();
@@ -136,16 +136,26 @@ export default function Index() {
   useEffect(() => {
     const fetchUpcomingEvent = async () => {
       try {
+        // Fetch events from API
+        const response = await fetch(API_ENDPOINTS.EVENTS_PUBLIC);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch events');
+        }
+        
+        const data = await response.json();
+        const events = data.events || [];
+        
         // Filter upcoming events (events with future dates)
         const now = new Date();
-        const upcomingEvents = allEvents.filter(event => {
-          const eventDate = new Date(event.date);
+        const upcomingEvents = events.filter((event: Event) => {
+          const eventDate = new Date(event.date_time);
           return eventDate > now;
         });
         
         // Sort by date and get the first upcoming event
-        const sortedUpcomingEvents = upcomingEvents.sort((a, b) => 
-          new Date(a.date).getTime() - new Date(b.date).getTime()
+        const sortedUpcomingEvents = upcomingEvents.sort((a: Event, b: Event) => 
+          new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
         );
         
         if (sortedUpcomingEvents.length > 0) {
@@ -173,7 +183,10 @@ export default function Index() {
 
   // Use dynamic event data if available, otherwise fallback to hardcoded data
   const displayEvent = upcomingEventData || upcomingEvent;
-  const eventDate = new Date(displayEvent.date);
+  const eventDate = displayEvent ? new Date(displayEvent.date_time) : null;
+  
+  // Check if we have any upcoming events
+  const hasUpcomingEvents = upcomingEventData !== null;
   
   const stats = [
     { label: "Active Members", value: "1000+", icon: Users },
@@ -201,9 +214,9 @@ export default function Index() {
         </div>
         
         <div className="container-site py-6 sm:py-8 lg:py-10">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 xl:gap-20 items-start lg:items-center">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 xl:gap-20 items-start lg:items-center relative">
             {/* Left Column - Text Content */}
-            <div className="space-y-6 lg:space-y-8 animate-fade-in pt-0 lg:pt-0">
+            <div className="space-y-6 lg:space-y-8 animate-fade-in pt-0 lg:pt-0 relative z-30">
               <div className="space-y-4 lg:space-y-6">
                 <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight text-secondary">
                   <div className="text-secondary">Advancing Cloud Security</div>
@@ -215,13 +228,16 @@ export default function Index() {
                 </p>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-4 lg:gap-6">
+              <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 relative z-10">
                 <Button 
-                  asChild 
+                  onClick={() => {
+                    window.location.href = '/events#upcoming';
+                  }}
                   size="lg" 
-                  className="bg-csa-accent hover:bg-csa-accent/90 text-white text-lg px-8 py-4 shadow-lg transition-all duration-300 hover:shadow-xl"
+                  className="bg-csa-accent hover:bg-csa-accent/90 text-white text-lg px-8 py-4 shadow-lg transition-all duration-300 hover:shadow-xl relative z-20"
+                  style={{ pointerEvents: 'auto' }}
                 >
-                  <Link to="/events">View Upcoming Events</Link>
+                  View Upcoming Events
                 </Button>
                 <Button 
                   asChild 
@@ -293,83 +309,125 @@ export default function Index() {
                 Next Chapter Meeting
               </h2>
               <p className="text-lg text-gray-600">
-                Don't miss our upcoming event featuring industry experts and networking opportunities.
+                {hasUpcomingEvents 
+                  ? "Don't miss our upcoming event featuring industry experts and networking opportunities."
+                  : "Stay tuned for our next chapter meeting. We're planning exciting events for the community."
+                }
               </p>
             </div>
 
-            <Card className="overflow-hidden shadow-lg animate-fade-in">
-              <CardHeader className="bg-gradient-to-r from-primary to-secondary text-white">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-2xl mb-2">{displayEvent.title}</CardTitle>
-                    <CardDescription className="text-gray-200">
-                      {displayEvent.excerpt}
+            {hasUpcomingEvents ? (
+              <Card className="overflow-hidden shadow-lg animate-fade-in">
+                <CardHeader className="bg-gradient-to-r from-primary to-secondary text-white">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                      <CardTitle className="text-2xl mb-2">{displayEvent.title}</CardTitle>
+                      <CardDescription className="text-gray-200">
+                        {displayEvent.excerpt}
+                      </CardDescription>
+                    </div>
+                    <Button 
+                      asChild 
+                      size="lg"
+                      className="bg-csa-accent hover:bg-csa-accent/90 text-white whitespace-nowrap"
+                    >
+                      <Link to={`/events/${displayEvent.slug}`}>
+                        Register Now
+                      </Link>
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3 text-gray-700">
+                        <Calendar className="h-5 w-5 text-primary" />
+                        <span className="font-medium">
+                          {eventDate?.toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            timeZoneName: 'short'
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-start space-x-3 text-gray-700">
+                        <MapPin className="h-5 w-5 text-primary mt-0.5" />
+                        <span>{displayEvent.location}</span>
+                      </div>
+                      {attendeesCount > 0 && (
+                        <div className="flex items-center space-x-3 text-gray-700">
+                          <Users className="h-5 w-5 text-primary" />
+                          <span className="font-medium">{attendeesCount} attendees registered</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-secondary mb-2">Featured Speakers</h4>
+                        <div className="space-y-1">
+                          {displayEvent.speakers.map((speaker, index) => (
+                            <div key={typeof speaker === 'string' ? `speaker-${index}-${speaker}` : `speaker-${speaker.id || index}-${speaker.name}`} className="text-gray-700">
+                              {typeof speaker === 'string' ? speaker : speaker.name}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-secondary mb-2">Topics</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {displayEvent.tags.map(tag => (
+                            <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="overflow-hidden shadow-lg animate-fade-in">
+                <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800">
+                  <div className="text-center">
+                    <CardTitle className="text-2xl mb-2 text-gray-700">Event Details Coming Soon</CardTitle>
+                    <CardDescription className="text-gray-600">
+                      We're working on planning our next chapter meeting. Check back soon for updates!
                     </CardDescription>
                   </div>
-                  <Button 
-                    asChild 
-                    size="lg"
-                    className="bg-csa-accent hover:bg-csa-accent/90 text-white whitespace-nowrap"
-                  >
-                    <Link to={`/events/${displayEvent.slug}`}>
-                      Register Now
-                    </Link>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3 text-gray-700">
-                      <Calendar className="h-5 w-5 text-primary" />
-                      <span className="font-medium">
-                        {eventDate.toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                          timeZoneName: 'short'
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex items-start space-x-3 text-gray-700">
-                      <MapPin className="h-5 w-5 text-primary mt-0.5" />
-                      <span>{displayEvent.location}</span>
-                    </div>
-                    {attendeesCount > 0 && (
-                      <div className="flex items-center space-x-3 text-gray-700">
-                        <Users className="h-5 w-5 text-primary" />
-                        <span className="font-medium">{attendeesCount} attendees registered</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-semibold text-secondary mb-2">Featured Speakers</h4>
-                      <div className="space-y-1">
-                        {displayEvent.speakers.map((speaker, index) => (
-                          <div key={typeof speaker === 'string' ? `speaker-${index}-${speaker}` : `speaker-${speaker.id || index}-${speaker.name}`} className="text-gray-700">
-                            {typeof speaker === 'string' ? speaker : speaker.name}
-                          </div>
-                        ))}
+                </CardHeader>
+                <CardContent className="p-8">
+                  <div className="text-center space-y-6">
+                    <div className="flex justify-center">
+                      <div className="p-4 bg-primary/10 rounded-full">
+                        <Calendar className="h-12 w-12 text-primary" />
                       </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-secondary mb-2">Topics</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {displayEvent.tags.map(tag => (
-                          <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-semibold text-gray-800">Stay Connected</h3>
+                      <p className="text-gray-600">
+                        Follow us on social media and join our mailing list to be the first to know about upcoming events.
+                      </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <Button 
+                        onClick={() => {
+                          window.location.href = '/events#past';
+                        }}
+                        variant="outline"
+                        className="border-primary text-primary hover:bg-primary hover:text-white"
+                      >
+                        View Past Events
+                      </Button>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </section>
@@ -382,10 +440,7 @@ export default function Index() {
         
         <div className="container-site relative px-4 sm:px-6">
           <div className="text-center mb-4 sm:mb-6">
-            <div className="inline-flex items-center gap-1.5 bg-csa-accent/10 px-2.5 py-1 rounded-full mb-3">
-              <div className="w-1.5 h-1.5 bg-csa-accent rounded-full animate-pulse"></div>
-              <span className="text-csa-accent font-semibold text-xs uppercase tracking-wider">Membership</span>
-            </div>
+            
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-secondary mb-2">
               Executive Member
             </h2>
@@ -496,12 +551,8 @@ export default function Index() {
       <section className="py-16 section-light overflow-hidden relative">
         <div className="container-site">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full mb-4">
-              <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
-              <span className="text-primary font-semibold text-xs uppercase tracking-wider">Our Sponsors</span>
-            </div>
             <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-4">
-              Powered by Industry Leaders
+              Our Sponsors
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Thank you to our generous sponsors who support our community initiatives and help advance cloud security education
@@ -609,10 +660,6 @@ export default function Index() {
       <section className="py-16 bg-white">
         <div className="container-site">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-csa-accent/10 px-3 py-1.5 rounded-full mb-4">
-              <div className="w-1.5 h-1.5 bg-csa-accent rounded-full animate-pulse"></div>
-              <span className="text-csa-accent font-semibold text-xs uppercase tracking-wider">Our Partners</span>
-            </div>
             <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-4">
               Our Partners
             </h2>
