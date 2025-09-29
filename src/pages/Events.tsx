@@ -6,11 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Users, Car, X } from "lucide-react";
+import { Calendar, MapPin, Users, Car, X, Loader2 } from "lucide-react";
 import { Event } from "@/types/event";
 import { API_ENDPOINTS } from "@/config/api";
 
 // All events data - will be dynamically categorized as upcoming or past
+// COMMENTED OUT: Now fetching from API instead of using hardcoded data
+/*
 export const allEvents: Event[] = [
   {
     id: "1dd7038a-8ef4-415c-8078-24ae2307ab2b",
@@ -244,12 +246,77 @@ export const allEvents: Event[] = [
      description: "We're thrilled to announce our next chapter meeting in collaboration with OWASP Bay Area Chapter, for an evening of knowledge sharing, innovation, and networking! Huge thanks to our sponsor Corgea and our host Blackhawk Network for making this possible. Let's build stronger bridges across the security community together!"
    }
 ];
+*/
 
 export default function Events() {
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedTopic, setSelectedTopic] = useState("all");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [attendeeCounts, setAttendeeCounts] = useState<Record<string, number>>({});
+  const [allEvents, setAllEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeTab, setActiveTab] = useState(() => {
+    // Check hash immediately on component initialization
+    const hash = window.location.hash;
+    if (hash === '#past') return 'past';
+    if (hash === '#upcoming') return 'upcoming';
+    return 'upcoming';
+  });
+
+  // Fetch events from API
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(API_ENDPOINTS.EVENTS_PUBLIC);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('API Response:', data); // Debug log
+      
+      // Extract events array from response
+      const eventsArray = data.events || data;
+      
+      // Check if eventsArray is an array
+      if (!Array.isArray(eventsArray)) {
+        console.error('API response events is not an array:', eventsArray);
+        throw new Error('API response is not in expected format');
+      }
+      
+      // Transform API data to match Event interface
+      const transformedEvents: Event[] = eventsArray.map((event: any) => ({
+        id: event.id,
+        title: event.title,
+        date_time: event.date_time,
+        location: event.location,
+        checkins: event.checkins,
+        excerpt: event.excerpt,
+        slug: event.slug,
+        speakers: event.speakers || [],
+        agenda: event.agenda || [],
+        tags: event.tags || [],
+        capacity: event.capacity || 0,
+        attendees: event.attendees || 0,
+        image_url: event.image_url,
+        map_url: event.map_url,
+        poster_url: event.poster_url
+      }));
+      
+      setAllEvents(transformedEvents);
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch events');
+      // Fallback to empty array if API fails
+      setAllEvents([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fetch attendee counts for all events
   const fetchAttendeeCounts = async () => {
@@ -273,20 +340,124 @@ export default function Events() {
     setAttendeeCounts(counts);
   };
 
-  // Fetch attendee counts on component mount
+  // Fetch events on component mount
   useEffect(() => {
-    fetchAttendeeCounts();
+    fetchEvents();
   }, []);
 
-  // Event images array for the modal
-  const eventImages = [
-    "/Events-pictures/1729377993131.jpeg",
-    "/Events-pictures/20250604_111127.jpg",
-    "/Events-pictures/20250605_133448.jpg",
-    "/Events-pictures/PXL_20250327_020441379.MP.jpg",
-    "/Events-pictures/PXL_20250522_015003557.MP.jpg",
-    "/Events-pictures/PXL_20250522_024915629.MP.jpg"
+  // Handle hash navigation to switch tabs
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash === '#past') {
+        setActiveTab('past');
+        // Use requestAnimationFrame to ensure DOM is updated before scrolling
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: 500, behavior: 'smooth' });
+          });
+        });
+      } else if (hash === '#upcoming') {
+        setActiveTab('upcoming');
+        // Use requestAnimationFrame to ensure DOM is updated before scrolling
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: 900, behavior: 'smooth' });
+          });
+        });
+      } else {
+        setActiveTab('upcoming');
+        // Smooth scroll to top when no specific hash
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+
+    // Check hash on initial load
+    handleHashChange();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
+  // Fetch attendee counts when events change
+  useEffect(() => {
+    if (allEvents.length > 0) {
+      fetchAttendeeCounts();
+    }
+  }, [allEvents]);
+
+  // Refresh attendee counts when page becomes visible (user returns from event detail)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && allEvents.length > 0) {
+        fetchAttendeeCounts();
+      }
+    };
+
+    const handleFocus = () => {
+      if (allEvents.length > 0) {
+        fetchAttendeeCounts();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [allEvents]);
+
+  // Slideshow images array with captions and descriptions
+  const slideshowImages = [
+    {
+      src: "/Events-pictures/PXL_20250522_024915629.MP.jpg",
+      caption: "CSA Community Networking Event",
+      description: "Members connecting and sharing insights"
+    },
+    {
+      src: "/Events-pictures/1729377993131.jpeg",
+      caption: "Technical Workshop Session",
+      description: "Hands-on learning with industry experts"
+    },
+    {
+      src: "/Events-pictures/20250604_111127.jpg",
+      caption: "Speaker Presentation",
+      description: "Expert insights on cloud security trends"
+    },
+    {
+      src: "/Events-pictures/20250605_133448.jpg",
+      caption: "Interactive Discussion Panel",
+      description: "Q&A session with security professionals"
+    },
+    {
+      src: "/Events-pictures/PXL_20250327_020441379.MP.jpg",
+      caption: "Networking Break",
+      description: "Building connections in the community"
+    },
+    {
+      src: "/Events-pictures/PXL_20250522_015003557.MP.jpg",
+      caption: "Event Wrap-up",
+      description: "Closing thoughts and future plans"
+    }
   ];
+
+  // Event images array for the modal (extract src from slideshowImages)
+  const eventImages = slideshowImages.map(img => img.src);
+
+  // Auto-slide functionality
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slideshowImages.length);
+    }, 4000); // Change slide every 4 seconds
+
+    return () => clearInterval(interval);
+  }, [slideshowImages.length]);
 
   // Function to categorize events as upcoming or past based on current date
   const categorizeEvents = () => {
@@ -295,7 +466,7 @@ export default function Events() {
     const past: Event[] = [];
 
     allEvents.forEach(event => {
-      const eventDate = new Date(event.date);
+      const eventDate = new Date(event.date_time);
       if (eventDate >= now) {
         upcoming.push(event);
       } else {
@@ -304,10 +475,10 @@ export default function Events() {
     });
 
     // Sort upcoming events by date (earliest first)
-    upcoming.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    upcoming.sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime());
     
     // Sort past events by date (most recent first)
-    past.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    past.sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime());
 
     return { upcoming, past };
   };
@@ -322,7 +493,7 @@ export default function Events() {
   // Filter events based on selected year and topic
   const filterEvents = (events: Event[]) => {
     return events.filter(event => {
-      const eventYear = new Date(event.date).getFullYear().toString();
+      const eventYear = new Date(event.date_time).getFullYear().toString();
       const yearMatch = selectedYear === "all" || eventYear === selectedYear;
       const topicMatch = selectedTopic === "all" || event.tags.some(tag => 
         tag.toLowerCase() === selectedTopic.toLowerCase()
@@ -336,7 +507,7 @@ export default function Events() {
 
   // Get unique years from all events for the year filter
   const availableYears = Array.from(new Set(
-    allEvents.map(event => new Date(event.date).getFullYear().toString())
+    allEvents.map(event => new Date(event.date_time).getFullYear().toString())
   )).sort((a, b) => b.localeCompare(a)); // Sort descending (newest first)
 
   const formatEventDate = (dateString: string) => {
@@ -364,7 +535,7 @@ export default function Events() {
   };
 
   const EventCard = ({ event, showRegistration = false }: { event: Event, showRegistration?: boolean }) => {
-    const dateInfo = formatEventDate(event.date);
+    const dateInfo = formatEventDate(event.date_time);
     const currentAttendees = attendeeCounts[event.id] ?? event.attendees;
     const spotsLeft = event.capacity - currentAttendees;
 
@@ -409,12 +580,12 @@ export default function Events() {
             <span>{event.location}</span>
           </div>
 
-          {event.parkingCheckIn && (
+          {event.checkins && (
             <div className="flex items-start space-x-2 text-sm text-gray-600">
               <Car className="h-4 w-4 text-csa-blue mt-0.5 flex-shrink-0" />
               <div>
                 <span className="font-medium">Parking/Check In: </span>
-                <span>{event.parkingCheckIn}</span>
+                <span>{event.checkins}</span>
               </div>
             </div>
           )}
@@ -509,11 +680,20 @@ export default function Events() {
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.6s' }}>
                 <Button 
-                  asChild 
+                  onClick={() => {
+                    setActiveTab('upcoming');
+                    window.location.hash = '#upcoming';
+                    // Use requestAnimationFrame to ensure DOM is updated before scrolling
+                    requestAnimationFrame(() => {
+                      requestAnimationFrame(() => {
+                        window.scrollTo({ top: 600, behavior: 'smooth' });
+                      });
+                    });
+                  }}
                   size="lg" 
                   className="bg-csa-accent hover:bg-csa-accent/90 text-white text-lg px-8 py-4 shadow-lg transition-all duration-300 hover:shadow-xl"
                 >
-                  <Link to="#upcoming">Explore Events</Link>
+                  Explore Events
                 </Button>
                 <Button 
                   asChild 
@@ -530,119 +710,78 @@ export default function Events() {
           {/* Right Column - Interactive Image Gallery */}
           <div className="relative flex items-center justify-center p-8">
             
-            {/* Gallery Container */}
-            <div className="relative w-full max-w-2xl h-[400px] lg:h-[480px]">
+            {/* Slideshow Container */}
+            <div className="relative w-full max-w-2xl h-[400px] lg:h-[480px] overflow-hidden rounded-3xl">
               
-              {/* Central Featured Image */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div 
-                  className="relative w-80 h-56 lg:w-96 lg:h-64 cursor-pointer group animate-fade-in"
-                  style={{ animationDelay: '1s' }}
-                  onClick={() => setSelectedImage("/Events-pictures/PXL_20250522_024915629.MP.jpg")}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-csa-accent/20 to-csa-blue/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-                  <img 
-                    src="/Events-pictures/PXL_20250522_024915629.MP.jpg"
-                    alt="CSA Event Highlight"
-                    className="relative w-full h-full object-cover rounded-3xl shadow-2xl group-hover:scale-105 transition-all duration-500 border-2 border-white/20"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="absolute bottom-4 left-4 right-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <p className="text-sm font-medium">CSA Community Event</p>
+              {/* Slideshow Images */}
+              <div className="relative w-full h-full">
+                {slideshowImages.map((image, index) => (
+                  <div
+                    key={index}
+                    className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                      index === currentSlide 
+                        ? 'opacity-100 scale-100' 
+                        : 'opacity-0 scale-105'
+                    }`}
+                  >
+                    <div 
+                      className="relative w-full h-full cursor-pointer group"
+                      onClick={() => setSelectedImage(image.src)}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-csa-accent/20 to-csa-blue/20 rounded-3xl blur-xl"></div>
+                      <img 
+                        src={image.src}
+                        alt={`CSA Event ${index + 1}`}
+                        className="relative w-full h-full object-cover rounded-3xl shadow-2xl border-2 border-white/20"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              {/* Slide Indicators */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+                {slideshowImages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      index === currentSlide 
+                        ? 'bg-csa-accent scale-125' 
+                        : 'bg-white/40 hover:bg-white/60'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Slide Counter */}
+              <div className="absolute top-4 right-4 z-10 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
+                <span className="text-sm text-white font-medium">
+                  {currentSlide + 1} / {slideshowImages.length}
+                </span>
+              </div>
+            </div>
+
+            {/* Floating Event Info Badge */}
+            <div className="absolute bottom-4 left-4 bg-white text-csa-navy px-4 py-2 rounded-lg shadow-lg border border-gray-200">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-csa-accent rounded-full animate-pulse"></div>
+                <div>
+                  <div className="text-xs font-semibold">{slideshowImages[currentSlide].caption}</div>
+                  <div className="text-xs text-gray-600">{slideshowImages[currentSlide].description}</div>
                 </div>
-              </div>
-
-              {/* Orbiting Images */}
-              
-              {/* Image 2 - Top */}
-              <div 
-                className="absolute top-2 left-1/2 transform -translate-x-1/2 -translate-y-4 w-48 h-32 lg:w-56 lg:h-36 cursor-pointer group animate-fade-in"
-                style={{ animationDelay: '1.2s' }}
-                onClick={() => setSelectedImage("/Events-pictures/1729377993131.jpeg")}
-              >
-                <img 
-                  src="/Events-pictures/1729377993131.jpeg"
-                  alt="CSA Event"
-                  className="w-full h-full object-cover rounded-2xl shadow-xl group-hover:scale-110 transition-all duration-300 border border-white/30"
-                />
-              </div>
-
-              {/* Image 3 - Top Right */}
-              <div 
-                className="absolute top-16 right-0 transform translate-x-4 w-44 h-28 lg:w-52 lg:h-32 cursor-pointer group animate-fade-in"
-                style={{ animationDelay: '1.4s' }}
-                onClick={() => setSelectedImage("/Events-pictures/20250604_111127.jpg")}
-              >
-                <img 
-                  src="/Events-pictures/20250604_111127.jpg"
-                  alt="CSA Event"
-                  className="w-full h-full object-cover rounded-2xl shadow-xl group-hover:scale-110 transition-all duration-300 border border-white/30"
-                />
-              </div>
-
-              {/* Image 4 - Bottom Right */}
-              <div 
-                className="absolute bottom-16 right-0 transform translate-x-4 w-48 h-32 lg:w-56 lg:h-36 cursor-pointer group animate-fade-in"
-                style={{ animationDelay: '1.6s' }}
-                onClick={() => setSelectedImage("/Events-pictures/20250605_133448.jpg")}
-              >
-                <img 
-                  src="/Events-pictures/20250605_133448.jpg"
-                  alt="CSA Event"
-                  className="w-full h-full object-cover rounded-2xl shadow-xl group-hover:scale-110 transition-all duration-300 border border-white/30"
-                />
-              </div>
-
-              {/* Image 5 - Bottom */}
-              <div 
-                className="absolute bottom-2 left-1/2 transform -translate-x-1/2 translate-y-4 w-48 h-32 lg:w-56 lg:h-36 cursor-pointer group animate-fade-in"
-                style={{ animationDelay: '1.8s' }}
-                onClick={() => setSelectedImage("/Events-pictures/PXL_20250327_020441379.MP.jpg")}
-              >
-                <img 
-                  src="/Events-pictures/PXL_20250327_020441379.MP.jpg"
-                  alt="CSA Event"
-                  className="w-full h-full object-cover rounded-2xl shadow-xl group-hover:scale-110 transition-all duration-300 border border-white/30"
-                />
-              </div>
-
-              {/* Image 6 - Top Left */}
-              <div 
-                className="absolute top-16 left-0 transform -translate-x-4 w-44 h-28 lg:w-52 lg:h-32 cursor-pointer group animate-fade-in"
-                style={{ animationDelay: '2s' }}
-                onClick={() => setSelectedImage("/Events-pictures/PXL_20250522_015003557.MP.jpg")}
-              >
-                <img 
-                  src="/Events-pictures/PXL_20250522_015003557.MP.jpg"
-                  alt="CSA Event"
-                  className="w-full h-full object-cover rounded-2xl shadow-xl group-hover:scale-110 transition-all duration-300 border border-white/30"
-                />
-              </div>
-
-              {/* Connecting Lines/Dots */}
-              <div className="absolute inset-0 opacity-30">
-                <svg className="w-full h-full" viewBox="0 0 400 400">
-                  <circle cx="200" cy="200" r="150" fill="none" stroke="url(#gradient)" strokeWidth="1" strokeDasharray="5,5" className="animate-spin" style={{ animationDuration: '20s' }}>
-                    <defs>
-                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#F27D42" stopOpacity="0.5"/>
-                        <stop offset="100%" stopColor="#367ABB" stopOpacity="0.5"/>
-                      </linearGradient>
-                    </defs>
-                  </circle>
-                </svg>
               </div>
             </div>
           </div>
         </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce z-20">
+        {/* <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce z-20">
           <div className="w-6 h-10 border-2 border-white/40 rounded-full flex justify-center">
             <div className="w-1 h-3 bg-csa-accent rounded-full mt-2 animate-pulse"></div>
           </div>
-        </div>
+        </div> */}
 
         {/* Enhanced Floating Particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-5">
@@ -658,7 +797,24 @@ export default function Events() {
       {/* Events Content */}
       <section id="upcoming" className="py-16">
         <div className="container-site">
-          <Tabs defaultValue="upcoming" className="space-y-8">
+          {loading && (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-12 w-12 text-csa-blue animate-spin mb-4" />
+              <p className="text-csa-blue text-lg">Loading events...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-center text-red-500 text-lg">
+              <p>Error: {error}</p>
+              <Button onClick={fetchEvents} className="bg-csa-blue hover:bg-csa-blue/90">
+                Try Again
+              </Button>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
               <TabsList className="grid w-full lg:w-auto grid-cols-2">
                 <TabsTrigger value="upcoming" className="px-8">Upcoming</TabsTrigger>
@@ -702,11 +858,49 @@ export default function Events() {
                 ))}
               </div>
               {filteredUpcomingEvents.length === 0 && (
-                <div className="text-center py-12">
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-600 mb-2">No upcoming events</h3>
-                  <p className="text-gray-500">Check back soon for new events!</p>
-                </div>
+                <Card className="overflow-hidden shadow-lg animate-fade-in">
+                  <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800">
+                    <div className="text-center">
+                      <CardTitle className="text-2xl mb-2 text-gray-700">Event Details Coming Soon</CardTitle>
+                      <CardDescription className="text-gray-600">
+                        We're working on planning our next chapter meeting. Check back soon for updates!
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-8">
+                    <div className="text-center space-y-6">
+                      <div className="flex justify-center">
+                        <div className="p-4 bg-primary/10 rounded-full">
+                          <Calendar className="h-12 w-12 text-primary" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-semibold text-gray-800">Stay Connected</h3>
+                        <p className="text-gray-600">
+                          Follow us on social media and join our mailing list to be the first to know about upcoming events.
+                        </p>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <Button 
+                          onClick={() => {
+                            setActiveTab('past');
+                            window.location.hash = '#past';
+                            // Use requestAnimationFrame to ensure DOM is updated before scrolling
+                            requestAnimationFrame(() => {
+                              requestAnimationFrame(() => {
+                                window.scrollTo({ top: 500, behavior: 'smooth' });
+                              });
+                            });
+                          }}
+                          variant="outline"
+                          className="border-primary text-primary hover:bg-primary hover:text-white"
+                        >
+                          View Past Events
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </TabsContent>
 
@@ -725,6 +919,7 @@ export default function Events() {
               )}
             </TabsContent>
           </Tabs>
+          )}
         </div>
       </section>
 

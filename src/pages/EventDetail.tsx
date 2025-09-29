@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +17,8 @@ import { Event } from "@/types/event";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
 
-// Mock event data - in real app this would come from CMS/API or shared state
+// Mock event data - COMMENTED OUT: Now fetching from API instead of using hardcoded data
+/*
 const eventData: Record<string, Event> = {
   "csa-san-francisco-chapter-meeting-august-2025": {
     id: "1dd7038a-8ef4-415c-8078-24ae2307ab2b",
@@ -352,41 +353,22 @@ Whether you're interested in AI security, MCP (Model Context Protocol) security,
     posterUrl: "/posters/CSA-Sfo-September.png"
   }
 };
+*/
 
 export default function EventDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isAdmin } = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
-
-  const event = slug ? eventData[slug as keyof typeof eventData] : null;
-  const [attendeesCount, setAttendeesCount] = useState(event?.attendees || 0);
-
-  if (!event) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Event Not Found</h1>
-          <p className="text-gray-600 mb-8">The event you're looking for doesn't exist.</p>
-          <Button asChild className="bg-csa-accent hover:bg-csa-accent/90 text-white">
-            <Link to="/events">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Events
-            </Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const eventDate = new Date(event.date);
-  const spotsLeft = event.capacity - attendeesCount;
-  const isFullyBooked = spotsLeft <= 0;
+  const [event, setEvent] = useState<Event | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [attendeesCount, setAttendeesCount] = useState(0);
 
   // Check if user is already registered for this event
-  const checkRegistrationStatus = async () => {
+  const checkRegistrationStatus = useCallback(async () => {
     
     if (!isAuthenticated || !user) {
       setIsRegistered(false);
@@ -415,12 +397,12 @@ export default function EventDetail() {
           
           const registrations = responseData.registrations || [];
           
-          const isUserRegistered = registrations.some((reg: any) => reg.event_id === event.id);
+          const isUserRegistered = registrations.some((reg: any) => reg.event_id === event?.id);
           
           setIsRegistered(isUserRegistered);
           
           // Update localStorage to match backend status for performance
-          const registrationKey = `registered_${user.id}_${event.id}`;
+          const registrationKey = `registered_${user.id}_${event?.id}`;
           if (isUserRegistered) {
             localStorage.setItem(registrationKey, 'true');
           } else {
@@ -436,13 +418,13 @@ export default function EventDetail() {
     } catch (error) {
       setIsRegistered(false);
     }
-  };
+  }, [isAuthenticated, user, event?.id]);
 
   // Update attendees count after registration
-  const updateAttendeesCount = async () => {
+  const updateAttendeesCount = useCallback(async () => {
     try {
       // Fetch updated attendee count from backend
-      const response = await fetch(`${API_ENDPOINTS.EVENT_ATTENDEES}/${event.id}`);
+      const response = await fetch(`${API_ENDPOINTS.EVENT_ATTENDEES}/${event?.id}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -461,15 +443,152 @@ export default function EventDetail() {
         return newCount;
       });
     }
-  };
+  }, [event?.id]);
 
+  // Fetch event on component mount
+  useEffect(() => {
+    fetchEventBySlug();
+  }, [slug]);
 
   // Check registration status on component mount
   useEffect(() => {
-    checkRegistrationStatus();
-    updateAttendeesCount();
-  }, [isAuthenticated, user, event.id]);
+    if (event?.id) {
+      checkRegistrationStatus();
+      updateAttendeesCount();
+    }
+  }, [checkRegistrationStatus, updateAttendeesCount, event?.id]);
 
+  // Fetch event by slug from API
+  const fetchEventBySlug = async () => {
+    if (!slug) {
+      setError("No event slug provided");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // First, try to get all events and find the one with matching slug
+      const response = await fetch(API_ENDPOINTS.EVENTS_PUBLIC);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch events: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.events && Array.isArray(data.events)) {
+        // Find event by slug
+        const foundEvent = data.events.find((e: any) => e.slug === slug);
+        
+        if (foundEvent) {
+          // Transform the API data to match our Event interface
+          const transformedEvent: Event = {
+            id: foundEvent.id,
+            title: foundEvent.title,
+            date_time: foundEvent.date_time,
+            location: foundEvent.location,
+            checkins: foundEvent.checkins || "",
+            excerpt: foundEvent.excerpt || "",
+            slug: foundEvent.slug || foundEvent.id,
+            speakers: foundEvent.speakers || [],
+            tags: foundEvent.tags || [],
+            attendees: foundEvent.attendees || 0,
+            capacity: foundEvent.capacity || 100,
+            agenda: foundEvent.agenda || [],
+            reg_url: foundEvent.reg_url || "",
+            description: foundEvent.description || "",
+            map_url: foundEvent.map_url || "",
+            poster_url: foundEvent.poster_url || ""
+          };
+          
+          setEvent(transformedEvent);
+          setAttendeesCount(transformedEvent.attendees);
+        } else {
+          setError("Event not found");
+        }
+      } else {
+        throw new Error("Invalid response format");
+      }
+    } catch (err) {
+      console.error("Error fetching event:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch event");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-csa-blue mx-auto mb-4"></div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading Event...</h1>
+          <p className="text-gray-600">Fetching event details from our database</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !event) {
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="container mx-auto px-4 py-12">
+          <Card className="overflow-hidden shadow-lg animate-fade-in max-w-2xl mx-auto">
+            <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800">
+              <div className="text-center">
+                <CardTitle className="text-2xl mb-2 text-gray-700">Event Details Coming Soon</CardTitle>
+                <CardDescription className="text-gray-600">
+                  We're working on planning our next chapter meeting. Check back soon for updates!
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="text-center space-y-6">
+                <div className="flex justify-center">
+                  <div className="p-4 bg-primary/10 rounded-full">
+                    <Calendar className="h-12 w-12 text-primary" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold text-gray-800">Stay Connected</h3>
+                  <p className="text-gray-600">
+                    Follow us on social media and join our mailing list to be the first to know about upcoming events.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    onClick={() => {
+                      window.location.href = '/events#past';
+                    }}
+                    variant="outline"
+                    className="border-primary text-primary hover:bg-primary hover:text-white"
+                  >
+                    View Past Events
+                  </Button>
+                  <Button 
+                    asChild 
+                    className="bg-csa-blue hover:bg-csa-blue/90 text-white"
+                  >
+                    <Link to="/events">
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back to Events
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const eventDate = new Date(event?.date_time || new Date());
+  const spotsLeft = (event?.capacity || 0) - attendeesCount;
+  const isFullyBooked = spotsLeft <= 0;
 
   const handleRegistration = async () => {
     
@@ -551,7 +670,7 @@ export default function EventDetail() {
 
 
   const generateCalendarFile = () => {
-    const startDate = new Date(event.date);
+    const startDate = new Date(event.date_time);
     const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours
     
     const formatDate = (date: Date) => {
@@ -640,10 +759,10 @@ END:VCALENDAR`;
                 <div>
                   <div className="font-medium">Location</div>
                   <div className="text-sm">{event.location}</div>
-                  {event.parkingCheckIn && (
+                  {event.checkins && (
                     <div className="text-sm mt-1">
                       <span className="font-medium">Parking/Check In: </span>
-                      <span>{event.parkingCheckIn}</span>
+                      <span>{event.checkins}</span>
                     </div>
                   )}
                 </div>
@@ -665,9 +784,9 @@ END:VCALENDAR`;
 
             {/* Right: Poster */}
             <div className="flex justify-center md:justify-end order-1 md:order-2">
-				{event.posterUrl && (
+				{event.poster_url && (
 					<img
-						src={event.posterUrl}
+						src={event.poster_url}
 						alt={`${event.title} poster`}
                   className="w-full max-w-md sm:max-w-lg md:max-w-xl rounded-xl shadow-2xl border border-white/20 mt-2 md:mt-0"
 					/>
@@ -724,7 +843,7 @@ END:VCALENDAR`;
                     <CardContent className="pt-6">
                       <div className="flex items-start space-x-4">
                         <img
-                          src={speaker.imageUrl}
+                          src={speaker.image_url}
                           alt={`${speaker.name} profile`}
                           className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                         />
@@ -748,8 +867,9 @@ END:VCALENDAR`;
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Registration Card */}
-            <Card className="sticky top-24">
+            {/* Registration Card - Only show for non-admin users */}
+            {!isAdmin && (
+              <Card className="sticky top-24">
               <CardHeader>
                 <CardTitle className="text-csa-navy">
                   {isRegistered ? "Registration Confirmed" : (isFullyBooked ? "Join Waitlist" : "Register Now")}
@@ -841,6 +961,65 @@ END:VCALENDAR`;
                 </div>
               </CardContent>
             </Card>
+            )}
+
+            {/* Admin Info Card - Only show for admin users */}
+            {isAdmin && (
+              <Card className="sticky top-24">
+                <CardHeader>
+                  <CardTitle className="text-csa-navy">Admin View</CardTitle>
+                  <CardDescription>
+                    You're viewing this event as an administrator.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-csa-light rounded-lg">
+                    <span className="font-medium text-csa-navy">Event Status:</span>
+                    <span className="font-medium text-blue-600">
+                      {isFullyBooked ? "Fully Booked" : `${spotsLeft} spots left`}
+                    </span>
+                  </div>
+                  
+                  <div className="text-center py-4">
+                    <Users className="h-12 w-12 text-blue-500 mx-auto mb-3" />
+                    <p className="text-blue-600 font-medium mb-2">Event Management</p>
+                    <p className="text-sm text-gray-600">
+                      As an admin, you can manage this event from the admin dashboard.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      onClick={generateCalendarFile}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Add to Calendar
+                    </Button>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <a
+                        href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${eventDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${new Date(eventDate.getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent(event.excerpt)}&location=${encodeURIComponent(event.location)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-center p-2 border rounded text-csa-blue hover:bg-csa-light transition-colors"
+                      >
+                        Google
+                      </a>
+                      <a
+                        href={`https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(event.title)}&startdt=${eventDate.toISOString()}&enddt=${new Date(eventDate.getTime() + 2 * 60 * 60 * 1000).toISOString()}&body=${encodeURIComponent(event.excerpt)}&location=${encodeURIComponent(event.location)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-center p-2 border rounded text-csa-blue hover:bg-csa-light transition-colors"
+                      >
+                        Outlook
+                      </a>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Location Card */}
             <Card>
@@ -850,15 +1029,15 @@ END:VCALENDAR`;
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <p className="font-medium">{event.location}</p>
-                  {event.parkingCheckIn && (
+                  {event.checkins && (
                     <div className="p-3 bg-gray-50 rounded-lg">
                       <p className="text-sm font-medium text-gray-700 mb-1">Parking/Check In:</p>
-                      <p className="text-sm text-gray-600">{event.parkingCheckIn}</p>
+                      <p className="text-sm text-gray-600">{event.checkins}</p>
                     </div>
                   )}
                   <Button asChild variant="outline" className="w-full">
                     <a
-                      href={event.mapUrl}
+                      href={event.map_url}
                       target="_blank"
                       rel="noopener noreferrer"
                     >

@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
 
@@ -17,19 +18,19 @@ const boardMembers = [
   },
   {
     name: "Megha Satish",
-    role: "Treasurer and Program Manager ",
+    role: "Treasurer/Program Manager ",
     linkedin: "https://www.linkedin.com/in/megha-satish22/",
     image: "/lovable-uploads/members/meghasatish.png"
   },
   {
     name: "Brent Ichien ",
-    role: "Marketing and Sponsorship Coordinator  ",
+    role: "Marketing/Sponsorship Coordinator  ",
     linkedin: "https://www.linkedin.com/in/brent-ichien-49128650/ ",
     image: "/lovable-uploads/members/brentIchien.png"
   },
   {
     name: "Poonam Dhillon",
-    role: "Program Manager and Sponsorship Coordinator ",
+    role: "Program Manager/Sponsorship Coordinator ",
     linkedin: "https://www.linkedin.com/in/poonamdhillon1/ ",
     image: "/lovable-uploads/members/poonamdhillon.png"
   }
@@ -59,7 +60,6 @@ const volunteers = [
     image: "/Volunteers-pictures/volunteer1.jpg"
   }
 ];
-
 
 
 export default function About() {
@@ -324,13 +324,80 @@ export default function About() {
               <h2 className="text-3xl md:text-4xl font-bold text-csa-navy mb-6">
                 Our Mission
               </h2>
-              <p className="text-lg text-gray-600 leading-relaxed">
-                To promote the use of best practices for providing security assurance within 
-                cloud computing, and to provide education on the uses of cloud computing to 
-                help secure all other forms of computing in the San Francisco Bay Area.
+              <p className="text-lg text-gray-600 leading-relaxed mb-8">
+                To build a thriving, sustainable cloud security community in bay area and san francisco where volunteers grow as leaders, sponsors gain meaningful industry visibility, and members advance their knowledge and careers through collaboration and innovation.
               </p>
+              
+              {/* Stakeholder Goals */}
+              <div className="grid md:grid-cols-2 gap-6 mt-8">
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-csa-blue rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                      <h4 className="font-semibold text-csa-navy mb-1">For Volunteers</h4>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        Create opportunities for leadership, networking, and hands-on experience that strengthen skills, careers, and recognition in the cloud security ecosystem.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-csa-accent rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                      <h4 className="font-semibold text-csa-navy mb-1">For Sponsors</h4>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        Provide a trusted platform to engage with security professionals, showcase thought leadership, and gain visibility with a highly targeted, influential community.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                      <h4 className="font-semibold text-csa-navy mb-1">For Members</h4>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        Deliver valuable learning, peer networking, and career advancement opportunities through meetups, workshops, and knowledge-sharing sessions.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                      <h4 className="font-semibold text-csa-navy mb-1">For the Ecosystem</h4>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        Connect academia, startups, enterprises, and practitioners to collaborate on solving real-world cloud and AI security challenges.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
+          </div>
+        </div>
+      </section>
+
+      {/* Vision Section */}
+      <section className="py-16 bg-gradient-to-br from-csa-blue/5 to-csa-accent/5">
+        <div className="container-site">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-csa-navy mb-6">
+              Our Vision
+            </h2>
+            <p className="text-lg text-gray-600 leading-relaxed">
+              To be the Bay Area's leading cloud security community — the next RSA Conference — where professionals connect, learn, and shape the future of secure cloud and AI.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Who We Are & What We Do Section */}
+      <section className="py-16 bg-white">
+        <div className="container-site">
+          <div className="max-w-6xl mx-auto">
             <div className="grid md:grid-cols-2 gap-8">
               <Card>
                 <CardHeader>
@@ -451,8 +518,6 @@ export default function About() {
         </div>
       </section>
 
-
-
       {/* CSA Global Section */}
       <section className="py-16 section-light">
         <div className="container-site">
@@ -489,6 +554,7 @@ export default function About() {
           </div>
         </div>
       </section>
+
     </div>
   );
 }
