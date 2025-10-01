@@ -3,7 +3,7 @@ const API_BASE_URL_DEV = import.meta.env.VITE_DEV_API_URL || "http://localhost:8
 const API_BASE_URL_PROD = import.meta.env.VITE_PROD_API_URL;
 
 // Use production URL by default, fallback to dev for local development
-const API_BASE_URL = API_BASE_URL_PROD
+export const API_BASE_URL = API_BASE_URL_PROD;
 
 export const API_ENDPOINTS = {
   SEND_MESSAGE: `${API_BASE_URL}/v1/routes/message`,
@@ -13,6 +13,12 @@ export const API_ENDPOINTS = {
   USER_DETAILS: `${API_BASE_URL}/v1/routes/user/details`,
   GOOGLE_LOGIN: `${API_BASE_URL}/v1/routes/google-login`,
   VERIFY_PROFILE_COMPLETION: `${API_BASE_URL}/v1/routes/is-profile-completed`,
+  // Event Management Endpoints
+  EVENTS_ALL: `${API_BASE_URL}/v1/routes/events/all`,
+  EVENTS_PUBLIC: `${API_BASE_URL}/v1/routes/events/public`,
+  EVENT_CREATE: `${API_BASE_URL}/v1/routes/events/create`,
+  EVENT_UPDATE: `${API_BASE_URL}/v1/routes/events/update`,
+  EVENT_DELETE: `${API_BASE_URL}/v1/routes/events/delete`,
   // Event Registration Endpoints
   EVENT_REGISTRATIONS: `${API_BASE_URL}/v1/routes/event-registrations`,
   EVENT_ATTENDEES: `${API_BASE_URL}/v1/routes/event-attendees`,

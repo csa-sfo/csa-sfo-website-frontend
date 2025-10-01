@@ -65,23 +65,17 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
     }
 
     setError(""); // Clear any previous errors
-    console.log("Starting OTP verification for:", email);
 
     try {
       const result = await verifyOTP(email, otp);
-      console.log("OTP verification result:", result);
       
       if (result?.user) {
         const user = result.user;
-        console.log("OTP verified successfully, user:", user);
-        console.log("User metadata:", user.user_metadata);
         
         if (mode === "signup") {
-          console.log("Processing signup...");
           
           // For signup, ensure user metadata is properly set
           if (!user.user_metadata?.name && (name || organization)) {
-            console.log("Updating user metadata with form data");
             try {
               await updateUserMetadata({ name, organization });
               // Get updated user session
@@ -105,9 +99,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
             setError("Failed to create account. Please try again.");
           }
         } else {
-          console.log("Processing login...");
           const success = await loginWithOtp(user);
-          console.log("Login result:", success);
           
           if (success) {
             toast.success("Welcome back! You've been signed in successfully.");
@@ -183,7 +175,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
         setCanResend(false);
         toast.success(`OTP sent to ${email}. Please check your email.`);
       } else {
-        setError("Failed to send OTP. Please try again.");
+        setError("Failed to send OTP. Please try after few minutes.");
       }
     } catch (error) {
       setError("An error occurred while sending OTP. Please try again.");

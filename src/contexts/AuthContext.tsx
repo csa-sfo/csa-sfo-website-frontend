@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, API_BASE_URL } from '@/config/api';
 import { supabase } from '@/lib/supabase';
 
 interface User {
@@ -8,9 +8,8 @@ interface User {
   email: string;
   name?: string;
   role: 'admin' | 'user';
-  companyName?: string;
-  jobRole?: string;
-  profileCompleted?: boolean;
+  // Removed sensitive fields: companyName, jobRole, profileCompleted
+  // These will be fetched from API when needed
 }
 
 interface AuthContextType {
@@ -18,6 +17,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  adminLogin: (email: string, password: string) => Promise<boolean>;
   signup: (name: string, email: string, password: string, organization: string) => Promise<boolean>;
   loginWithOtp: (supabaseUser: any) => Promise<boolean>;
   signupWithOtp: (supabaseUser: any) => Promise<boolean>;
@@ -27,6 +27,8 @@ interface AuthContextType {
   loading: boolean;
   showProfileDialog: boolean;
   socialLogin : (provider: string) => Promise<boolean>;
+  // New function to fetch user details when needed
+  fetchUserDetails: () => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,15 +78,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Set default values if they don't exist
         const userWithDefaults = {
-          ...parsedUser,
-          companyName: parsedUser.companyName || parsedUser.organization,
-          jobRole: parsedUser.jobRole || 'Participant',
-          profileCompleted: true
+          ...parsedUser
+          // Removed: companyName, jobRole, profileCompleted defaults
         };
         setUser(userWithDefaults);
-        if (!parsedUser.profileCompleted) {
-          setShowProfileDialog(true);
-        }
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('csaUser');
@@ -134,10 +131,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: u.id,
         email: u.email,
         name: u.name,
-        role: (u.type === 'admin' ? 'admin' : 'user'),
-        companyName: u.company_name,
-        jobRole: u.role,
-        profileCompleted: !!u.profile_completed || (!!u.company_name && !!u.role)
+        role: (u.type === 'admin' ? 'admin' : 'user')
+        // Removed: companyName, jobRole, profileCompleted
       };
       const nextTokens: Tokens = {
         accessToken: data.access_token,
@@ -145,9 +140,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
       setUser(nextUser);
       persistState(nextUser, nextTokens);
-      setShowProfileDialog(!nextUser.profileCompleted);
+      // Removed: profile dialog logic since profileCompleted is no longer stored
       return true;
     } catch {
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const adminLogin = async (email: string, password: string): Promise<boolean> => {
+    setLoading(true);
+    try {
+      console.log('Admin login attempt for:', email);
+      
+      // Make API call to admin login endpoint
+      const response = await fetch(`${API_BASE_URL}/v1/routes/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Admin login successful:', data);
+        
+        // Create admin user object
+        const adminUser: User = {
+          id: data.admin.id,
+          email: data.admin.email,
+          name: data.admin.name,
+          role: 'admin'
+          // Removed: companyName, jobRole, profileCompleted
+        };
+        
+        const nextTokens: Tokens = {
+          accessToken: data.access_token,
+        };
+        
+        setUser(adminUser);
+        persistState(adminUser, nextTokens);
+        return true;
+      } else {
+        const errorData = await response.json();
+        console.error('Admin login failed:', errorData);
+        return false;
+      }
+    } catch (error) {
+      console.error('Admin login error:', error);
       return false;
     } finally {
       setLoading(false);
@@ -213,24 +255,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loginWithOtp = async (supabaseUser: any): Promise<boolean> => {
     setLoading(true);
-    console.log('loginWithOtp called with user:', supabaseUser);
-    console.log('User metadata:', supabaseUser.user_metadata);
     
     try {
+      // Check if user is an admin by calling the admin check endpoint
+      let isAdmin = false;
+      let adminData = null;
+      
+      try {
+        const adminCheckResponse = await fetch(`${API_BASE_URL}/v1/routes/admin/check`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: supabaseUser.email }),
+        });
+        
+        if (adminCheckResponse.ok) {
+          const adminResult = await adminCheckResponse.json();
+          if (adminResult.is_admin) {
+            isAdmin = true;
+            adminData = adminResult.admin;
+            const adminToken = adminResult.admin_token;
+            
+            // Store the admin token in localStorage for authentication
+            if (adminToken) {
+              const adminTokens = { accessToken: adminToken };
+              localStorage.setItem('csaTokens', JSON.stringify(adminTokens));
+            }
+          }
+        }
+      } catch (error) {
+        // Continue as regular user
+      }
+      
       // Create user from Supabase user_metadata (standard practice)
       const frontendUser: User = {
-        id: supabaseUser.id,
+        id: isAdmin && adminData ? adminData.id : supabaseUser.id,
         email: supabaseUser.email,
-        name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || supabaseUser.email.split('@')[0],
-        role: 'user',
-        companyName: (supabaseUser.user_metadata as any)?.organization,
-        jobRole: 'Participant',
-        profileCompleted: true
+        name: isAdmin && adminData ? adminData.name : (supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || supabaseUser.email.split('@')[0]),
+        role: isAdmin ? 'admin' : 'user'
+        // Removed: companyName, jobRole, profileCompleted
       };
       
       setUser(frontendUser);
       persistState(frontendUser, {});
-      console.log('Frontend login successful, user set:', frontendUser);
       return true;
       
     } catch (error) {
@@ -243,8 +311,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signupWithOtp = async (supabaseUser: any): Promise<boolean> => {
     setLoading(true);
-    console.log('signupWithOtp called with user:', supabaseUser);
-    console.log('User metadata:', supabaseUser.user_metadata);
     
     try {
       // Create user from Supabase user_metadata (standard practice)
@@ -252,15 +318,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: supabaseUser.id,
         email: supabaseUser.email,
         name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || supabaseUser.email.split('@')[0],
-        role: 'user',
-        companyName: (supabaseUser.user_metadata as any)?.organization,
-        jobRole: 'Participant',
-        profileCompleted: true
+        role: 'user'
+        // Removed: companyName, jobRole, profileCompleted
       };
       
       setUser(frontendUser);
       persistState(frontendUser, {});
-      console.log('Frontend signup successful, user set:', frontendUser);
       return true;
       
     } catch (error) {
@@ -326,23 +389,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }),
         });
         if (!res.ok) throw new Error('Failed to update details');
-        const updatedUser: User = {
-          ...user,
-          companyName: profileData.companyName,
-          jobRole: profileData.jobRole,
-          profileCompleted: true,
-        };
-        setUser(updatedUser);
-        persistState(updatedUser, tokens);
+        // Profile data is now stored in backend, not frontend
       } else {
-        const updatedUser: User = {
-          ...user,
-          companyName: profileData.companyName,
-          jobRole: profileData.jobRole,
-          profileCompleted: true,
-        };
-        setUser(updatedUser);
-        persistState(updatedUser, tokens);
+        // Profile data is now stored in backend, not frontend
       }
       setShowProfileDialog(false);
     } finally {
@@ -376,11 +425,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setShowProfileDialog(false);
   };
 
+  const fetchUserDetails = async () => {
+    if (!user) {
+      throw new Error('No user logged in');
+    }
+
+    try {
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        throw new Error('No authentication token found');
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken;
+
+      if (!accessToken) {
+        throw new Error('No access token found');
+      }
+
+      // Call the /user/role endpoint to get current user details
+      const response = await fetch(`${API_BASE_URL}/v1/routes/user/role`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user details');
+      }
+
+      const userDetails = await response.json();
+      return userDetails;
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
     login,
+    adminLogin,
     signup,
     loginWithOtp,
     signupWithOtp,
@@ -389,7 +478,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearDemoData,
     loading,
     showProfileDialog,
-    socialLogin
+    socialLogin,
+    fetchUserDetails
   };
 
   return (
