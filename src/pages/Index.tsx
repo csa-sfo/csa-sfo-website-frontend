@@ -231,7 +231,7 @@ export default function Index() {
               <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 relative z-10">
                 <Button 
                   onClick={() => {
-                    window.location.href = '/events#upcoming';
+                    navigate('/events#upcoming');
                   }}
                   size="lg" 
                   className="bg-csa-accent hover:bg-csa-accent/90 text-white text-lg px-8 py-4 shadow-lg transition-all duration-300 hover:shadow-xl relative z-20"
@@ -416,7 +416,7 @@ export default function Index() {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                       <Button 
                         onClick={() => {
-                          window.location.href = '/events#past';
+                          navigate('/events#past');
                         }}
                         variant="outline"
                         className="border-primary text-primary hover:bg-primary hover:text-white"
