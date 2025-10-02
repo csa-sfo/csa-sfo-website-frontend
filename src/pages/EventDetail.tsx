@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -357,6 +357,7 @@ Whether you're interested in AI security, MCP (Model Context Protocol) security,
 
 export default function EventDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { isAuthenticated, user, isAdmin } = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
@@ -561,7 +562,7 @@ export default function EventDetail() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button 
                     onClick={() => {
-                      window.location.href = '/events#past';
+                      navigate('/events#past');
                     }}
                     variant="outline"
                     className="border-primary text-primary hover:bg-primary hover:text-white"
