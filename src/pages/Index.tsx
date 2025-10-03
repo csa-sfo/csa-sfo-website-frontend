@@ -6,6 +6,8 @@ import { Calendar, MapPin, Users, Award, TrendingUp, ExternalLink, Eye } from "l
 import { useState, useEffect } from "react";
 import { API_ENDPOINTS } from "@/config/api";
 import { Event } from "@/types/event";
+import FAQ from "@/components/FAQ";
+import { homepageFAQs } from "@/data/faqData";
 
 // Custom hook for real-time page visits counter
 const usePageVisitsCounter = () => {
@@ -709,6 +711,13 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <FAQ 
+        faqs={homepageFAQs}
+        title="Frequently Asked Questions"
+        subtitle="Everything you need to know about the Cloud Security Alliance San Francisco Chapter"
+      />
 
       {/* CTA Section */}
       <section className="py-16 section-light">
