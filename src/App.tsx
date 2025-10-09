@@ -44,6 +44,7 @@ const AppContent = () => {
               <Route path="/archive" element={<Archive />} />
               <Route path="/get-involved" element={<GetInvolved />} />
               <Route path="/google-callback" element={<AuthCallback />} />
+              <Route path="/linkedin-callback" element={<AuthCallback />} />
               <Route path="/sponsorship" element={<Sponsorship />} />
                 <Route path="/sponsorship/success" element={<SponsorshipSuccess />} />
               <Route path="/contact" element={<Contact />} />

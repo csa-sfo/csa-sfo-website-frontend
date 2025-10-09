@@ -8,7 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false
+    detectSessionInUrl: true  // Enable OAuth callback detection
   }
 })
 
@@ -84,4 +84,24 @@ export const signOut = async () => {
     console.error('Error signing out:', error)
     throw error
   }
+}
+
+// LinkedIn OAuth authentication
+export const signInWithLinkedIn = async () => {
+  console.log('Initiating LinkedIn OAuth...');
+  
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'linkedin_oidc',
+    options: {
+      redirectTo: `${window.location.origin}/linkedin-callback`
+    }
+  })
+  
+  if (error) {
+    console.error('Error signing in with LinkedIn:', error)
+    throw error
+  }
+  
+  console.log('LinkedIn OAuth initiated:', data);
+  return data
 }

@@ -421,15 +421,31 @@ export default function EventDetail() {
     }
   }, [isAuthenticated, user, event?.id]);
 
-  // Update attendees count after registration
-  const updateAttendeesCount = useCallback(async () => {
+  // Fetch live registration count from actual registrations
+  const fetchLiveRegistrationCount = async (eventId: string) => {
     try {
-      // Fetch updated attendee count from backend
-      const response = await fetch(`${API_ENDPOINTS.EVENT_ATTENDEES}/${event?.id}`);
+      const response = await fetch(`${API_ENDPOINTS.EVENT_REGISTERED_USERS}/${eventId}`);
       
       if (response.ok) {
         const data = await response.json();
-        setAttendeesCount(data.attendees);
+        setAttendeesCount(data.count || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching registration count:", error);
+    }
+  };
+
+  // Update attendees count after registration
+  const updateAttendeesCount = useCallback(async () => {
+    if (!event?.id) return;
+    
+    try {
+      // Fetch live registration count from actual registrations
+      const response = await fetch(`${API_ENDPOINTS.EVENT_REGISTERED_USERS}/${event.id}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAttendeesCount(data.count || 0);
       } else {
         // Fallback: increment locally if backend fails
         setAttendeesCount(prev => {
@@ -506,7 +522,9 @@ export default function EventDetail() {
           };
           
           setEvent(transformedEvent);
-          setAttendeesCount(transformedEvent.attendees);
+          
+          // Fetch live registration count instead of using stored attendees
+          fetchLiveRegistrationCount(transformedEvent.id);
         } else {
           setError("Event not found");
         }
