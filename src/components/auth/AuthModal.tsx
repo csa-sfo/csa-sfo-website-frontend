@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/otp-input";
 import { sendOTP, verifyOTP, updateUserMetadata, supabase } from "@/lib/supabase";
+import { API_ENDPOINTS } from "@/config/api";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -124,7 +125,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
       const signupData = mode === "signup" ? { name, organization } : undefined;
       const success = await sendOtpToEmail(email, signupData);
       if (success) {
-        setOtpTimer(300);
+        setOtpTimer(60); // 1 minute
         setCanResend(false);
         toast.success("OTP resent successfully!");
       } else {
@@ -167,11 +168,31 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
     }
 
     try {
+      // Check if email exists before sending OTP
+      const checkResponse = await fetch(`${API_ENDPOINTS.CHECK_EMAIL}/${encodeURIComponent(email)}`);
+      const checkData = await checkResponse.json();
+      
+      if (mode === "login") {
+        // For login, email must exist
+        if (!checkData.exists) {
+          setError("Email not registered. Please sign up first.");
+          toast.error("Email not registered. Please sign up first.");
+          return;
+        }
+      } else if (mode === "signup") {
+        // For signup, email must NOT exist
+        if (checkData.exists) {
+          setError("Email already registered. Please login instead.");
+          toast.error("Email already registered. Please login instead.");
+          return;
+        }
+      }
+
       // Send OTP to email
       const success = await sendOtpToEmail(email, mode === "signup" ? { name, organization } : undefined);
       if (success) {
         setIsOtpSent(true);
-        setOtpTimer(300); // 5 minutes
+        setOtpTimer(60); // 1 minute
         setCanResend(false);
         toast.success(`OTP sent to ${email}. Please check your email.`);
       } else {
@@ -201,6 +222,17 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
   const handleModeChange = (newMode: "login" | "signup") => {
     resetForm();
     onModeChange(newMode);
+  };
+
+  const handleLinkedInLogin = async () => {
+    try {
+      // Use Supabase client for LinkedIn OAuth (simpler and matches Google pattern)
+      const { signInWithLinkedIn } = await import('@/lib/supabase');
+      await signInWithLinkedIn();
+    } catch (error) {
+      console.error('LinkedIn login error:', error);
+      toast.error('Failed to initiate LinkedIn login');
+    }
   };
 
 
@@ -332,6 +364,28 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                   "Send OTP"
                 )}
               </Button>
+
+              {/* Divider */}
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">or</span>
+                </div>
+              </div>
+
+              {/* LinkedIn Login Button */}
+              <Button
+                type="button"
+                onClick={handleLinkedInLogin}
+                className="w-full h-10 bg-[#0077B5] hover:bg-[#005885] text-white text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] flex items-center justify-center space-x-2"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+                <span>Continue with LinkedIn</span>
+              </Button>
               </form>
             )}
           </div>
@@ -405,6 +459,28 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                     {canResend ? "Resend OTP" : `Resend in ${formatTime(otpTimer)}`}
                   </button>
                 </div>
+
+                {/* Divider */}
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">or</span>
+                  </div>
+                </div>
+
+                {/* LinkedIn Login Button */}
+                <Button
+                  type="button"
+                  onClick={handleLinkedInLogin}
+                  className="w-full h-10 bg-[#0077B5] hover:bg-[#005885] text-white text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] flex items-center justify-center space-x-2"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                  </svg>
+                  <span>Continue with LinkedIn</span>
+                </Button>
               </div>
               </div>
             )}

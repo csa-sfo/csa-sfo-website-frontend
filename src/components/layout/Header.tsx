@@ -190,7 +190,7 @@ export function Header() {
                   onClick={handleAuthClick}
                   className="bg-orange-500 text-white hover:bg-orange-600 px-4 py-2 text-sm"
                 >
-                  Sign Up
+                  Log In
                 </Button>
               )}
             </div>
@@ -333,7 +333,7 @@ export function Header() {
                       }}
                       className="bg-orange-500 text-white hover:bg-orange-600 w-full py-3 text-base font-medium"
                     >
-                      Sign Up
+                      Log In
                     </Button>
                   )}
                 </div>
