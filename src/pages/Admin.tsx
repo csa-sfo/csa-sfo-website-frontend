@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Calendar, MapPin, Users, Plus, Edit, Trash2, Save, X } from "lucide-react";
+import { Calendar, MapPin, Users, Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Event, AgendaItem, Speaker } from "@/types/event";
 import { API_BASE_URL, API_ENDPOINTS } from "@/config/api";
@@ -30,6 +30,10 @@ interface EventFormProps {
   onParkingCheckInChange: (parkingCheckIn: string) => void;
   onDescriptionChange: (description: string) => void;
   onPosterChange: (posterUrl: string) => void;
+  onPosterUpload: (file: File) => Promise<void>;
+  isUploadingPoster: boolean;
+  onSpeakerImageUpload: (speakerId: string, file: File) => Promise<void>;
+  uploadingSpeakerId: string | null;
   onTagsChange: (tags: string) => void;
   onCapacityChange: (capacity: string) => void;
   onAttendeesChange: (attendees: string) => void;
@@ -54,6 +58,10 @@ const EventForm = memo(({
   onParkingCheckInChange,
   onDescriptionChange,
   onPosterChange,
+  onPosterUpload,
+  isUploadingPoster,
+  onSpeakerImageUpload,
+  uploadingSpeakerId,
   onTagsChange,
   onCapacityChange,
   onAttendeesChange,
@@ -63,7 +71,33 @@ const EventForm = memo(({
   onAddSpeaker,
   onUpdateSpeaker,
   onRemoveSpeaker
-}: EventFormProps) => (
+}: EventFormProps) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const speakerImageInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await onPosterUpload(file);
+      // Reset the input so the same file can be selected again if needed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleSpeakerImageSelect = async (speakerId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await onSpeakerImageUpload(speakerId, file);
+      // Reset the input
+      if (speakerImageInputRefs.current[speakerId]) {
+        speakerImageInputRefs.current[speakerId]!.value = '';
+      }
+    }
+  };
+
+  return (
   <div className="space-y-6">
     <div className="grid gap-4">
       <div className="space-y-2">
@@ -130,18 +164,45 @@ const EventForm = memo(({
 
       {/* Poster upload / URL */}
       <div className="space-y-2">
-        <Label htmlFor="posterUrl">Poster Image URL (optional)</Label>
-        <Input
-          id="posterUrl"
-          value={formData.poster_url || ""}
-          onChange={(e) => onPosterChange(e.target.value)}
-          placeholder="/public/Speaker-images/poster.png or https://..."
-        />
-        {formData.poster_url && (
-          <div className="pt-2">
-            <img src={formData.poster_url} alt="Event poster preview" className="max-h-56 rounded-md border" />
+        <Label htmlFor="posterUrl">Poster Image</Label>
+        <div className="flex gap-2">
+          <Input
+            id="posterUrl"
+            value={formData.poster_url || ""}
+            onChange={(e) => onPosterChange(e.target.value)}
+            className="flex-1"
+          />
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+              id="poster-file-input"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingPoster}
+              className="flex items-center gap-2 whitespace-nowrap"
+            >
+              {isUploadingPoster ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                  <span>Uploading...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  <span>Upload Image</span>
+                </>
+              )}
+            </Button>
           </div>
-        )}
+        </div>
+        <p className="text-xs text-gray-500">Upload an image from your computer or enter a URL</p>
       </div>
 
       {/* Agenda Section */}
@@ -276,14 +337,45 @@ const EventForm = memo(({
                       placeholder="Company or organization"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`speaker-image-${speaker.id}`}>Image URL</Label>
-                    <Input
-                      id={`speaker-image-${speaker.id}`}
-                      value={speaker.image_url}
-                      onChange={(e) => onUpdateSpeaker(speaker.id, 'image_url', e.target.value)}
-                      placeholder="https://... or /path/to/image.jpg"
-                    />
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor={`speaker-image-${speaker.id}`}>Speaker Image</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id={`speaker-image-${speaker.id}`}
+                        value={speaker.image_url}
+                        onChange={(e) => onUpdateSpeaker(speaker.id, 'image_url', e.target.value)}
+                        className="flex-1"
+                      />
+                      <div>
+                        <input
+                          ref={(el) => speakerImageInputRefs.current[speaker.id] = el}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleSpeakerImageSelect(speaker.id, e)}
+                          className="hidden"
+                          id={`speaker-image-file-${speaker.id}`}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => speakerImageInputRefs.current[speaker.id]?.click()}
+                          disabled={uploadingSpeakerId === speaker.id}
+                          className="flex items-center gap-2 whitespace-nowrap"
+                        >
+                          {uploadingSpeakerId === speaker.id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                              <span>Uploading...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4" />
+                              <span>Upload</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor={`speaker-about-${speaker.id}`}>About the Speaker</Label>
@@ -388,7 +480,8 @@ const EventForm = memo(({
       </Button>
     </div>
   </div>
-));
+  );
+});
 
 // const initialEvents: Event[] = [
 //   {
@@ -487,16 +580,56 @@ const EventForm = memo(({
 //   }
 // ];
 
+interface EventRegistration {
+  id: string;
+  event_id: string;
+  events: {
+    title: string;
+    slug: string;
+    date_time: string;
+  };
+}
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  company_name?: string;
+  role?: string;
+  provider?: string;
+  linkedin_id?: string;
+  headline?: string;
+  avatar_url?: string;
+  created_at?: string;
+  last_login?: string;
+  registrations?: EventRegistration[];
+  registration_count?: number;
+}
+
 export default function Admin() {
   const { user, isAdmin, fetchUserDetails } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [updatingEventId, setUpdatingEventId] = useState<string | null>(null);
+  const [isUploadingPoster, setIsUploadingPoster] = useState(false);
+  const [uploadingSpeakerId, setUploadingSpeakerId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage] = useState(10);
+  const [selectedEventForUsers, setSelectedEventForUsers] = useState<string | null>(null);
+  const [eventRegisteredUsers, setEventRegisteredUsers] = useState<any[]>([]);
+  const [isLoadingEventUsers, setIsLoadingEventUsers] = useState(false);
+  const [isEventUsersDialogOpen, setIsEventUsersDialogOpen] = useState(false);
+  const [eventRegistrationCounts, setEventRegistrationCounts] = useState<Record<string, number>>({});
+  const [eventUsersCurrentPage, setEventUsersCurrentPage] = useState(1);
+  const [eventUsersPerPage] = useState(10);
+  const [activeTab, setActiveTab] = useState("manage");
   const [formData, setFormData] = useState<Partial<Event>>({
     title: "",
     date_time: "",
@@ -605,6 +738,12 @@ export default function Admin() {
           const backendEvents = result.events;
 
           setEvents(backendEvents);
+          
+          // Fetch registration counts for all events
+          if (backendEvents && backendEvents.length > 0) {
+            const eventIds = backendEvents.map((e: Event) => e.id);
+            fetchEventRegistrationCounts(eventIds);
+          }
     } catch (error) {
       console.error('Error fetching events:', error);
       handleAuthError(error);
@@ -616,12 +755,161 @@ export default function Admin() {
     }
   };
 
+  const fetchUsers = async () => {
+    if (!isAdmin) {
+      return;
+    }
+
+    setIsLoadingUsers(true);
+    try {
+      // Get authentication token
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        console.warn('No authentication token found, skipping users fetch');
+        setUsers([]);
+        return;
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      let accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        console.warn('No access token found');
+        setUsers([]);
+        return;
+      }
+
+      // Debug: Check token payload
+      try {
+        const base64Url = accessToken.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(atob(base64));
+        
+        // If token doesn't have admin role, try to refresh it
+        if (!payload.role || payload.role !== 'admin') {
+          console.warn('Token missing admin role, attempting to refresh...');
+          
+          if (user && user.email) {
+            try {
+              const adminCheckResponse = await fetch(`${API_BASE_URL}/v1/routes/admin/check`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: user.email }),
+              });
+              
+              if (adminCheckResponse.ok) {
+                const adminResult = await adminCheckResponse.json();
+                if (adminResult.is_admin && adminResult.admin_token) {
+                  localStorage.setItem('csaTokens', JSON.stringify({ accessToken: adminResult.admin_token }));
+                  accessToken = adminResult.admin_token;
+                  console.log('Admin token refreshed successfully');
+                  toast.success('Admin token refreshed. Please try again.');
+                }
+              }
+            } catch (refreshError) {
+              console.error('Failed to refresh admin token:', refreshError);
+            }
+          }
+        }
+      } catch (decodeError) {
+        console.error('Error decoding token:', decodeError);
+      }
+
+      const response = await fetch(API_ENDPOINTS.USERS_ALL, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to fetch users:', errorText);
+        
+        if (response.status === 401) {
+          handleAuthError(() => {
+            console.log('Session expired, redirecting to login...');
+          });
+        } else {
+          toast.error('Failed to fetch users');
+        }
+        return;
+      }
+
+      const data = await response.json();
+      setUsers(data.users || []);
+      setCurrentPage(1); // Reset to first page when users are refreshed
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Error loading users');
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // Fetch registration counts for all events
+  const fetchEventRegistrationCounts = async (eventIds: string[]) => {
+    const counts: Record<string, number> = {};
+    
+    await Promise.all(
+      eventIds.map(async (eventId) => {
+        try {
+          const response = await fetch(`${API_ENDPOINTS.EVENT_REGISTERED_USERS}/${eventId}`);
+          if (response.ok) {
+            const data = await response.json();
+            counts[eventId] = data.count || 0;
+          }
+        } catch (error) {
+          console.error(`Error fetching count for event ${eventId}:`, error);
+        }
+      })
+    );
+    
+    setEventRegistrationCounts(counts);
+  };
+
+  // Fetch registered users for a specific event
+  const fetchEventRegisteredUsers = async (eventId: string) => {
+    setIsLoadingEventUsers(true);
+    setEventUsersCurrentPage(1); // Reset to first page
+    try {
+      const response = await fetch(`${API_ENDPOINTS.EVENT_REGISTERED_USERS}/${eventId}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch registered users');
+      }
+      
+      const data = await response.json();
+      setEventRegisteredUsers(data.registered_users || []);
+      setEventRegistrationCounts(prev => ({
+        ...prev,
+        [eventId]: data.count || 0
+      }));
+      setSelectedEventForUsers(eventId);
+      setIsEventUsersDialogOpen(true);
+    } catch (error) {
+      console.error('Error fetching registered users:', error);
+      toast.error('Failed to load registered users');
+    } finally {
+      setIsLoadingEventUsers(false);
+    }
+  };
+
   // Fetch events when component mounts
   useEffect(() => {
     if (isAdmin && user) {
       fetchEvents();
+      fetchUsers(); // Also fetch users for the Users tab
     }
   }, [isAdmin, user]);
+
+  // Refresh registration counts when switching to manage tab
+  useEffect(() => {
+    if (activeTab === "manage" && events.length > 0 && isAdmin) {
+      const eventIds = events.map((e: Event) => e.id);
+      fetchEventRegistrationCounts(eventIds);
+    }
+  }, [activeTab]);
 
 
   const generateSlug = (title: string) => {
@@ -1097,6 +1385,137 @@ export default function Admin() {
     setFormData(prev => ({ ...prev, poster_url: value }));
   }, []);
 
+  const handlePosterUpload = useCallback(async (file: File) => {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast.error('Image size must be less than 10MB');
+      return;
+    }
+
+    setIsUploadingPoster(true);
+    try {
+      // Get authentication token
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        throw new Error('No authentication token found');
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        throw new Error('No access token found');
+      }
+
+      // Create FormData and append the file
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+
+      // Upload to backend with image_type as query parameter
+      const response = await fetch(`${API_ENDPOINTS.UPLOAD_IMAGE}?image_type=poster`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to upload image');
+      }
+
+      const result = await response.json();
+      
+      // Update the poster URL in the form
+      setFormData(prev => ({ ...prev, poster_url: result.url }));
+      toast.success('Poster image uploaded successfully!');
+      
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsUploadingPoster(false);
+    }
+  }, []);
+
+  const handleSpeakerImageUpload = useCallback(async (speakerId: string, file: File) => {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast.error('Image size must be less than 10MB');
+      return;
+    }
+
+    setUploadingSpeakerId(speakerId);
+    try {
+      // Get authentication token
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        throw new Error('No authentication token found');
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        throw new Error('No access token found');
+      }
+
+      // Create FormData and append the file
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+
+      // Upload to backend with image_type as query parameter
+      const response = await fetch(`${API_ENDPOINTS.UPLOAD_IMAGE}?image_type=speaker`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to upload image');
+      }
+
+      const result = await response.json();
+      
+      // Update the speaker's image URL in the form
+      setFormData(prev => ({
+        ...prev,
+        speakers: prev.speakers?.map(speaker =>
+          speaker.id === speakerId
+            ? { ...speaker, image_url: result.url }
+            : speaker
+        ) || []
+      }));
+      toast.success('Speaker image uploaded successfully!');
+      
+    } catch (error) {
+      console.error('Error uploading speaker image:', error);
+      toast.error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setUploadingSpeakerId(null);
+    }
+  }, []);
+
   const handleCapacityChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, capacity: parseInt(value) || 0 }));
   }, []);
@@ -1153,10 +1572,11 @@ export default function Admin() {
       </div>
 
       <div className="container-site py-8">
-        <Tabs defaultValue="manage" className="space-y-8">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="manage">Manage Events</TabsTrigger>
             <TabsTrigger value="add">Add New Event</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
 
           <TabsContent value="manage" className="space-y-6">
@@ -1214,6 +1634,7 @@ export default function Admin() {
                           <TableHead>Location</TableHead>
                           <TableHead>Attendance</TableHead>
                           <TableHead>Tags</TableHead>
+                          <TableHead>Registered Users</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -1265,6 +1686,17 @@ export default function Admin() {
                               </div>
                             </TableCell>
                             <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => fetchEventRegisteredUsers(event.id)}
+                                className="flex items-center gap-2"
+                              >
+                                <Users className="h-4 w-4" />
+                                <span>{eventRegistrationCounts[event.id] ?? '...'}</span>
+                              </Button>
+                            </TableCell>
+                            <TableCell>
                               <div className="flex gap-2">
                                 <Dialog open={isEditDialogOpen && editingEvent?.id === event.id} onOpenChange={(open) => {
                                   if (!open) {
@@ -1306,6 +1738,10 @@ export default function Admin() {
                                       onParkingCheckInChange={handleParkingCheckInChange}
                                       onDescriptionChange={handleDescriptionChange}
                                       onPosterChange={handlePosterChange}
+                                      onPosterUpload={handlePosterUpload}
+                                      isUploadingPoster={isUploadingPoster}
+                                      onSpeakerImageUpload={handleSpeakerImageUpload}
+                                      uploadingSpeakerId={uploadingSpeakerId}
                                       onTagsChange={handleTagsChange}
                                       onCapacityChange={handleCapacityChange}
                                       onAttendeesChange={handleAttendeesChange}
@@ -1361,6 +1797,183 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Dialog for viewing registered users */}
+            <Dialog 
+              open={isEventUsersDialogOpen} 
+              onOpenChange={(open) => {
+                setIsEventUsersDialogOpen(open);
+                // Refresh registration counts when dialog is closed
+                if (!open && events.length > 0) {
+                  const eventIds = events.map((e: Event) => e.id);
+                  fetchEventRegistrationCounts(eventIds);
+                }
+              }}
+            >
+              <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-csa-blue" />
+                    Registered Users
+                  </DialogTitle>
+                </DialogHeader>
+                
+                {isLoadingEventUsers ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-csa-blue"></div>
+                  </div>
+                ) : eventRegisteredUsers.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No users registered for this event yet.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-600 mb-4">
+                      Total registered: <span className="font-semibold">{eventRegisteredUsers.length}</span>
+                    </div>
+                    <div className="grid gap-3">
+                      {eventRegisteredUsers
+                        .slice(
+                          (eventUsersCurrentPage - 1) * eventUsersPerPage,
+                          eventUsersCurrentPage * eventUsersPerPage
+                        )
+                        .map((user, index) => {
+                          const actualIndex = (eventUsersCurrentPage - 1) * eventUsersPerPage + index + 1;
+                          return (
+                            <div 
+                              key={user.id} 
+                              className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                              <div className="flex-shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center text-white font-semibold shadow-md">
+                                  {actualIndex}
+                                </div>
+                              </div>
+                              
+                              {user.avatar_url ? (
+                                <img 
+                                  src={user.avatar_url} 
+                                  alt={user.name}
+                                  className="w-12 h-12 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-lg">
+                                  {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                                </div>
+                              )}
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold text-gray-900 truncate">{user.name}</div>
+                                <div className="text-sm text-gray-500 truncate">{user.email}</div>
+                                {user.company_name && (
+                                  <div className="text-sm text-gray-600 truncate">
+                                    {user.company_name}
+                                    {user.role && ` • ${user.role}`}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="flex-shrink-0">
+                                {user.user_type === 'admin' ? (
+                                  <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+                                    Admin
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-blue-600 border-blue-600">
+                                    User
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                    
+                    {/* Pagination Controls */}
+                    {eventRegisteredUsers.length > eventUsersPerPage && (
+                      <div className="mt-6 flex items-center justify-between px-4 py-3 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">
+                            Showing <span className="font-medium">{(eventUsersCurrentPage - 1) * eventUsersPerPage + 1}</span> to{' '}
+                            <span className="font-medium">
+                              {Math.min(eventUsersCurrentPage * eventUsersPerPage, eventRegisteredUsers.length)}
+                            </span>{' '}
+                            of <span className="font-medium">{eventRegisteredUsers.length}</span> users
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEventUsersCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={eventUsersCurrentPage === 1}
+                            className="h-8"
+                          >
+                            Previous
+                          </Button>
+                          
+                          {Array.from({ length: Math.ceil(eventRegisteredUsers.length / eventUsersPerPage) }, (_, i) => i + 1)
+                            .filter(page => {
+                              const totalPages = Math.ceil(eventRegisteredUsers.length / eventUsersPerPage);
+                              if (totalPages <= 5) return true;
+                              if (page === 1 || page === totalPages) return true;
+                              if (Math.abs(page - eventUsersCurrentPage) <= 1) return true;
+                              return false;
+                            })
+                            .map((page, index, array) => {
+                              if (index > 0 && array[index - 1] !== page - 1) {
+                                return [
+                                  <span key={`ellipsis-${page}`} className="px-2 text-gray-400">...</span>,
+                                  <Button
+                                    key={page}
+                                    variant={eventUsersCurrentPage === page ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setEventUsersCurrentPage(page)}
+                                    className={`h-8 w-8 p-0 ${
+                                      eventUsersCurrentPage === page 
+                                        ? 'bg-csa-blue hover:bg-blue-700' 
+                                        : ''
+                                    }`}
+                                  >
+                                    {page}
+                                  </Button>
+                                ];
+                              }
+                              return (
+                                <Button
+                                  key={page}
+                                  variant={eventUsersCurrentPage === page ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => setEventUsersCurrentPage(page)}
+                                  className={`h-8 w-8 p-0 ${
+                                    eventUsersCurrentPage === page 
+                                      ? 'bg-csa-blue hover:bg-blue-700' 
+                                      : ''
+                                  }`}
+                                >
+                                  {page}
+                                </Button>
+                              );
+                            })}
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEventUsersCurrentPage(prev => 
+                              Math.min(prev + 1, Math.ceil(eventRegisteredUsers.length / eventUsersPerPage))
+                            )}
+                            disabled={eventUsersCurrentPage >= Math.ceil(eventRegisteredUsers.length / eventUsersPerPage)}
+                            className="h-8"
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           <TabsContent value="add" className="space-y-6">
@@ -1391,6 +2004,10 @@ export default function Admin() {
                   onParkingCheckInChange={handleParkingCheckInChange}
                   onDescriptionChange={handleDescriptionChange}
                   onPosterChange={handlePosterChange}
+                  onPosterUpload={handlePosterUpload}
+                  isUploadingPoster={isUploadingPoster}
+                  onSpeakerImageUpload={handleSpeakerImageUpload}
+                  uploadingSpeakerId={uploadingSpeakerId}
                   onTagsChange={handleTagsChange}
                   onCapacityChange={handleCapacityChange}
                   onAttendeesChange={handleAttendeesChange}
@@ -1401,6 +2018,254 @@ export default function Admin() {
                   onUpdateSpeaker={updateSpeaker}
                   onRemoveSpeaker={removeSpeaker}
                 />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-6">
+            <Card className="border-t-4 border-t-csa-blue">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-2xl font-medium">
+                      <div className="p-2 bg-csa-blue rounded-lg">
+                        <Users className="h-6 w-6 text-white" />
+                      </div>
+                      All Users
+                      <Badge variant="secondary" className="ml-2 bg-csa-blue/10 text-csa-blue border-csa-blue/20">
+                        {users.length} Total
+                      </Badge>
+                    </CardTitle>
+                  </div>
+                  <Button
+                    onClick={fetchUsers}
+                    disabled={isLoadingUsers}
+                    className="bg-csa-blue hover:bg-csa-blue/90 text-white shadow-md"
+                    size="sm"
+                  >
+                    {isLoadingUsers ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <Users className="h-4 w-4 mr-2" />
+                    )}
+                    {isLoadingUsers ? "Loading..." : "Refresh Users"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isLoadingUsers ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-csa-blue"></div>
+                  </div>
+                ) : users.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-lg font-medium">No users found</p>
+                    <p className="text-sm mt-2">Click refresh to load users</p>
+                  </div>
+                ) : (
+                  <>
+                  <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200">
+                          <TableHead className="font-semibold text-gray-700">Name</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Email</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Company</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Role</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Provider</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Registered Events</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(() => {
+                          // Calculate pagination
+                          const indexOfLastUser = currentPage * usersPerPage;
+                          const indexOfFirstUser = indexOfLastUser - usersPerPage;
+                          const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+                          
+                          return currentUsers.map((usr, index) => (
+                          <TableRow key={usr.id} className="hover:bg-blue-50/50 transition-colors border-b border-gray-100">
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-3">
+                                {usr.avatar_url ? (
+                                  <img src={usr.avatar_url} alt={usr.name} className="h-10 w-10 rounded-full border-2 border-csa-blue/20 shadow-sm" />
+                                ) : (
+                                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-csa-blue to-purple-600 flex items-center justify-center shadow-md">
+                                    <span className="text-sm font-semibold text-white">
+                                      {usr.name?.charAt(0) || usr.email.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="font-semibold text-gray-900">{usr.name || 'N/A'}</div>
+                                  <div className="text-xs text-gray-500">User #{index + 1 + (currentPage - 1) * usersPerPage}</div>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-700">{usr.email}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className={`${usr.company_name ? 'text-gray-800 font-medium' : 'text-gray-400 italic'}`}>
+                                {usr.company_name || 'No company'}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <span className={`${usr.role || usr.headline ? 'text-gray-800' : 'text-gray-400 italic'}`}>
+                                {usr.role || usr.headline || 'No role'}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant="outline" 
+                                className={`capitalize font-medium ${
+                                  usr.provider === 'linkedin_oidc' 
+                                    ? 'bg-blue-100 text-blue-700 border-blue-300' 
+                                    : 'bg-gray-100 text-gray-700 border-gray-300'
+                                }`}
+                              >
+                                {usr.provider?.replace('_oidc', '') || 'email'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {usr.registration_count ? (
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="gap-2 bg-green-50 border-green-300 text-green-700 hover:bg-green-100 hover:border-green-400 font-medium"
+                                    >
+                                      <Calendar className="h-4 w-4" />
+                                      <span className="flex items-center gap-1">
+                                        <span className="font-bold">{usr.registration_count}</span>
+                                        {usr.registration_count === 1 ? 'event' : 'events'}
+                                      </span>
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl border-t-4 border-t-csa-blue">
+                                    <DialogHeader>
+                                      <DialogTitle className="text-xl flex items-center gap-2">
+                                        <Calendar className="h-5 w-5 text-csa-blue" />
+                                        Registered Events - {usr.name}
+                                      </DialogTitle>
+                                      <DialogDescription className="text-base">
+                                        Events that {usr.name} has registered for
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                                      {usr.registrations?.map((reg, idx) => (
+                                        <div key={reg.id} className="flex items-center justify-between p-4 border-l-4 border-l-csa-blue bg-gradient-to-r from-blue-50 to-white rounded-lg hover:shadow-md transition-shadow">
+                                          <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                              <span className="bg-csa-blue text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                                                {idx + 1}
+                                              </span>
+                                              <p className="font-semibold text-base text-gray-900">{reg.events.title}</p>
+                                            </div>
+                                            <p className="text-sm text-gray-600 mt-1 ml-8">
+                                              📅 {new Date(reg.events.date_time).toLocaleDateString('en-US', {
+                                                weekday: 'short',
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                              })}
+                                            </p>
+                                          </div>
+                                          <Badge className="ml-2 bg-green-100 text-green-700 border-green-300">
+                                            ✓ Registered
+                                          </Badge>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              ) : (
+                                <Badge variant="outline" className="text-gray-400 border-gray-300">
+                                  No registrations
+                                </Badge>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                          ));
+                        })()}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  {/* Pagination Controls */}
+                  <div className="mt-6 flex items-center justify-between bg-gradient-to-r from-gray-50 to-blue-50 p-4 rounded-lg border border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-white border-csa-blue/30 text-gray-700 font-medium px-3 py-1">
+                        Showing {Math.min((currentPage - 1) * usersPerPage + 1, users.length)} - {Math.min(currentPage * usersPerPage, users.length)} of {users.length} users
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="bg-white hover:bg-csa-blue hover:text-white transition-colors disabled:opacity-50"
+                      >
+                        ← Previous
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {(() => {
+                          const totalPages = Math.ceil(users.length / usersPerPage);
+                          const pages = [];
+                          
+                          // Show page numbers
+                          for (let i = 1; i <= totalPages; i++) {
+                            // Show first page, last page, current page, and pages around current
+                            if (
+                              i === 1 ||
+                              i === totalPages ||
+                              (i >= currentPage - 1 && i <= currentPage + 1)
+                            ) {
+                              pages.push(
+                                <Button
+                                  key={i}
+                                  variant={currentPage === i ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => setCurrentPage(i)}
+                                  className={currentPage === i 
+                                    ? "bg-gradient-to-r from-csa-blue to-purple-600 hover:from-csa-blue/90 hover:to-purple-600/90 text-white shadow-md font-bold min-w-[2.5rem]" 
+                                    : "bg-white hover:bg-blue-50 hover:border-csa-blue min-w-[2.5rem]"
+                                  }
+                                >
+                                  {i}
+                                </Button>
+                              );
+                            } else if (
+                              i === currentPage - 2 ||
+                              i === currentPage + 2
+                            ) {
+                              pages.push(<span key={i} className="px-2 text-gray-400 font-bold">•••</span>);
+                            }
+                          }
+                          
+                          return pages;
+                        })()}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(users.length / usersPerPage)))}
+                        disabled={currentPage === Math.ceil(users.length / usersPerPage)}
+                        className="bg-white hover:bg-csa-blue hover:text-white transition-colors disabled:opacity-50"
+                      >
+                        Next →
+                      </Button>
+                    </div>
+                  </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

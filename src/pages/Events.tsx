@@ -277,7 +277,6 @@ export default function Events() {
       }
       
       const data = await response.json();
-      console.log('API Response:', data); // Debug log
       
       // Extract events array from response
       const eventsArray = data.events || data;
