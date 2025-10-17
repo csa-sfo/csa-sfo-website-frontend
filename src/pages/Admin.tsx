@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { Event, AgendaItem, Speaker } from "@/types/event";
 import { API_BASE_URL, API_ENDPOINTS } from "@/config/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { handleApiError, handleAuthError } from "@/utils/authUtils";
+// import { handleApiError, handleAuthError } from "@/utils/authUtils";
 
 // Separate EventForm component to prevent re-renders
 interface EventFormProps {
@@ -725,9 +725,9 @@ export default function Admin() {
       });
 
       if (!response.ok) {
-        if (handleApiError(response, 'Failed to fetch events')) {
-          return; // Error was handled (token expired)
-        }
+        // if (handleApiError(response, 'Failed to fetch events')) {
+        //   return; // Error was handled (token expired)
+        // }
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to fetch events');
       }
@@ -746,7 +746,7 @@ export default function Admin() {
           }
     } catch (error) {
       console.error('Error fetching events:', error);
-      handleAuthError(error);
+      // handleAuthError(error);
       // Fallback to initial events if API fails
       // setEvents(initialEvents);
       setEvents([]);
@@ -803,7 +803,6 @@ export default function Admin() {
                   localStorage.setItem('csaTokens', JSON.stringify({ accessToken: adminResult.admin_token }));
                   accessToken = adminResult.admin_token;
                   console.log('Admin token refreshed successfully');
-                  toast.success('Admin token refreshed. Please try again.');
                 }
               }
             } catch (refreshError) {
@@ -827,11 +826,12 @@ export default function Admin() {
         console.error('Failed to fetch users:', errorText);
         
         if (response.status === 401) {
-          handleAuthError(() => {
-            console.log('Session expired, redirecting to login...');
-          });
+          // handleAuthError(() => {
+          //   console.log('Session expired, redirecting to login...');
+          // });
+          console.log('Session expired, redirecting to login...');
         } else {
-          toast.error('Failed to fetch users');
+          // toast.error('Failed to fetch users');
         }
         return;
       }
@@ -841,7 +841,7 @@ export default function Admin() {
       setCurrentPage(1); // Reset to first page when users are refreshed
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Error loading users');
+      // toast.error('Error loading users');
     } finally {
       setIsLoadingUsers(false);
     }
@@ -889,7 +889,7 @@ export default function Admin() {
       setIsEventUsersDialogOpen(true);
     } catch (error) {
       console.error('Error fetching registered users:', error);
-      toast.error('Failed to load registered users');
+      // toast.error('Failed to load registered users');
     } finally {
       setIsLoadingEventUsers(false);
     }
@@ -1070,9 +1070,9 @@ export default function Admin() {
           });
 
       if (!response.ok) {
-        if (handleApiError(response, 'Failed to create event')) {
-          return; // Error was handled (token expired)
-        }
+        // if (handleApiError(response, 'Failed to create event')) {
+        //   return; // Error was handled (token expired)
+        // }
         const errorData = await response.json();
         console.error('Backend error response:', errorData);
         throw new Error(JSON.stringify(errorData) || 'Failed to create event');
@@ -1106,7 +1106,7 @@ export default function Admin() {
       fetchEvents();
     } catch (error) {
       console.error('Error creating event:', error);
-      handleAuthError(error);
+      // handleAuthError(error);
     } finally {
       setIsLoading(false);
     }
