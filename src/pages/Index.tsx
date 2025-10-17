@@ -435,32 +435,30 @@ export default function Index() {
       </section>
 
       {/* Executive Member Section */}
-      <section className="py-6 sm:py-8 lg:py-12 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden">
+      <section className="py-4 sm:py-6 lg:py-8 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden">
         {/* Background decorative elements - adjusted for mobile */}
-        <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 bg-csa-accent/5 rounded-full blur-2xl sm:blur-3xl"></div>
-        <div className="absolute bottom-0 right-0 w-40 h-40 sm:w-64 sm:h-64 bg-blue-500/5 rounded-full blur-2xl sm:blur-3xl"></div>
+        <div className="absolute top-0 left-0 w-24 h-24 sm:w-32 sm:h-32 bg-csa-accent/5 rounded-full blur-2xl sm:blur-3xl"></div>
+        <div className="absolute bottom-0 right-0 w-32 h-32 sm:w-48 sm:h-48 bg-blue-500/5 rounded-full blur-2xl sm:blur-3xl"></div>
         
         <div className="container-site relative px-4 sm:px-6">
-          <div className="text-center mb-4 sm:mb-6">
+          <div className="text-center mb-12">
             
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-secondary mb-2">
+            <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-4">
               Executive Member
             </h2>
-            <p className="text-sm sm:text-base text-gray-600 max-w-3xl mx-auto px-4 sm:px-6">
-              Indrasol has developed AI-powered features for the CSA SFO website, including a context-aware AI voice assistant that guides visitors using live website updates, an AI chatbot, and integrated Stripe payments.
-            </p>
+            
           </div>
 
-          <div className="max-w-8xl mx-auto px-2 sm:px-4">
-            <Card className="overflow-hidden shadow-md sm:shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+          <div className="max-w-6xl mx-auto px-2 sm:px-4">
+            <Card className="overflow-hidden shadow-md border-0 bg-white/80 backdrop-blur-sm">
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-0">
                 {/* Left Column - Logo */}
-                <div className="relative bg-gradient-to-br from-white via-gray-50/50 to-blue-50/30 p-4 sm:p-6 lg:p-8 flex flex-col justify-center items-center overflow-hidden min-h-[300px] sm:min-h-[400px]">
+                <div className="relative bg-gradient-to-br from-white via-gray-50/50 to-blue-50/30 p-3 sm:p-4 lg:p-6 flex flex-col justify-center items-center overflow-hidden min-h-[200px] sm:min-h-[250px]">
                   {/* Background decorative elements - adjusted for mobile */}
                   <div className="absolute top-0 left-0 w-20 h-20 sm:w-32 sm:h-32 bg-gradient-to-br from-csa-accent/10 to-blue-500/10 rounded-full blur-2xl sm:blur-3xl opacity-30"></div>
                   <div className="absolute bottom-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-tr from-primary/10 to-csa-accent/10 rounded-full blur-xl sm:blur-2xl opacity-40"></div>
                   
-                  <div className="relative z-10 w-full space-y-4 sm:space-y-6 lg:space-y-8 text-center">
+                  <div className="relative z-10 w-full space-y-2 sm:space-y-3 lg:space-y-4 text-center">
                     {/* Main Logo */}
                     <div className="flex justify-center">
                       {executiveMember.map((partner, index) => (
@@ -472,11 +470,11 @@ export default function Index() {
                           className="inline-block transition-all duration-300 hover:scale-105 animate-fade-in group"
                           style={{ animationDelay: `${index * 0.1}s` }}
                         >
-                          <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 xl:p-10 shadow-lg sm:shadow-xl group-hover:shadow-2xl transition-all duration-500 border border-white/30 w-full max-w-[200px] sm:max-w-[240px] lg:max-w-[280px]">
+                          <div className="bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 shadow-lg group-hover:shadow-xl transition-all duration-500 border border-white/30 w-full max-w-[160px] sm:max-w-[180px] lg:max-w-[200px]">
                             <img 
                               src={partner.logo} 
                               alt={`${partner.name} logo`}
-                              className="h-16 sm:h-20 md:h-24 lg:h-28 xl:h-32 object-contain mx-auto w-full transition-all duration-500 group-hover:brightness-110"
+                              className="h-12 sm:h-14 md:h-16 lg:h-18 object-contain mx-auto w-full transition-all duration-500 group-hover:brightness-110"
                             />
                           </div>
                         </a>
@@ -485,13 +483,13 @@ export default function Index() {
 
                     {/* Website Link */}
                     <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                      <div className="inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm px-4 sm:px-6 py-2.5 sm:py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-white/40 min-h-[44px] touch-manipulation">
-                        <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-csa-accent flex-shrink-0" />
+                      <div className="inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-full shadow-md hover:shadow-lg transition-all duration-300 border border-white/40 min-h-[36px] touch-manipulation">
+                        <ExternalLink className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-csa-accent flex-shrink-0" />
                         <a 
                           href="https://indrasol.com/" 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-csa-accent hover:text-csa-accent/80 font-semibold transition-colors text-sm sm:text-base"
+                          className="text-csa-accent hover:text-csa-accent/80 font-semibold transition-colors text-xs sm:text-sm"
                         >
                           <span className="hidden sm:inline">Visit Indrasol.com</span>
                           <span className="sm:hidden">Visit Website</span>
@@ -501,9 +499,9 @@ export default function Index() {
 
                     {/* Partnership Badge */}
                     <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                      <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-csa-accent/10 to-primary/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-csa-accent/20">
-                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0"></div>
-                        <span className="text-xs sm:text-sm font-medium text-gray-700">
+                      <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-csa-accent/10 to-primary/10 backdrop-blur-sm px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-csa-accent/20">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse flex-shrink-0"></div>
+                        <span className="text-xs font-medium text-gray-700">
                           <span className="hidden sm:inline">Executive Member since 2023</span>
                           <span className="sm:hidden">Member since 2023</span>
                         </span>
@@ -512,33 +510,32 @@ export default function Index() {
                   </div>
                 </div>
 
-                {/* Right Column - Services Image */}
-                <div className="relative bg-gradient-to-br from-blue-50/20 via-white/50 to-gray-50/30 p-4 sm:p-6 lg:p-8 flex flex-col justify-center items-center overflow-hidden min-h-[300px] sm:min-h-[400px]">
+                {/* Right Column - Description Text */}
+                <div className="relative bg-gradient-to-br from-blue-50/20 via-white/50 to-gray-50/30 p-3 sm:p-4 lg:p-6 flex flex-col justify-center items-center overflow-hidden min-h-[200px] sm:min-h-[250px]">
                   {/* Background decorative elements - adjusted for mobile */}
-                  <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 bg-gradient-to-br from-csa-accent/10 to-blue-500/10 rounded-full blur-2xl sm:blur-3xl opacity-50"></div>
-                  <div className="absolute bottom-0 left-0 w-20 h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32 bg-gradient-to-tr from-primary/10 to-csa-accent/10 rounded-full blur-xl sm:blur-2xl opacity-30"></div>
+                  <div className="absolute top-0 right-0 w-20 h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32 bg-gradient-to-br from-csa-accent/10 to-blue-500/10 rounded-full blur-2xl sm:blur-3xl opacity-50"></div>
+                  <div className="absolute bottom-0 left-0 w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-tr from-primary/10 to-csa-accent/10 rounded-full blur-xl sm:blur-2xl opacity-30"></div>
                   
                   <div className="relative z-10 w-full flex justify-center">
-                    {/* Services Image */}
-                    <div className="w-full max-w-[280px] sm:max-w-[320px] md:max-w-[380px] lg:max-w-[450px] animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                    {/* Description Text */}
+                    <div className="w-full max-w-[320px] sm:max-w-[380px] md:max-w-[420px] lg:max-w-[460px] animate-fade-in text-center" style={{ animationDelay: '0.3s' }}>
                       <div className="relative group">
-                        {/* Main image with subtle overlay */}
-                        <div className="relative overflow-hidden rounded-lg sm:rounded-xl lg:rounded-2xl">
-                          <img 
-                            src="/lovable-uploads/core-key-services.png"
-                            alt="Indrasol Key Services Overview"
-                            className="w-full h-auto object-contain transition-all duration-500 sm:duration-700 group-hover:scale-105"
-                          />
-                          {/* Subtle gradient overlay for blending */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-blue-50/20 via-transparent to-white/10 opacity-60 group-hover:opacity-40 transition-opacity duration-300 sm:duration-500"></div>
+                        {/* Main text content with background */}
+                        <div className="relative bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl p-4 sm:p-5 lg:p-6 shadow-lg hover:shadow-xl transition-all duration-500 border border-white/50">
+                          <p className="text-xs sm:text-sm lg:text-base text-gray-700 leading-relaxed">
+                            Indrasol has developed AI-powered features for the CSA SFO website, including a context-aware AI voice assistant that guides visitors using live website updates, an AI chatbot, and integrated Stripe payments.
+                          </p>
+                          
+                          {/* Subtle gradient overlay for visual appeal */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-blue-50/20 via-transparent to-white/10 opacity-60 group-hover:opacity-40 transition-opacity duration-300 sm:duration-500 rounded-lg sm:rounded-xl"></div>
                           
                           {/* Interactive glow effect */}
-                          <div className="absolute -inset-0.5 sm:-inset-1 bg-gradient-to-r from-csa-accent/20 via-blue-500/20 to-primary/20 rounded-lg sm:rounded-xl lg:rounded-2xl blur-md sm:blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 sm:duration-700"></div>
+                          <div className="absolute -inset-0.5 bg-gradient-to-r from-csa-accent/20 via-blue-500/20 to-primary/20 rounded-lg sm:rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         </div>
                         
                         {/* Floating accent elements - adjusted for mobile */}
-                        <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-3 h-3 sm:w-4 sm:h-4 bg-gradient-to-br from-csa-accent to-blue-500 rounded-full opacity-70 animate-pulse"></div>
-                        <div className="absolute -bottom-0.5 -left-0.5 sm:-bottom-1 sm:-left-1 w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-tr from-primary to-csa-accent rounded-full opacity-50 animate-bounce" style={{ animationDelay: '1s' }}></div>
+                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gradient-to-br from-csa-accent to-blue-500 rounded-full opacity-70 animate-pulse"></div>
+                        <div className="absolute -bottom-0.5 -left-0.5 w-2 h-2 bg-gradient-to-tr from-primary to-csa-accent rounded-full opacity-50 animate-bounce" style={{ animationDelay: '1s' }}></div>
                       </div>
                     </div>
                   </div>

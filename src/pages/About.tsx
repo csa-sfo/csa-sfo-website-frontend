@@ -43,12 +43,6 @@ const advisoryMembers = [
     role: "Advisory Member",
     linkedin: "https://www.linkedin.com/in/kapilraina/ ",
     image: "/lovable-uploads/members/Kapilraina.png"
-  },
-  {
-    name: "Rahul Kalva",
-    role: "Advisory Member",
-    linkedin: "https://www.linkedin.com/in/rahul-kalva",
-    image: "/lovable-uploads/members/rahulkalva.png"
   }
 ];
 
@@ -229,7 +223,7 @@ export default function About() {
           </div>
 
           <div className="flex justify-center">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
+            <div className="grid grid-cols-1 gap-8 max-w-sm">
               {advisoryMembers.map((member, index) => (
                 <Card key={member.name} className="text-center overflow-hidden h-full">
                   <CardContent className="pt-8 pb-6">
@@ -388,7 +382,7 @@ export default function About() {
               Our Vision
             </h2>
             <p className="text-lg text-gray-600 leading-relaxed">
-              To be the Bay Area's leading cloud security community — the next RSA Conference — where professionals connect, learn, and shape the future of secure cloud and AI.
+            Be the Bay Area's leading cloud security community — the next "RSA of Bay Area" — where professionals connect, learn, and shape the future of secure cloud and AI.
             </p>
           </div>
         </div>
