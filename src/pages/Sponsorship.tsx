@@ -65,7 +65,8 @@ const partners = [
 const sponsorshipTiers = [
   {
     name: "Platinum",
-    price: "$5,000+",
+    duration: "3 years",
+    price: "$5,000",
     priceValue: 5000,
     stripeProductId: "prod_SsCCvAwsBE9mPE",
     stripePriceId: "price_1RwRoL1UuWDRyCc1UZWBec7B",
@@ -83,6 +84,7 @@ const sponsorshipTiers = [
   },
   {
     name: "Gold",
+    duration: "2 years",
     price: "$3,000",
     priceValue: 3000,
     stripeProductId: "prod_SsCDl33DNshyt6",
@@ -100,6 +102,7 @@ const sponsorshipTiers = [
   },
   {
     name: "Silver",
+    duration: "1 year",
     price: "$2,000",
     priceValue: 2000,
     stripeProductId: "prod_SsCE0iUAHFIOMz",
@@ -306,15 +309,17 @@ export default function Sponsorship() {
                 {/* Navigation Dots */}
                 <div className="flex justify-center gap-3 mt-6">
                   {heroSlides.map((_, index) => (
-                    <button
+                    <Button
                       key={index}
                       onClick={() => setCurrentSlide(index)}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      className={`w-3 h-3 rounded-full transition-all duration-300 p-0 border-0 ${
                         index === currentSlide 
                           ? 'bg-csa-accent scale-125' 
                           : 'bg-white/40 hover:bg-white/60'
                       }`}
                       aria-label={`Go to slide ${index + 1}`}
+                      variant="ghost"
+                      size="sm"
                     />
                   ))}
                 </div>
@@ -351,7 +356,7 @@ export default function Sponsorship() {
         <div className="container-site">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-csa-navy mb-4">
-              Annual Sponsorship Opportunities
+              Sponsorship Opportunities
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Choose the sponsorship level that best fits your organization's 
@@ -379,6 +384,7 @@ export default function Sponsorship() {
                 <CardHeader className="text-center relative z-10">
                   <CardTitle className="text-csa-navy text-xl font-bold">{tier.name}</CardTitle>
                   <div className="text-3xl font-bold text-csa-blue">{tier.price}</div>
+                  <div className="text-sm font-medium text-csa-accent mb-2">{tier.duration}</div>
                   <CardDescription className="text-gray-600">{tier.description}</CardDescription>
                 </CardHeader>
                 
@@ -471,7 +477,7 @@ export default function Sponsorship() {
         <div className="container-site">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-csa-navy mb-4">
-              Our Valued Sponsors
+            Executive Member
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               We're proud to partner with industry-leading organizations that 
@@ -481,7 +487,7 @@ export default function Sponsorship() {
 
           {/* Technical Partner Section */}
           <div className="mb-12">
-            <h3 className="text-xl font-semibold text-csa-navy text-center mb-6">Technical Partner</h3>
+            
             <div className="flex justify-center">
               {technicalPartner.map((partner, index) => (
                 <div key={index} className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-csa-blue/20 max-w-xs">
