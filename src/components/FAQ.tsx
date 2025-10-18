@@ -109,7 +109,7 @@ export default function FAQ({
               Contact Us
             </a>
             <a
-              href="https://www.linkedin.com/groups/13346003/"
+              href="https://www.linkedin.com/groups/14049487/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center px-6 py-3 border border-csa-accent text-csa-accent rounded-lg hover:bg-csa-accent hover:text-white transition-colors duration-200 font-medium"

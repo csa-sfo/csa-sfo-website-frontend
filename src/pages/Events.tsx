@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Users, Car, X, Loader2 } from "lucide-react";
+import { Calendar, MapPin, Users, Car, X, Loader2, Trophy } from "lucide-react";
 import { Event } from "@/types/event";
 import { API_ENDPOINTS } from "@/config/api";
+import { RaffleWheel } from "@/components/RaffleWheel";
 
 // All events data - will be dynamically categorized as upcoming or past
 // COMMENTED OUT: Now fetching from API instead of using hardcoded data
@@ -257,6 +258,11 @@ export default function Events() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isSlideshowPaused, setIsSlideshowPaused] = useState(false);
+  const [raffleEventId, setRaffleEventId] = useState<string | null>(null);
+  const [raffleAttendees, setRaffleAttendees] = useState<{ name: string; email: string }[]>([]);
+  const [raffleEventTitle, setRaffleEventTitle] = useState("");
+  const [isLoadingRaffle, setIsLoadingRaffle] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     // Check hash immediately on component initialization
     const hash = window.location.hash;
@@ -264,6 +270,7 @@ export default function Events() {
     if (hash === '#upcoming') return 'upcoming';
     return 'upcoming';
   });
+
 
   // Fetch events from API
   const fetchEvents = async () => {
@@ -339,6 +346,44 @@ export default function Events() {
     setAttendeeCounts(counts);
   };
 
+  // Fetch raffle attendees for an event
+  const openRaffle = async (eventId: string, eventTitle: string) => {
+    setIsLoadingRaffle(true);
+    setRaffleEventId(eventId);
+    setRaffleEventTitle(eventTitle);
+    
+    try {
+      const response = await fetch(`${API_ENDPOINTS.EVENT_REGISTERED_USERS}/${eventId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch attendees');
+      }
+      
+      const data = await response.json();
+      
+      // The API returns { registered_users: [...], count: N }
+      const registeredUsers = data.registered_users || [];
+      
+      // Transform data to match RaffleWheel expected format
+      const attendees = registeredUsers.map((user: any) => ({
+        name: user.name || user.full_name || user.email?.split('@')[0] || 'Anonymous',
+        email: user.email || ''
+      }));
+      
+      setRaffleAttendees(attendees);
+    } catch (error) {
+      console.error('Error fetching raffle attendees:', error);
+      setRaffleAttendees([]);
+    } finally {
+      setIsLoadingRaffle(false);
+    }
+  };
+
+  const closeRaffle = () => {
+    setRaffleEventId(null);
+    setRaffleAttendees([]);
+    setRaffleEventTitle("");
+  };
+
   // Fetch events on component mount
   useEffect(() => {
     fetchEvents();
@@ -412,50 +457,70 @@ export default function Events() {
     };
   }, [allEvents]);
 
-  // Slideshow images array with captions and descriptions
+  // Slideshow images array
   const slideshowImages = [
     {
       src: "/Events-pictures/PXL_20250522_024915629.MP.jpg",
-      caption: "CSA Community Networking Event",
-      description: "Members connecting and sharing insights"
+      caption: "CSA Event 1",
+      description: "Community networking and learning"
     },
     {
       src: "/Events-pictures/1729377993131.jpeg",
-      caption: "Technical Workshop Session",
-      description: "Hands-on learning with industry experts"
+      caption: "CSA Event 2",
+      description: "Industry experts sharing knowledge"
     },
     {
       src: "/Events-pictures/20250604_111127.jpg",
-      caption: "Speaker Presentation",
-      description: "Expert insights on cloud security trends"
+      caption: "CSA Event 3",
+      description: "Collaborative discussions and workshops"
     },
     {
       src: "/Events-pictures/20250605_133448.jpg",
-      caption: "Interactive Discussion Panel",
-      description: "Q&A session with security professionals"
+      caption: "CSA Event 4",
+      description: "Professional development sessions"
     },
     {
       src: "/Events-pictures/PXL_20250327_020441379.MP.jpg",
-      caption: "Networking Break",
-      description: "Building connections in the community"
+      caption: "CSA Event 5",
+      description: "Tech talks and demonstrations"
     },
     {
       src: "/Events-pictures/PXL_20250522_015003557.MP.jpg",
-      caption: "Event Wrap-up",
-      description: "Closing thoughts and future plans"
+      caption: "CSA Event 6",
+      description: "Networking and collaboration opportunities"
     }
   ];
 
-  // Event images array for the modal (extract src from slideshowImages)
-  const eventImages = slideshowImages.map(img => img.src);
 
   // Auto-slide functionality
   useEffect(() => {
+    if (slideshowImages.length === 0 || isSlideshowPaused) return;
+    
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slideshowImages.length);
-    }, 4000); // Change slide every 4 seconds
+    }, 1500); // Change slide every 1.5 seconds
 
     return () => clearInterval(interval);
+  }, [slideshowImages.length, isSlideshowPaused]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (slideshowImages.length === 0) return;
+      
+      if (event.key === 'ArrowLeft') {
+        setCurrentSlide((prev) => 
+          prev === 0 ? slideshowImages.length - 1 : prev - 1
+        );
+      } else if (event.key === 'ArrowRight') {
+        setCurrentSlide((prev) => 
+          (prev + 1) % slideshowImages.length
+        );
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [slideshowImages.length]);
 
   // Function to categorize events as upcoming or past based on current date
@@ -596,12 +661,21 @@ export default function Events() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {event.tags.map((tag: string) => (
               <Badge key={tag} variant="secondary" className="bg-csa-blue/10 text-csa-blue">
                 {tag}
               </Badge>
             ))}
+            <Button
+              onClick={() => openRaffle(event.id, event.title)}
+              variant="outline"
+              size="sm"
+              className="ml-auto border-yellow-500 text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700"
+            >
+              <Trophy className="h-4 w-4 mr-1" />
+              Raffle
+            </Button>
           </div>
 
           {showRegistration && (
@@ -707,71 +781,162 @@ export default function Events() {
           </div>
 
           {/* Right Column - Interactive Image Gallery */}
-          <div className="relative flex items-center justify-center p-8">
+          <div className="relative flex items-center justify-center p-4">
             
-            {/* Slideshow Container */}
-            <div className="relative w-full max-w-2xl h-[400px] lg:h-[480px] overflow-hidden rounded-3xl">
-              
-              {/* Slideshow Images */}
-              <div className="relative w-full h-full">
-                {slideshowImages.map((image, index) => (
-                  <div
-                    key={index}
-                    className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
-                      index === currentSlide 
-                        ? 'opacity-100 scale-100' 
-                        : 'opacity-0 scale-105'
-                    }`}
-                  >
-                    <div 
-                      className="relative w-full h-full cursor-pointer group"
-                      onClick={() => setSelectedImage(image.src)}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-csa-accent/20 to-csa-blue/20 rounded-3xl blur-xl"></div>
-                      <img 
-                        src={image.src}
-                        alt={`CSA Event ${index + 1}`}
-                        className="relative w-full h-full object-cover rounded-3xl shadow-2xl border-2 border-white/20"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    </div>
+            {/* Cover Flow Carousel */}
+            {slideshowImages.length > 0 && (
+              <div 
+                className="relative w-full max-w-7xl h-[550px] overflow-hidden"
+                onMouseEnter={() => setIsSlideshowPaused(true)}
+                onMouseLeave={() => setIsSlideshowPaused(false)}
+              >
+                {/* Carousel Container */}
+                <div className="relative w-full h-full flex items-center justify-center">
+                  {/* Carousel Images */}
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    {slideshowImages.map((image, index) => {
+                      const distance = Math.abs(index - currentSlide);
+                      const isActive = index === currentSlide;
+                      const isPrev = index === currentSlide - 1 || (currentSlide === 0 && index === slideshowImages.length - 1);
+                      const isNext = index === currentSlide + 1 || (currentSlide === slideshowImages.length - 1 && index === 0);
+                      
+                      let transform = '';
+                      let opacity = 0.3;
+                      let scale = 0.7;
+                      let zIndex = 1;
+                      
+                      if (isActive) {
+                        transform = 'translateX(0)';
+                        opacity = 1;
+                        scale = 1;
+                        zIndex = 10;
+                      } else if (isPrev) {
+                        transform = 'translateX(-250px)';
+                        opacity = 0.6;
+                        scale = 0.8;
+                        zIndex = 5;
+                      } else if (isNext) {
+                        transform = 'translateX(250px)';
+                        opacity = 0.6;
+                        scale = 0.8;
+                        zIndex = 5;
+                      } else {
+                        transform = `translateX(${(index - currentSlide) * 500}px)`;
+                        opacity = 0.2;
+                        scale = 0.6;
+                        zIndex = 1;
+                      }
+                      
+                      return (
+                        <div
+                          key={index}
+                          className="absolute transition-all duration-700 ease-out cursor-pointer"
+                          style={{
+                            transform,
+                            opacity,
+                            zIndex
+                          }}
+                          onClick={() => {
+                            if (isActive) {
+                              setSelectedImage(image.src);
+                            } else {
+                              setCurrentSlide(index);
+                            }
+                          }}
+                        >
+                          <div className="relative group">
+                            {/* Image Shadow */}
+                            <div 
+                              className="absolute inset-0 bg-black/30 rounded-2xl blur-lg"
+                              style={{
+                                scale: scale * 1.1
+                              }}
+                            />
+                            
+                            {/* Main Image */}
+                            <img
+                              src={image.src}
+                              alt={`CSA Event ${index + 1}`}
+                              className="relative w-[32rem] h-[24rem] object-cover rounded-2xl shadow-2xl border-2 border-white/20 transition-all duration-300 group-hover:scale-105"
+                              style={{
+                                transform: `scale(${scale})`
+                              }}
+                              onError={(e) => {
+                                console.error(`Failed to load image: ${image.src}`);
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                            
+                            {/* Hover Overlay - only show if there's a caption */}
+                            {image.caption && (
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div className="absolute bottom-4 left-4 right-4">
+                                  <p className="text-white/80 text-xs truncate" title={image.description}>
+                                    {image.description}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Active Indicator */}
+                            {isActive && (
+                              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-csa-accent rounded-full"></div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                </div>
 
-              {/* Slide Indicators */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
-                {slideshowImages.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentSlide(index)}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      index === currentSlide 
-                        ? 'bg-csa-accent scale-125' 
-                        : 'bg-white/40 hover:bg-white/60'
-                    }`}
-                  />
-                ))}
-              </div>
+                {/* Navigation Arrows */}
+                {slideshowImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setCurrentSlide((prev) => 
+                        prev === 0 ? slideshowImages.length - 1 : prev - 1
+                      )}
+                      className="absolute left-8 top-1/2 transform -translate-y-1/2 z-20 bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-full p-4 transition-all duration-300 group"
+                      aria-label="Previous image"
+                    >
+                      <svg className="w-6 h-6 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setCurrentSlide((prev) => 
+                        (prev + 1) % slideshowImages.length
+                      )}
+                      className="absolute right-8 top-1/2 transform -translate-y-1/2 z-20 bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-full p-4 transition-all duration-300 group"
+                      aria-label="Next image"
+                    >
+                      <svg className="w-6 h-6 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </>
+                )}
 
-              {/* Slide Counter */}
-              <div className="absolute top-4 right-4 z-10 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
-                <span className="text-sm text-white font-medium">
-                  {currentSlide + 1} / {slideshowImages.length}
-                </span>
-              </div>
-            </div>
+                {/* Slide Counter */}
+                <div className="absolute top-6 right-6 z-10 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <span className="text-sm text-white font-medium">
+                    {currentSlide + 1} / {slideshowImages.length}
+                  </span>
+                </div>
 
-            {/* Floating Event Info Badge */}
-            <div className="absolute bottom-4 left-4 bg-white text-csa-navy px-4 py-2 rounded-lg shadow-lg border border-gray-200">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-csa-accent rounded-full animate-pulse"></div>
-                <div>
-                  <div className="text-xs font-semibold">{slideshowImages[currentSlide].caption}</div>
-                  <div className="text-xs text-gray-600">{slideshowImages[currentSlide].description}</div>
+              </div>
+            )}
+
+            {/* Fallback when no images */}
+            {slideshowImages.length === 0 && (
+              <div className="relative w-full max-w-2xl h-[400px] lg:h-[480px] overflow-hidden rounded-3xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <div className="text-4xl mb-4">📸</div>
+                  <div className="text-lg font-medium">Loading Event Images...</div>
+                  <div className="text-sm">Images will appear here once loaded</div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -949,15 +1114,15 @@ export default function Events() {
             {/* Image navigation */}
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
               <div className="flex gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-                {eventImages.map((image, index) => (
+                {slideshowImages.map((image, index) => (
                   <button
-                    key={image}
+                    key={image.src}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedImage(image);
+                      setSelectedImage(image.src);
                     }}
                     className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      selectedImage === image 
+                      selectedImage === image.src 
                         ? 'bg-csa-accent scale-125' 
                         : 'bg-white/40 hover:bg-white/60'
                     }`}
@@ -969,6 +1134,14 @@ export default function Events() {
           </div>
         </div>
       )}
+
+      {/* Raffle Wheel Modal */}
+      <RaffleWheel
+        isOpen={raffleEventId !== null && !isLoadingRaffle}
+        onClose={closeRaffle}
+        attendees={raffleAttendees}
+        eventTitle={raffleEventTitle}
+      />
     </div>
   );
 }

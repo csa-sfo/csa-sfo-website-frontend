@@ -544,7 +544,7 @@ export default function EventDetail() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-csa-blue mx-auto mb-4"></div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading Event...</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading Event</h1>
           <p className="text-gray-600">Fetching event details from our database</p>
         </div>
       </div>
@@ -861,11 +861,22 @@ END:VCALENDAR`;
                   <Card key={speaker.id}>
                     <CardContent className="pt-6">
                       <div className="flex items-start space-x-4">
-                        <img
-                          src={speaker.image_url}
-                          alt={`${speaker.name} profile`}
-                          className="w-16 h-16 rounded-full object-cover flex-shrink-0"
-                        />
+                        {speaker.image_url ? (
+                          <img
+                            src={speaker.image_url}
+                            alt={`${speaker.name} profile`}
+                            className="w-16 h-16 rounded-full object-cover flex-shrink-0"
+                            onError={(e) => {
+                              console.log(`Failed to load speaker image for ${speaker.name}: ${speaker.image_url}`);
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                            }}
+                            onLoad={() => console.log(`Successfully loaded speaker image for ${speaker.name}`)}
+                          />
+                        ) : null}
+                        <div className={`w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold ${speaker.image_url ? 'hidden' : ''}`}>
+                          {speaker.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </div>
                         <div>
                           <h3 className="text-lg font-semibold text-csa-navy mb-1">
                             {speaker.name}
@@ -1054,15 +1065,22 @@ END:VCALENDAR`;
                       <p className="text-sm text-gray-600">{event.checkins}</p>
                     </div>
                   )}
-                  <Button asChild variant="outline" className="w-full">
-                    <a
-                      href={event.map_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      View on Map
-                    </a>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => {
+                      if (event.map_url) {
+                        window.open(event.map_url, '_blank');
+                      } else if (event.location) {
+                        // Generate Google Maps URL from location
+                        const encodedLocation = encodeURIComponent(event.location);
+                        const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+                        window.open(googleMapsUrl, '_blank');
+                      }
+                    }}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View on Map
                   </Button>
                 </div>
               </CardContent>
