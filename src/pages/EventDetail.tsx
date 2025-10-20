@@ -431,7 +431,7 @@ export default function EventDetail() {
         setAttendeesCount(data.count || 0);
       }
     } catch (error) {
-      console.error("Error fetching registration count:", error);
+      // Error fetching registration count
     }
   };
 
@@ -532,7 +532,6 @@ export default function EventDetail() {
         throw new Error("Invalid response format");
       }
     } catch (err) {
-      console.error("Error fetching event:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch event");
     } finally {
       setLoading(false);
@@ -680,7 +679,6 @@ export default function EventDetail() {
       await updateAttendeesCount();
       
     } catch (error) {
-      console.error('Registration error:', error);
       toast.error(`Registration failed: ${error.message}`);
     } finally {
     setIsRegistering(false);
@@ -867,11 +865,9 @@ END:VCALENDAR`;
                             alt={`${speaker.name} profile`}
                             className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                             onError={(e) => {
-                              console.log(`Failed to load speaker image for ${speaker.name}: ${speaker.image_url}`);
                               e.currentTarget.style.display = 'none';
                               e.currentTarget.nextElementSibling?.classList.remove('hidden');
                             }}
-                            onLoad={() => console.log(`Successfully loaded speaker image for ${speaker.name}`)}
                           />
                         ) : null}
                         <div className={`w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold ${speaker.image_url ? 'hidden' : ''}`}>

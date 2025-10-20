@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Calendar, MapPin, Users, Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon } from "lucide-react";
+import { Calendar, MapPin, Users, Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Event, AgendaItem, Speaker } from "@/types/event";
 import { API_BASE_URL, API_ENDPOINTS } from "@/config/api";
@@ -630,6 +630,16 @@ export default function Admin() {
   const [eventUsersCurrentPage, setEventUsersCurrentPage] = useState(1);
   const [eventUsersPerPage] = useState(10);
   const [activeTab, setActiveTab] = useState("manage");
+  
+  // Event Images state
+  const [eventImages, setEventImages] = useState<any[]>([]);
+  const [isLoadingEventImages, setIsLoadingEventImages] = useState(false);
+  const [isUploadingEventImage, setIsUploadingEventImage] = useState(false);
+  const [eventImageCaption, setEventImageCaption] = useState("");
+  const [imageToDelete, setImageToDelete] = useState<{ url: string; name: string } | null>(null);
+  const [eventImagesCurrentPage, setEventImagesCurrentPage] = useState(1);
+  const [eventImagesPerPage] = useState(12); // 12 images per page (3x4 grid)
+  
   const [formData, setFormData] = useState<Partial<Event>>({
     title: "",
     date_time: "",
@@ -673,8 +683,6 @@ export default function Admin() {
       // Get authentication token
       const storedTokens = localStorage.getItem('csaTokens');
       if (!storedTokens) {
-        console.warn('No authentication token found, skipping events fetch');
-        // setEvents(initialEvents);
         setEvents([]);
         return;
       }
@@ -703,13 +711,11 @@ export default function Admin() {
               }
             }
           } catch (error) {
-            console.error('Failed to get fresh admin token:', error);
+            // Failed to get fresh admin token
           }
         }
         
         if (!accessToken) {
-          console.warn('No access token available, skipping events fetch');
-          // setEvents(initialEvents);
           setEvents([]);
           return;
         }
@@ -725,9 +731,13 @@ export default function Admin() {
       });
 
       if (!response.ok) {
-        // if (handleApiError(response, 'Failed to fetch events')) {
-        //   return; // Error was handled (token expired)
-        // }
+        if (response.status === 401) {
+          toast.error('Your session has expired. Please login again.');
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+          return;
+        }
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to fetch events');
       }
@@ -745,10 +755,6 @@ export default function Admin() {
             fetchEventRegistrationCounts(eventIds);
           }
     } catch (error) {
-      console.error('Error fetching events:', error);
-      // handleAuthError(error);
-      // Fallback to initial events if API fails
-      // setEvents(initialEvents);
       setEvents([]);
     } finally {
       setIsLoadingEvents(false);
@@ -765,7 +771,6 @@ export default function Admin() {
       // Get authentication token
       const storedTokens = localStorage.getItem('csaTokens');
       if (!storedTokens) {
-        console.warn('No authentication token found, skipping users fetch');
         setUsers([]);
         return;
       }
@@ -774,7 +779,6 @@ export default function Admin() {
       let accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
 
       if (!accessToken) {
-        console.warn('No access token found');
         setUsers([]);
         return;
       }
@@ -787,8 +791,6 @@ export default function Admin() {
         
         // If token doesn't have admin role, try to refresh it
         if (!payload.role || payload.role !== 'admin') {
-          console.warn('Token missing admin role, attempting to refresh...');
-          
           if (user && user.email) {
             try {
               const adminCheckResponse = await fetch(`${API_BASE_URL}/v1/routes/admin/check`, {
@@ -802,16 +804,15 @@ export default function Admin() {
                 if (adminResult.is_admin && adminResult.admin_token) {
                   localStorage.setItem('csaTokens', JSON.stringify({ accessToken: adminResult.admin_token }));
                   accessToken = adminResult.admin_token;
-                  console.log('Admin token refreshed successfully');
                 }
               }
             } catch (refreshError) {
-              console.error('Failed to refresh admin token:', refreshError);
+              // Failed to refresh admin token
             }
           }
         }
       } catch (decodeError) {
-        console.error('Error decoding token:', decodeError);
+        // Error decoding token
       }
 
       const response = await fetch(API_ENDPOINTS.USERS_ALL, {
@@ -822,16 +823,11 @@ export default function Admin() {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Failed to fetch users:', errorText);
-        
         if (response.status === 401) {
-          // handleAuthError(() => {
-          //   console.log('Session expired, redirecting to login...');
-          // });
-          console.log('Session expired, redirecting to login...');
-        } else {
-          // toast.error('Failed to fetch users');
+          toast.error('Your session has expired. Please login again.');
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
         }
         return;
       }
@@ -840,8 +836,7 @@ export default function Admin() {
       setUsers(data.users || []);
       setCurrentPage(1); // Reset to first page when users are refreshed
     } catch (error) {
-      console.error('Error fetching users:', error);
-      // toast.error('Error loading users');
+      // Error fetching users
     } finally {
       setIsLoadingUsers(false);
     }
@@ -860,7 +855,7 @@ export default function Admin() {
             counts[eventId] = data.count || 0;
           }
         } catch (error) {
-          console.error(`Error fetching count for event ${eventId}:`, error);
+          // Error fetching count for event
         }
       })
     );
@@ -888,8 +883,7 @@ export default function Admin() {
       setSelectedEventForUsers(eventId);
       setIsEventUsersDialogOpen(true);
     } catch (error) {
-      console.error('Error fetching registered users:', error);
-      // toast.error('Failed to load registered users');
+      // Error fetching registered users
     } finally {
       setIsLoadingEventUsers(false);
     }
@@ -965,8 +959,6 @@ export default function Admin() {
       const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
 
       if (!accessToken) {
-        console.error('Available token keys:', Object.keys(tokens)); // Debug log
-        
         // Try to get a fresh admin token if user is admin but no token found
         if (user && user.role === 'admin') {
           try {
@@ -1032,7 +1024,7 @@ export default function Admin() {
               }
             }
           } catch (error) {
-            console.error('Failed to get fresh admin token:', error);
+            // Failed to get fresh admin token
           }
         }
         
@@ -1070,11 +1062,14 @@ export default function Admin() {
           });
 
       if (!response.ok) {
-        // if (handleApiError(response, 'Failed to create event')) {
-        //   return; // Error was handled (token expired)
-        // }
+        if (response.status === 401) {
+          toast.error('Your session has expired. Please login again.');
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+          return;
+        }
         const errorData = await response.json();
-        console.error('Backend error response:', errorData);
         throw new Error(JSON.stringify(errorData) || 'Failed to create event');
       }
 
@@ -1105,8 +1100,7 @@ export default function Admin() {
       // Refresh events list to get the latest data
       fetchEvents();
     } catch (error) {
-      console.error('Error creating event:', error);
-      // handleAuthError(error);
+      // Error creating event
     } finally {
       setIsLoading(false);
     }
@@ -1201,7 +1195,6 @@ export default function Admin() {
       toast.success("Event updated successfully!");
       
     } catch (error) {
-      console.error('Error updating event:', error);
       toast.error(`Failed to update event: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
@@ -1249,7 +1242,6 @@ export default function Admin() {
       toast.success("Event deleted successfully!");
       
     } catch (error) {
-      console.error('Error deleting event:', error);
       toast.error(`Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setDeletingEventId(null);
@@ -1440,7 +1432,6 @@ export default function Admin() {
       toast.success('Poster image uploaded successfully!');
       
     } catch (error) {
-      console.error('Error uploading image:', error);
       toast.error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsUploadingPoster(false);
@@ -1464,17 +1455,25 @@ export default function Admin() {
 
     setUploadingSpeakerId(speakerId);
     try {
-      // Get authentication token
-      const storedTokens = localStorage.getItem('csaTokens');
-      if (!storedTokens) {
-        throw new Error('No authentication token found');
+      // Get token from Supabase auth or custom token
+      let accessToken = localStorage.getItem('csatoken') || localStorage.getItem('accessToken');
+      
+      // Check for Supabase auth token
+      if (!accessToken) {
+        const supabaseAuthKey = Object.keys(localStorage).find(key => key.includes('auth-token'));
+        if (supabaseAuthKey) {
+          try {
+            const authData = JSON.parse(localStorage.getItem(supabaseAuthKey) || '{}');
+            accessToken = authData.access_token;
+          } catch (e) {
+            // Error parsing Supabase auth token
+          }
+        }
       }
 
-      const tokens = JSON.parse(storedTokens);
-      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
-
       if (!accessToken) {
-        throw new Error('No access token found');
+        toast.error('Please login to upload images');
+        return;
       }
 
       // Create FormData and append the file
@@ -1491,8 +1490,8 @@ export default function Admin() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to upload image');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Upload failed with status ${response.status}`);
       }
 
       const result = await response.json();
@@ -1509,7 +1508,6 @@ export default function Admin() {
       toast.success('Speaker image uploaded successfully!');
       
     } catch (error) {
-      console.error('Error uploading speaker image:', error);
       toast.error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUploadingSpeakerId(null);
@@ -1524,7 +1522,171 @@ export default function Admin() {
     setFormData(prev => ({ ...prev, attendees: parseInt(value) || undefined }));
   }, []);
 
+  // Event Images functions
+  const fetchEventImages = async () => {
+    setIsLoadingEventImages(true);
+    try {
+      // Get token from Supabase auth or custom token
+      let token = localStorage.getItem('csatoken') || localStorage.getItem('accessToken');
+      
+      // Check for Supabase auth token
+      if (!token) {
+        const supabaseAuthKey = Object.keys(localStorage).find(key => key.includes('auth-token'));
+        if (supabaseAuthKey) {
+          try {
+            const authData = JSON.parse(localStorage.getItem(supabaseAuthKey) || '{}');
+            token = authData.access_token;
+          } catch (e) {
+            console.error('Error parsing Supabase auth token:', e);
+          }
+        }
+      }
+      
+      const response = await fetch(`${API_ENDPOINTS.LIST_EVENT_IMAGES}`, {
+        headers: token ? {
+          'Authorization': `Bearer ${token}`
+        } : {}
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setEventImages(data.images || []);
+      }
+    } catch (error) {
+      // Error fetching event images
+    } finally {
+      setIsLoadingEventImages(false);
+    }
+  };
 
+  const handleEventImageUpload = async (file: File) => {
+    if (!file) return;
+    
+    setIsUploadingEventImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Get token from Supabase auth or custom token
+      let accessToken = localStorage.getItem('csatoken') || localStorage.getItem('accessToken');
+      
+      // Check for Supabase auth token
+      if (!accessToken) {
+        const supabaseAuthKey = Object.keys(localStorage).find(key => key.includes('auth-token'));
+        if (supabaseAuthKey) {
+          try {
+            const authData = JSON.parse(localStorage.getItem(supabaseAuthKey) || '{}');
+            accessToken = authData.access_token;
+          } catch (e) {
+            // Error parsing Supabase auth token
+          }
+        }
+      }
+      
+      if (!accessToken) {
+        toast.error('Please login to upload images');
+        setIsUploadingEventImage(false);
+        return;
+      }
+
+      const response = await fetch(`${API_ENDPOINTS.UPLOAD_IMAGE}?image_type=event`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Upload failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Save caption to database if provided
+      if (eventImageCaption.trim()) {
+        const captionResponse = await fetch(`${API_BASE_URL}/v1/routes/event-images`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            url: data.url,
+            caption: eventImageCaption.trim()
+          })
+        });
+        
+        if (!captionResponse.ok) {
+          // Failed to save caption, but image was uploaded
+        }
+      }
+
+      toast.success(`Event image uploaded${eventImageCaption ? ' with caption' : ''}!`);
+      setEventImageCaption('');
+      fetchEventImages();
+    } catch (error) {
+      toast.error(`Failed to upload: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsUploadingEventImage(false);
+    }
+  };
+
+  const confirmDeleteEventImage = async () => {
+    if (!imageToDelete) return;
+
+    try {
+      // Get token
+      let accessToken = localStorage.getItem('csatoken') || localStorage.getItem('accessToken');
+      
+      if (!accessToken) {
+        const supabaseAuthKey = Object.keys(localStorage).find(key => key.includes('auth-token'));
+        if (supabaseAuthKey) {
+          try {
+            const authData = JSON.parse(localStorage.getItem(supabaseAuthKey) || '{}');
+            accessToken = authData.access_token;
+          } catch (e) {
+            // Error parsing Supabase auth token
+          }
+        }
+      }
+
+      if (!accessToken) {
+        toast.error('Please login to delete images');
+        return;
+      }
+
+      // Extract filename from URL
+      const filename = imageToDelete.name;
+
+      // Delete from storage and database
+      const response = await fetch(`${API_BASE_URL}/v1/routes/event-images/${encodeURIComponent(filename)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        }
+      });
+
+      if (response.ok) {
+        toast.success('Image deleted successfully!');
+        fetchEventImages(); // Refresh the list
+        setImageToDelete(null); // Close dialog
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to delete image');
+      }
+    } catch (error) {
+      toast.error(`Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  // Fetch event images when tab is opened
+  useEffect(() => {
+    if (activeTab === 'images') {
+      fetchEventImages();
+    }
+  }, [activeTab]);
 
   // Check if user is admin
   if (!isAdmin) {
@@ -1573,9 +1735,10 @@ export default function Admin() {
 
       <div className="container-site py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="manage">Manage Events</TabsTrigger>
             <TabsTrigger value="add">Add New Event</TabsTrigger>
+            <TabsTrigger value="images">Event Images</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
 
@@ -2022,6 +2185,196 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="images" className="space-y-6">
+            <Card className="border-t-4 border-t-purple-500">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <ImageIcon className="h-5 w-5" />
+                      Event Images Gallery
+                    </CardTitle>
+                    <CardDescription>Upload images that will appear in the Events page slideshow</CardDescription>
+                  </div>
+                  <Button
+                    onClick={() => fetchEventImages()}
+                    disabled={isLoadingEventImages}
+                    variant="outline"
+                    size="sm"
+                  >
+                    {isLoadingEventImages ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                    ) : (
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                    )}
+                    {isLoadingEventImages ? "Loading..." : "Refresh"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Upload Section */}
+                <div className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-dashed border-purple-300 rounded-xl p-8">
+                  <div className="max-w-2xl mx-auto space-y-6">
+                    <div className="text-center">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-purple-100 mb-4">
+                        <Upload className="h-8 w-8 text-purple-600" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        Upload Event Image
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        Add images to the Events page slideshow with optional captions
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Caption Input */}
+                      <div>
+                        <Label htmlFor="image-caption" className="text-sm font-medium">
+                          Image Caption (Optional)
+                        </Label>
+                        <Input
+                          id="image-caption"
+                          type="text"
+                          placeholder="e.g., Community networking and learning"
+                          value={eventImageCaption}
+                          onChange={(e) => setEventImageCaption(e.target.value)}
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          This caption will appear when users hover over the image
+                        </p>
+                      </div>
+
+                      {/* File Input */}
+                      <div className="flex items-center justify-center w-full">
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-purple-300 border-dashed rounded-lg cursor-pointer bg-white hover:bg-purple-50 transition-colors">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <Upload className="h-10 w-10 text-purple-500 mb-2" />
+                            <p className="text-sm text-gray-600">
+                              <span className="font-semibold">Click to upload</span> or drag and drop
+                            </p>
+                            <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                          </div>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleEventImageUpload(file);
+                                e.target.value = '';
+                              }
+                            }}
+                            disabled={isUploadingEventImage}
+                          />
+                        </label>
+                      </div>
+
+                      {isUploadingEventImage && (
+                        <div className="flex items-center justify-center gap-2 text-purple-600">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
+                          <span className="text-sm font-medium">Uploading image...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Images Gallery */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Uploaded Images ({eventImages.length})
+                    </h3>
+                  </div>
+
+                  {isLoadingEventImages ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                    </div>
+                  ) : eventImages.length === 0 ? (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                      <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-600">No event images uploaded yet</p>
+                      <p className="text-sm text-gray-500 mt-1">Upload your first image above</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {eventImages
+                          .slice((eventImagesCurrentPage - 1) * eventImagesPerPage, eventImagesCurrentPage * eventImagesPerPage)
+                          .map((image, index) => {
+                            const actualIndex = (eventImagesCurrentPage - 1) * eventImagesPerPage + index;
+                            return (
+                              <div
+                                key={actualIndex}
+                                className="group relative aspect-video rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:border-purple-400"
+                              >
+                                <img
+                                  src={image.url}
+                                  alt={image.caption || `Event image ${actualIndex + 1}`}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                  onError={(e) => {
+                                    e.currentTarget.src = '/placeholder.svg';
+                                  }}
+                                />
+                                {image.caption && (
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                                    <p className="text-white text-sm font-medium p-3 w-full">
+                                      {image.caption}
+                                    </p>
+                                  </div>
+                                )}
+                                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Badge variant="secondary" className="bg-white text-gray-800 text-sm font-semibold shadow-md px-2 py-0.5">
+                                    {actualIndex + 1}
+                                  </Badge>
+                                  <button
+                                    onClick={() => setImageToDelete({ url: image.url, name: image.name })}
+                                    className="bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors shadow-lg"
+                                    title="Delete image"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+
+                      {/* Pagination */}
+                      {eventImages.length > eventImagesPerPage && (
+                        <div className="flex items-center justify-center gap-2 mt-6">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEventImagesCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={eventImagesCurrentPage === 1}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <span className="text-sm text-gray-600 px-4">
+                            Page {eventImagesCurrentPage} of {Math.ceil(eventImages.length / eventImagesPerPage)}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEventImagesCurrentPage(prev => Math.min(Math.ceil(eventImages.length / eventImagesPerPage), prev + 1))}
+                            disabled={eventImagesCurrentPage >= Math.ceil(eventImages.length / eventImagesPerPage)}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="users" className="space-y-6">
             <Card className="border-t-4 border-t-csa-blue">
               <CardHeader>
@@ -2271,6 +2624,27 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete Event Image Confirmation Dialog */}
+      <AlertDialog open={!!imageToDelete} onOpenChange={(open) => !open && setImageToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event Image</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this image? This action cannot be undone and the image will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setImageToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteEventImage}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete Image
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

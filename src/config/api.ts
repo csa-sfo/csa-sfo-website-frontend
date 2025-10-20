@@ -31,4 +31,6 @@ export const API_ENDPOINTS = {
   CHECK_EMAIL: `${API_BASE_URL}/v1/routes/check-email`,
   // Upload Endpoints
   UPLOAD_IMAGE: `${API_BASE_URL}/v1/routes/upload/image`,
+  // Event Images Endpoints
+  LIST_EVENT_IMAGES: `${API_BASE_URL}/v1/routes/event-images`,
 }; 
