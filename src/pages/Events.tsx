@@ -263,6 +263,42 @@ export default function Events() {
   const [raffleAttendees, setRaffleAttendees] = useState<{ name: string; email: string }[]>([]);
   const [raffleEventTitle, setRaffleEventTitle] = useState("");
   const [isLoadingRaffle, setIsLoadingRaffle] = useState(false);
+  // Default fallback images (local)
+  const defaultLocalImages = [
+    {
+      src: "/Events-pictures/PXL_20250522_024915629.MP.jpg",
+      caption: "Community networking and learning",
+      description: "Community networking and learning"
+    },
+    {
+      src: "/Events-pictures/1729377993131.jpeg",
+      caption: "Industry experts sharing knowledge",
+      description: "Industry experts sharing knowledge"
+    },
+    {
+      src: "/Events-pictures/20250604_111127.jpg",
+      caption: "Collaborative discussions and workshops",
+      description: "Collaborative discussions and workshops"
+    },
+    {
+      src: "/Events-pictures/20250605_133448.jpg",
+      caption: "Professional development sessions",
+      description: "Professional development sessions"
+    },
+    {
+      src: "/Events-pictures/PXL_20250327_020441379.MP.jpg",
+      caption: "Tech talks and demonstrations",
+      description: "Tech talks and demonstrations"
+    },
+    {
+      src: "/Events-pictures/PXL_20250522_015003557.MP.jpg",
+      caption: "Networking and collaboration opportunities",
+      description: "Networking and collaboration opportunities"
+    }
+  ];
+
+  const [slideshowImages, setSlideshowImages] = useState<any[]>(defaultLocalImages);
+  const [hasLoadedSupabaseImages, setHasLoadedSupabaseImages] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     // Check hash immediately on component initialization
     const hash = window.location.hash;
@@ -290,7 +326,6 @@ export default function Events() {
       
       // Check if eventsArray is an array
       if (!Array.isArray(eventsArray)) {
-        console.error('API response events is not an array:', eventsArray);
         throw new Error('API response is not in expected format');
       }
       
@@ -315,7 +350,6 @@ export default function Events() {
       
       setAllEvents(transformedEvents);
     } catch (err) {
-      console.error('Error fetching events:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch events');
       // Fallback to empty array if API fails
       setAllEvents([]);
@@ -371,7 +405,6 @@ export default function Events() {
       
       setRaffleAttendees(attendees);
     } catch (error) {
-      console.error('Error fetching raffle attendees:', error);
       setRaffleAttendees([]);
     } finally {
       setIsLoadingRaffle(false);
@@ -387,6 +420,7 @@ export default function Events() {
   // Fetch events on component mount
   useEffect(() => {
     fetchEvents();
+    fetchSlideshowImages(); // Fetch from Supabase with fallback to local images
   }, []);
 
   // Handle hash navigation to switch tabs
@@ -457,39 +491,38 @@ export default function Events() {
     };
   }, [allEvents]);
 
-  // Slideshow images array
-  const slideshowImages = [
-    {
-      src: "/Events-pictures/PXL_20250522_024915629.MP.jpg",
-      caption: "CSA Event 1",
-      description: "Community networking and learning"
-    },
-    {
-      src: "/Events-pictures/1729377993131.jpeg",
-      caption: "CSA Event 2",
-      description: "Industry experts sharing knowledge"
-    },
-    {
-      src: "/Events-pictures/20250604_111127.jpg",
-      caption: "CSA Event 3",
-      description: "Collaborative discussions and workshops"
-    },
-    {
-      src: "/Events-pictures/20250605_133448.jpg",
-      caption: "CSA Event 4",
-      description: "Professional development sessions"
-    },
-    {
-      src: "/Events-pictures/PXL_20250327_020441379.MP.jpg",
-      caption: "CSA Event 5",
-      description: "Tech talks and demonstrations"
-    },
-    {
-      src: "/Events-pictures/PXL_20250522_015003557.MP.jpg",
-      caption: "CSA Event 6",
-      description: "Networking and collaboration opportunities"
+  
+  // Fetch slideshow images from backend
+  const fetchSlideshowImages = async () => {
+    // Prevent duplicate loading
+    if (hasLoadedSupabaseImages) {
+      return;
     }
-  ];
+    
+    try {
+      const response = await fetch(API_ENDPOINTS.LIST_EVENT_IMAGES);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const images = data.images || [];
+        
+        if (images.length > 0) {
+          // Transform to slideshow format - ALL images come from Supabase
+          const allImages = images.map((img: any) => ({
+            src: img.url,
+            caption: img.caption || '',
+            description: img.caption || ''
+          }));
+          
+          // Set all images from Supabase
+          setSlideshowImages(allImages);
+          setHasLoadedSupabaseImages(true);
+        }
+      }
+    } catch (error) {
+      // Keep default local images (already set in initial state)
+    }
+  };
 
 
   // Auto-slide functionality
@@ -862,17 +895,16 @@ export default function Events() {
                                 transform: `scale(${scale})`
                               }}
                               onError={(e) => {
-                                console.error(`Failed to load image: ${image.src}`);
                                 e.currentTarget.style.display = 'none';
                               }}
                             />
                             
-                            {/* Hover Overlay - only show if there's a caption */}
+                            {/* Caption Overlay - visible on hover */}
                             {image.caption && (
                               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                 <div className="absolute bottom-4 left-4 right-4">
-                                  <p className="text-white/80 text-xs truncate" title={image.description}>
-                                    {image.description}
+                                  <p className="text-white/80 text-xs truncate" title={image.caption}>
+                                    {image.caption}
                                   </p>
                                 </div>
                               </div>
