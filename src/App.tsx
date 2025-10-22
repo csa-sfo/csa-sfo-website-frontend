@@ -11,6 +11,7 @@ import Contact from "./pages/Contact";
 import EventDetail from "./pages/EventDetail";
 import Events from "./pages/Events";
 import { Footer } from "@/components/layout/Footer";
+import Gallery from "./pages/Gallery";
 import GetInvolved from "./pages/GetInvolved";
 import { Header } from "@/components/layout/Header";
 import Index from "./pages/Index";
@@ -41,7 +42,8 @@ const AppContent = () => {
               <Route path="/about" element={<About />} />
               <Route path="/events" element={<Events />} />
               <Route path="/events/:slug" element={<EventDetail />} />
-              <Route path="/archive" element={<Archive />} />
+              {/* <Route path="/archive" element={<Archive />} /> */}
+              <Route path="/gallery" element={<Gallery />} />
               <Route path="/get-involved" element={<GetInvolved />} />
               <Route path="/google-callback" element={<AuthCallback />} />
               <Route path="/linkedin-callback" element={<AuthCallback />} />

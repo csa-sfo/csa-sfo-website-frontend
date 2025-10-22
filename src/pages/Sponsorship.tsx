@@ -364,83 +364,525 @@ export default function Sponsorship() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sponsorshipTiers.map((tier, index) => (
-              <Card key={index} className={`relative transform transition-all duration-300 hover:scale-105 hover:shadow-xl ${tier.popular ? 'border-csa-blue shadow-lg ring-2 ring-csa-blue/20' : 'hover:border-csa-blue/30'}`}>
-                {tier.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                    <Badge className="bg-csa-blue text-white shadow-lg">
-                      <Star className="h-3 w-3 mr-1" />
-                      Most Popular
-                    </Badge>
+          {/* Sponsorship Benefits Table */}
+          <div className="overflow-x-auto mb-8">
+            <div className="min-w-full bg-white rounded-2xl shadow-2xl border-0 overflow-hidden">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col className="w-1/4" />
+                  <col className="w-1/4" />
+                  <col className="w-1/4" />
+                  <col className="w-1/4" />
+                </colgroup>
+                <thead>
+                  <tr className="bg-gradient-to-r from-slate-50 via-gray-50 to-slate-50">
+                    <th className="px-8 py-8 text-center text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100">
+                      <div className="flex flex-col items-center justify-center gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gradient-to-br from-csa-blue to-csa-navy rounded-lg flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">✨</span>
                   </div>
-                )}
-                
-                {/* Gradient background for popular tier */}
-                {tier.popular && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-csa-blue/5 via-transparent to-csa-accent/5 rounded-lg"></div>
-                )}
-                
-                <CardHeader className="text-center relative z-10">
-                  <CardTitle className="text-csa-navy text-xl font-bold">{tier.name}</CardTitle>
-                  <div className="text-3xl font-bold text-csa-blue">{tier.price}</div>
-                  <div className="text-sm font-medium text-csa-accent mb-2">{tier.duration}</div>
-                  <CardDescription className="text-gray-600">{tier.description}</CardDescription>
-                </CardHeader>
-                
-                <CardContent className="relative z-10">
-                  <ul className="space-y-3 mb-6">
-                    {tier.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start space-x-2">
-                        <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  {/* Enhanced Stripe Payment Button */}
+                          <span className="text-lg font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                            Benefits
+                          </span>
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-8 py-8 text-center text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-br from-yellow-50 to-amber-50">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
+                          <span className="text-white text-lg font-bold">🏆</span>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-center gap-2 mb-1">
+                            <div className="text-lg font-bold bg-gradient-to-r from-yellow-600 to-amber-700 bg-clip-text text-transparent">
+                              Platinum
+                            </div>
+                            <div className="bg-csa-accent text-white text-xs font-bold px-2 py-1 rounded-full">
+                              Popular
+                            </div>
+                          </div>
+                          <div className="text-sm font-bold text-gray-700 bg-white/80 px-4 py-2 rounded-full">
+                            $5,000 – (3 Years)
+                          </div>
+                        </div>
+                        <div className="space-y-4 w-full">
+                          <Button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleStripeCheckout(sponsorshipTiers[0]);
+                            }}
+                            disabled={loadingTier === sponsorshipTiers[0].name}
+                            className="w-full h-14 text-sm font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100 disabled:opacity-70 bg-csa-accent hover:bg-csa-accent/90 text-white border-0"
+                          >
+                            {loadingTier === sponsorshipTiers[0].name ? (
+                              <>
+                                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard className="h-5 w-5 mr-2" />
+                                Purchase Platinum
+                              </>
+                            )}
+                          </Button>
+                          
+                          <Button 
+                            asChild
+                            variant="ghost" 
+                            size="sm"
+                            className="text-gray-600 hover:text-csa-blue text-xs w-full hover:bg-white/50 rounded-lg transition-all duration-200"
+                          >
+                            <Link to="/contact">
+                              Questions? Contact Us
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-8 py-8 text-center text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-br from-yellow-50 to-orange-50">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-300 via-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
+                          <span className="text-white text-lg font-bold">🥇</span>
+                        </div>
+                        <div>
+                          <div className="text-lg font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                            Gold Sponsor
+                          </div>
+                          <div className="text-sm font-bold text-gray-700 bg-white/80 px-4 py-2 rounded-full">
+                            $3,000 – (2 Years)
+                          </div>
+                        </div>
+                        <div className="space-y-4 w-full">
+                          <Button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleStripeCheckout(sponsorshipTiers[1]);
+                            }}
+                            disabled={loadingTier === sponsorshipTiers[1].name}
+                            className="w-full h-14 text-sm font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100 disabled:opacity-70 bg-csa-accent hover:bg-csa-accent/90 text-white border-0"
+                          >
+                            {loadingTier === sponsorshipTiers[1].name ? (
+                              <>
+                                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard className="h-5 w-5 mr-2" />
+                                Purchase Gold
+                              </>
+                            )}
+                          </Button>
+                          
+                          <Button 
+                            asChild
+                            variant="ghost" 
+                            size="sm"
+                            className="text-gray-600 hover:text-csa-blue text-xs w-full hover:bg-white/50 rounded-lg transition-all duration-200"
+                          >
+                            <Link to="/contact">
+                              Questions? Contact Us
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-8 py-8 text-center text-sm font-bold text-gray-800 bg-gradient-to-br from-gray-50 to-slate-100">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-gray-300 via-gray-400 to-slate-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
+                          <span className="text-white text-lg font-bold">🥈</span>
+                        </div>
+                        <div>
+                          <div className="text-lg font-bold bg-gradient-to-r from-gray-600 to-slate-700 bg-clip-text text-transparent">
+                            Silver
+                          </div>
+                          <div className="text-sm font-bold text-gray-700 bg-white/80 px-4 py-2 rounded-full">
+                            $2,000 – (1 Year)
+                          </div>
+                        </div>
+                        <div className="space-y-4 w-full">
                   <Button 
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleStripeCheckout(tier);
-                    }}
-                    disabled={loadingTier === tier.name}
-                    className={`w-full mt-6 h-12 ${
-                      tier.popular 
-                        ? 'bg-csa-blue hover:bg-csa-blue/90 shadow-lg hover:shadow-xl' 
-                        : 'bg-csa-accent hover:bg-csa-accent/90'
-                    } text-white font-semibold transition-all duration-300 hover:scale-105 disabled:hover:scale-100 disabled:opacity-70`}
-                  >
-                    {loadingTier === tier.name ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              handleStripeCheckout(sponsorshipTiers[2]);
+                            }}
+                            disabled={loadingTier === sponsorshipTiers[2].name}
+                            className="w-full h-14 text-sm font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100 disabled:opacity-70 bg-csa-accent hover:bg-csa-accent/90 text-white border-0"
+                          >
+                            {loadingTier === sponsorshipTiers[2].name ? (
+                              <>
+                                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                         Processing...
                       </>
                     ) : (
                       <>
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Purchase {tier.name}
+                                <CreditCard className="h-5 w-5 mr-2" />
+                                Purchase Silver
                       </>
                     )}
                   </Button>
                   
-                  {/* Alternative Contact Option */}
-                  <div className="mt-3 text-center">
                     <Button 
                       asChild
                       variant="ghost" 
                       size="sm"
-                      className="text-csa-navy hover:text-csa-blue text-sm"
+                            className="text-gray-600 hover:text-csa-blue text-xs w-full hover:bg-white/50 rounded-lg transition-all duration-200"
                     >
                       <Link to="/contact">
                         Questions? Contact Us
                       </Link>
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200">
+                    <td className="px-8 py-6 text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xs">🎯</span>
+                        </div>
+                        <span>Logo Placement</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/50 to-amber-50/50">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Premium logo on all event materials, banners, and CSA SF website</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/30 to-orange-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Prominent logo on event slides and CSA SF website</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 bg-gradient-to-r from-gray-50/30 to-slate-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Logo on CSA SF website and event slides</div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200">
+                    <td className="px-8 py-6 text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xs">🎤</span>
+                        </div>
+                        <span>Speaking Opportunities</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/50 to-amber-50/50">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Deliver a keynote or moderate a panel, plus guaranteed event speaking slots 3 events</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/30 to-orange-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Opportunity for a speaking slot at CSA SF events 2 events</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 bg-gradient-to-r from-gray-50/30 to-slate-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">One speaking slot at a CSA SF event</div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200">
+                    <td className="px-8 py-6 text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 bg-gradient-to-br from-purple-400 to-violet-500 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xs">📢</span>
+                        </div>
+                        <span>Event Mentions</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/50 to-amber-50/50">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Featured in CSA SF LinkedIn promotions and newsletters</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/30 to-orange-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Mention during event introductions and in social posts</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 bg-gradient-to-r from-gray-50/30 to-slate-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Mention during event welcome remarks</div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200">
+                    <td className="px-8 py-6 text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 bg-gradient-to-br from-pink-400 to-rose-500 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xs">📈</span>
+                        </div>
+                        <span>Marketing Visibility</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/50 to-amber-50/50">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Featured in marketing materials and event promotions</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/30 to-orange-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Recognition in CSA SF marketing & social media</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 bg-gradient-to-r from-gray-50/30 to-slate-50/30">
+                      <div className="flex items-center justify-center">
+                        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">✕</span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200">
+                    <td className="px-8 py-6 text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xs">📋</span>
+                        </div>
+                        <span>Event Registration List</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/50 to-amber-50/50">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Full access to registration lists (attendee info)</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/30 to-orange-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Access to registration lists</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 bg-gradient-to-r from-gray-50/30 to-slate-50/30">
+                      <div className="flex items-center justify-center">
+                        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">✕</span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200">
+                    <td className="px-8 py-6 text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xs">🤝</span>
+                        </div>
+                        <span>Workshops & Co-Branding</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/50 to-amber-50/50">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Priority inclusion in co-branded community initiatives or workshops</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/30 to-orange-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Eligible for collaborative sessions</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 bg-gradient-to-r from-gray-50/30 to-slate-50/30">
+                      <div className="flex items-center justify-center">
+                        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">✕</span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200">
+                    <td className="px-8 py-6 text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xs">🌐</span>
+                        </div>
+                        <span>Networking Access</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/50 to-amber-50/50">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Invitations to exclusive sponsor & community events</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/30 to-orange-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Invitations to sponsor networking events</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 bg-gradient-to-r from-gray-50/30 to-slate-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Included in chapter networking events</div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200">
+                    <td className="px-8 py-6 text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xs">🍽️</span>
+                        </div>
+                        <span>Food & Refreshments</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/50 to-amber-50/50">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Optional — CSA SF manages event catering</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/30 to-orange-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Sponsor covers food & refreshments</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 bg-gradient-to-r from-gray-50/30 to-slate-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Sponsor covers food & refreshments</div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200">
+                    <td className="px-8 py-6 text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 bg-gradient-to-br from-red-400 to-pink-500 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xs">🎉</span>
+                        </div>
+                        <span>Appreciation Dinner</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/50 to-amber-50/50">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Recognized at Year-End Sponsor & Volunteer Dinner</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/30 to-orange-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Invited to Year-End Sponsor Dinner</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 bg-gradient-to-r from-gray-50/30 to-slate-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Invited to Year-End Sponsor Dinner</div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200">
+                    <td className="px-8 py-6 text-sm font-bold text-gray-800 border-r border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 rounded-bl-2xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 bg-gradient-to-br from-violet-400 to-purple-500 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xs">🎓</span>
+                        </div>
+                        <span>Mentorship & Community Programs</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/50 to-amber-50/50">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Option to mentor or host educational sessions</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 border-r border-gray-100 bg-gradient-to-r from-yellow-50/30 to-orange-50/30">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Option to participate in community mentorship</div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-sm text-gray-700 bg-gradient-to-r from-gray-50/30 to-slate-50/30 rounded-br-2xl">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                        <div className="font-medium">Option to support local initiatives</div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>

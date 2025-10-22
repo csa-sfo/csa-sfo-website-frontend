@@ -284,7 +284,7 @@ export default function Contact() {
             </div>
             <p className="text-gray-600 mt-8">
               For immediate assistance with event registration or urgent matters, 
-              please call our events hotline at <span className="font-medium">(415) 555-0123</span> 
+              please call our events hotline at <span className="font-medium whitespace-nowrap">(415) 555-0123 </span> 
               during business hours (9 AM - 5 PM PST).
             </p>
           </div>

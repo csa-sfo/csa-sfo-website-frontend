@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Calendar, MapPin, Users, Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, Users, Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Event, AgendaItem, Speaker } from "@/types/event";
 import { API_BASE_URL, API_ENDPOINTS } from "@/config/api";
@@ -107,8 +107,14 @@ const EventForm = memo(({
           id="title"
           value={formData.title || ""}
           onChange={(e) => onTitleChange(e.target.value)}
-          placeholder="Enter event title"
+          placeholder="Enter meaningful event title (e.g., 'Cloud Security Workshop')"
+          minLength={3}
+          pattern=".*[a-zA-Z].*"
+          title="Event title must be at least 3 characters long and contain alphabetic characters"
         />
+        <p className="text-sm text-gray-600">
+          Title must contain meaningful text with alphabetic characters, not just numbers
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -119,7 +125,13 @@ const EventForm = memo(({
             type="datetime-local"
             value={formData.date_time || ""}
             onChange={(e) => onDateChange(e.target.value)}
+            min={new Date().toISOString().slice(0, 16)}
+            placeholder="mm/dd/yyyy hh:mm AM/PM"
+            title="Select event date and time (format: mm/dd/yyyy hh:mm AM/PM)"
           />
+          <p className="text-sm text-gray-600">
+            Format: mm/dd/yyyy hh:mm AM/PM (e.g., 12/25/2024 02:30 PM)
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="slug">URL Slug</Label>
@@ -939,6 +951,27 @@ export default function Admin() {
       return;
     }
 
+    // Validate that the event title contains meaningful text (not just numbers)
+    const titleTrimmed = formData.title.trim();
+    if (/^\d+$/.test(titleTrimmed)) {
+      toast.error("Event title must contain meaningful text, not just numbers");
+      return;
+    }
+
+    // Validate minimum title length and require at least one letter
+    if (titleTrimmed.length < 3 || !/[a-zA-Z]/.test(titleTrimmed)) {
+      toast.error("Event title must be at least 3 characters long and contain alphabetic characters");
+      return;
+    }
+
+    // Validate that the event date is not in the past
+    const selectedDate = new Date(formData.date_time);
+    const currentDate = new Date();
+    if (selectedDate < currentDate) {
+      toast.error("Event date and time cannot be in the past");
+      return;
+    }
+
     if (!isAdmin) {
       toast.error("Admin access required to create events");
       return;
@@ -1112,6 +1145,33 @@ export default function Admin() {
   const handleEditEvent = async () => {
     if (!editingEvent || !formData.title || !formData.date_time || !formData.location) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Check if the original event has already passed - prevent editing completed events
+    if (isEventPast(editingEvent.date_time)) {
+      toast.error("Cannot edit events that have already passed. This event is locked to maintain data integrity.");
+      return;
+    }
+
+    // Validate that the event title contains meaningful text (not just numbers)
+    const titleTrimmed = formData.title.trim();
+    if (/^\d+$/.test(titleTrimmed)) {
+      toast.error("Event title must contain meaningful text, not just numbers");
+      return;
+    }
+
+    // Validate minimum title length and require at least one letter
+    if (titleTrimmed.length < 3 || !/[a-zA-Z]/.test(titleTrimmed)) {
+      toast.error("Event title must be at least 3 characters long and contain alphabetic characters");
+      return;
+    }
+
+    // Validate that the event date is not in the past
+    const selectedDate = new Date(formData.date_time);
+    const currentDate = new Date();
+    if (selectedDate < currentDate) {
+      toast.error("Event date and time cannot be in the past");
       return;
     }
 
@@ -1291,6 +1351,13 @@ export default function Admin() {
       hour: 'numeric',
       minute: '2-digit'
     });
+  };
+
+  // Helper function to check if an event has already passed
+  const isEventPast = (eventDateTime: string) => {
+    const eventDate = new Date(eventDateTime);
+    const currentDate = new Date();
+    return eventDate < currentDate;
   };
 
   // Agenda management functions
@@ -1809,7 +1876,15 @@ export default function Admin() {
                           <TableRow key={event.id}>
                             <TableCell>
                               <div>
-                                <div className="font-medium text-csa-navy">{event.title}</div>
+                                <div className="flex items-center gap-2">
+                                  <div className="font-medium text-csa-navy">{event.title}</div>
+                                  {isEventPast(event.date_time) && (
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border">
+                                      <Lock className="h-3 w-3 mr-1" />
+                                      Completed
+                                    </span>
+                                  )}
+                                </div>
                                 <div className="text-sm text-gray-500">{(event.speakers || []).map(s => s.name).join(", ")}</div>
                               </div>
                             </TableCell>
@@ -1864,22 +1939,34 @@ export default function Admin() {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-2">
-                                <Dialog open={isEditDialogOpen && editingEvent?.id === event.id} onOpenChange={(open) => {
-                                  if (!open) {
-                                    setIsEditDialogOpen(false);
-                                    setEditingEvent(null);
-                                    resetForm();
-                                  }
-                                }}>
-                                  <DialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => startEditing(event)}
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                  </DialogTrigger>
+                                {isEventPast(event.date_time) ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled
+                                    title="This event has passed and cannot be edited"
+                                    className="opacity-50 cursor-not-allowed"
+                                  >
+                                    <Lock className="h-4 w-4" />
+                                  </Button>
+                                ) : (
+                                  <Dialog open={isEditDialogOpen && editingEvent?.id === event.id} onOpenChange={(open) => {
+                                    if (!open) {
+                                      setIsEditDialogOpen(false);
+                                      setEditingEvent(null);
+                                      resetForm();
+                                    }
+                                  }}>
+                                    <DialogTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => startEditing(event)}
+                                        title="Edit event"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                    </DialogTrigger>
                                   <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                                     <DialogHeader>
                                       <DialogTitle>Edit Event</DialogTitle>
@@ -1920,6 +2007,7 @@ export default function Admin() {
                                     />
                                   </DialogContent>
                                 </Dialog>
+                                )}
 
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
