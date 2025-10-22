@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Event, AgendaItem, Speaker } from "@/types/event";
 import { API_BASE_URL, API_ENDPOINTS } from "@/config/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { AuthModal } from "@/components/auth/AuthModal";
 // import { handleApiError, handleAuthError } from "@/utils/authUtils";
 
 // Separate EventForm component to prevent re-renders
@@ -157,7 +158,7 @@ const EventForm = memo(({
           id="description"
           value={formData.description || ""}
           onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder="Event description (will be used for both excerpt and description)"
+          placeholder="Event description"
           rows={4}
         />
       </div>
@@ -630,6 +631,8 @@ export default function Admin() {
   const [eventUsersCurrentPage, setEventUsersCurrentPage] = useState(1);
   const [eventUsersPerPage] = useState(10);
   const [activeTab, setActiveTab] = useState("manage");
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   
   // Event Images state
   const [eventImages, setEventImages] = useState<any[]>([]);
@@ -684,6 +687,7 @@ export default function Admin() {
       const storedTokens = localStorage.getItem('csaTokens');
       if (!storedTokens) {
         setEvents([]);
+        setIsLoadingEvents(false);
         return;
       }
 
@@ -717,6 +721,7 @@ export default function Admin() {
         
         if (!accessToken) {
           setEvents([]);
+          setIsLoadingEvents(false);
           return;
         }
       }
@@ -732,10 +737,15 @@ export default function Admin() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          toast.error('Your session has expired. Please login again.');
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 2000);
+          // Clear stored tokens
+          localStorage.removeItem('csaTokens');
+          localStorage.removeItem('csaUser');
+          setIsLoadingEvents(false);
+          // Open login modal immediately
+          setAuthMode('login');
+          setAuthModalOpen(true);
+          // Show toast after modal opens
+          toast.error('Your session has expired. Please login again.', { duration: 3000 });
           return;
         }
         const errorData = await response.json();
@@ -772,6 +782,7 @@ export default function Admin() {
       const storedTokens = localStorage.getItem('csaTokens');
       if (!storedTokens) {
         setUsers([]);
+        setIsLoadingUsers(false);
         return;
       }
 
@@ -780,41 +791,11 @@ export default function Admin() {
 
       if (!accessToken) {
         setUsers([]);
+        setIsLoadingUsers(false);
         return;
       }
 
-      // Debug: Check token payload
-      try {
-        const base64Url = accessToken.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const payload = JSON.parse(atob(base64));
-        
-        // If token doesn't have admin role, try to refresh it
-        if (!payload.role || payload.role !== 'admin') {
-          if (user && user.email) {
-            try {
-              const adminCheckResponse = await fetch(`${API_BASE_URL}/v1/routes/admin/check`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: user.email }),
-              });
-              
-              if (adminCheckResponse.ok) {
-                const adminResult = await adminCheckResponse.json();
-                if (adminResult.is_admin && adminResult.admin_token) {
-                  localStorage.setItem('csaTokens', JSON.stringify({ accessToken: adminResult.admin_token }));
-                  accessToken = adminResult.admin_token;
-                }
-              }
-            } catch (refreshError) {
-              // Failed to refresh admin token
-            }
-          }
-        }
-      } catch (decodeError) {
-        // Error decoding token
-      }
-
+      // Fetch users directly without token refresh check for speed
       const response = await fetch(API_ENDPOINTS.USERS_ALL, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -824,10 +805,14 @@ export default function Admin() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          toast.error('Your session has expired. Please login again.');
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 2000);
+          // Clear stored tokens
+          localStorage.removeItem('csaTokens');
+          localStorage.removeItem('csaUser');
+          // Open login modal immediately
+          setAuthMode('login');
+          setAuthModalOpen(true);
+          // Show toast after modal opens
+          toast.error('Your session has expired. Please login again.', { duration: 3000 });
         }
         return;
       }
@@ -896,6 +881,20 @@ export default function Admin() {
       fetchUsers(); // Also fetch users for the Users tab
     }
   }, [isAdmin, user]);
+
+  // Fetch events when switching to events tab
+  useEffect(() => {
+    if (activeTab === "events" && isAdmin && user && events.length === 0) {
+      fetchEvents();
+    }
+  }, [activeTab, isAdmin, user]);
+
+  // Fetch users when switching to users tab
+  useEffect(() => {
+    if (activeTab === "users" && isAdmin && user && users.length === 0) {
+      fetchUsers();
+    }
+  }, [activeTab, isAdmin, user]);
 
   // Refresh registration counts when switching to manage tab
   useEffect(() => {
@@ -1063,10 +1062,14 @@ export default function Admin() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          toast.error('Your session has expired. Please login again.');
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 2000);
+          // Clear stored tokens
+          localStorage.removeItem('csaTokens');
+          localStorage.removeItem('csaUser');
+          // Open login modal immediately
+          setAuthMode('login');
+          setAuthModalOpen(true);
+          // Show toast after modal opens
+          toast.error('Your session has expired. Please login again.', { duration: 3000 });
           return;
         }
         const errorData = await response.json();
@@ -2645,6 +2648,14 @@ export default function Admin() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Auth Modal for session expiration */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        mode={authMode}
+        onModeChange={setAuthMode}
+      />
     </div>
   );
 }

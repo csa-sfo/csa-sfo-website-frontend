@@ -424,11 +424,11 @@ export default function EventDetail() {
   // Fetch live registration count from actual registrations
   const fetchLiveRegistrationCount = async (eventId: string) => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.EVENT_REGISTERED_USERS}/${eventId}`);
+      const response = await fetch(`${API_ENDPOINTS.EVENT_ATTENDEES}/${eventId}`);
       
       if (response.ok) {
         const data = await response.json();
-        setAttendeesCount(data.count || 0);
+        setAttendeesCount(data.attendees || 0);
       }
     } catch (error) {
       // Error fetching registration count
@@ -440,12 +440,12 @@ export default function EventDetail() {
     if (!event?.id) return;
     
     try {
-      // Fetch live registration count from actual registrations
-      const response = await fetch(`${API_ENDPOINTS.EVENT_REGISTERED_USERS}/${event.id}`);
+      // Fetch attendees count from events table (includes base + registrations)
+      const response = await fetch(`${API_ENDPOINTS.EVENT_ATTENDEES}/${event.id}`);
       
       if (response.ok) {
         const data = await response.json();
-        setAttendeesCount(data.count || 0);
+        setAttendeesCount(data.attendees || 0);
       } else {
         // Fallback: increment locally if backend fails
         setAttendeesCount(prev => {
