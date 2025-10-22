@@ -73,7 +73,7 @@ export const RaffleWheel = ({ isOpen, onClose, attendees, eventTitle }: RaffleWh
     setWinner(null);
 
     // Calculate how many pixels to move based on attendees
-    const itemHeight = 60; // Height of each name item
+    const itemHeight = 48; // Height of each name item (matches minHeight in style)
     const totalItems = displayNames.length;
     
     // Random number of full cycles through the list + random final position
@@ -143,10 +143,10 @@ export const RaffleWheel = ({ isOpen, onClose, attendees, eventTitle }: RaffleWh
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Trophy className="h-6 w-6 text-yellow-500" />
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <Trophy className="h-5 w-5 text-yellow-500" />
             Event Raffle - {eventTitle}
           </DialogTitle>
           <p className="text-sm text-gray-600">
@@ -154,22 +154,22 @@ export const RaffleWheel = ({ isOpen, onClose, attendees, eventTitle }: RaffleWh
           </p>
         </DialogHeader>
 
-        <div className="py-6 space-y-6">
+        <div className="py-4 space-y-4">
           {/* Spinning Wheel/Bowl */}
           <div className="relative">
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 shadow-inner">
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4 shadow-inner">
               {/* Winner Display (when selected) */}
               {winner && (
-                <div className="text-center mb-6 animate-bounce">
-                  <div className="inline-block bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-full shadow-lg">
-                    <Trophy className="inline-block h-5 w-5 mr-2" />
-                    <span className="font-bold text-lg">WINNER!</span>
+                <div className="text-center mb-4 animate-bounce">
+                  <div className="inline-block bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-full shadow-lg">
+                    <Trophy className="inline-block h-4 w-4 mr-2" />
+                    <span className="font-bold text-base">WINNER!</span>
                   </div>
                 </div>
               )}
 
               {/* Name Bowl/Wheel */}
-              <div className="relative h-80 flex items-center justify-center overflow-hidden rounded-2xl">
+              <div className="relative h-60 flex items-center justify-center overflow-hidden rounded-xl">
                 {!winner ? (
                   <div className="relative w-full h-full flex flex-col items-center justify-center">
                     {/* Spinning Names */}
@@ -184,7 +184,7 @@ export const RaffleWheel = ({ isOpen, onClose, attendees, eventTitle }: RaffleWh
                       {displayNames.map((name, index) => (
                         <div
                           key={index}
-                          className={`text-xl font-bold text-center px-8 py-4 rounded-xl shadow-md transform transition-all ${
+                          className={`text-base font-bold text-center px-4 py-3 rounded-lg shadow-md transform transition-all ${
                             index % 3 === 0 
                               ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' 
                               : index % 3 === 1
@@ -192,7 +192,7 @@ export const RaffleWheel = ({ isOpen, onClose, attendees, eventTitle }: RaffleWh
                               : 'bg-gradient-to-r from-pink-500 to-pink-600 text-white'
                           }`}
                           style={{ 
-                            minHeight: '60px', 
+                            minHeight: '48px', 
                             display: 'flex', 
                             alignItems: 'center', 
                             justifyContent: 'center',
@@ -204,42 +204,42 @@ export const RaffleWheel = ({ isOpen, onClose, attendees, eventTitle }: RaffleWh
                     </div>
 
                     {/* Center Selection Indicator - Clear focus area */}
-                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10 px-8">
-                      <div className="w-full max-w-2xl">
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10 px-4">
+                      <div className="w-full max-w-lg">
                         {/* Winner selection box - clear and prominent */}
-                        <div className="border-4 border-yellow-400 rounded-xl bg-transparent shadow-lg ring-4 ring-yellow-400/30" style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <div className="flex items-center gap-2 bg-yellow-400 px-4 py-1 rounded-full shadow-md">
-                            <Trophy className="h-4 w-4 text-yellow-900 animate-bounce" />
-                            <span className="text-yellow-900 font-bold text-sm">WINNER</span>
-                            <Trophy className="h-4 w-4 text-yellow-900 animate-bounce" />
+                        <div className="border-3 border-yellow-400 rounded-lg bg-transparent shadow-lg ring-2 ring-yellow-400/30" style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div className="flex items-center gap-2 bg-yellow-400 px-3 py-1 rounded-full shadow-md">
+                            <Trophy className="h-3 w-3 text-yellow-900 animate-bounce" />
+                            <span className="text-yellow-900 font-bold text-xs">WINNER</span>
+                            <Trophy className="h-3 w-3 text-yellow-900 animate-bounce" />
                           </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Gradient Overlays for color fade effect */}
-                    <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-blue-50 via-blue-50/50 to-transparent pointer-events-none z-20" />
-                    <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-purple-50 via-purple-50/50 to-transparent pointer-events-none z-20" />
+                    <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-blue-50 via-blue-50/50 to-transparent pointer-events-none z-20" />
+                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-purple-50 via-purple-50/50 to-transparent pointer-events-none z-20" />
                   </div>
                 ) : (
                   // Winner Display - Clean and elegant
                   <div className="text-center animate-scale-in">
-                    <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-2xl p-10 shadow-xl">
+                    <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl p-6 shadow-xl">
                       {/* Trophy icon */}
-                      <Trophy className="h-16 w-16 text-yellow-500 mx-auto mb-4 animate-bounce" />
+                      <Trophy className="h-12 w-12 text-yellow-500 mx-auto mb-3 animate-bounce" />
                       
                       {/* Winner badge */}
-                      <div className="inline-block bg-yellow-400 text-white px-4 py-1 rounded-full font-semibold text-sm mb-4">
+                      <div className="inline-block bg-yellow-400 text-white px-3 py-1 rounded-full font-semibold text-xs mb-3">
                         WINNER
                       </div>
                       
                       {/* Winner name */}
-                      <h2 className="text-4xl font-bold text-gray-900 mb-3">
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">
                         {winner.name}
                       </h2>
                       
                       {/* Celebration message */}
-                      <p className="text-lg text-gray-600">
+                      <p className="text-base text-gray-600">
                         🎉 Congratulations! 🎉
                       </p>
                     </div>
@@ -250,22 +250,21 @@ export const RaffleWheel = ({ isOpen, onClose, attendees, eventTitle }: RaffleWh
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 justify-center">
+          <div className="flex gap-2 justify-center">
             {!winner ? (
               <Button
                 onClick={spinWheel}
                 disabled={isSpinning}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-6 text-lg font-semibold shadow-lg"
-                size="lg"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 text-base font-semibold shadow-lg"
               >
                 {isSpinning ? (
                   <>
-                    <RotateCw className="h-5 w-5 mr-2 animate-spin" />
+                    <RotateCw className="h-4 w-4 mr-2 animate-spin" />
                     Spinning...
                   </>
                 ) : (
                   <>
-                    <Trophy className="h-5 w-5 mr-2" />
+                    <Trophy className="h-4 w-4 mr-2" />
                     Spin the Wheel!
                   </>
                 )}
@@ -275,16 +274,14 @@ export const RaffleWheel = ({ isOpen, onClose, attendees, eventTitle }: RaffleWh
                 <Button
                   onClick={resetRaffle}
                   variant="outline"
-                  className="px-6 py-6 text-base"
-                  size="lg"
+                  className="px-4 py-3 text-sm"
                 >
                   <RotateCw className="h-4 w-4 mr-2" />
                   Spin Again
                 </Button>
                 <Button
                   onClick={onClose}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-6 text-base"
-                  size="lg"
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 text-sm"
                 >
                   Done
                 </Button>
@@ -293,9 +290,9 @@ export const RaffleWheel = ({ isOpen, onClose, attendees, eventTitle }: RaffleWh
           </div>
 
           {/* Participants List */}
-          <div className="mt-6">
-            <details className="bg-gray-50 rounded-lg p-4">
-              <summary className="cursor-pointer font-semibold text-gray-700 hover:text-gray-900 flex items-center justify-between">
+          <div className="mt-4">
+            <details className="bg-gray-50 rounded-lg p-3">
+              <summary className="cursor-pointer font-medium text-sm text-gray-700 hover:text-gray-900 flex items-center justify-between">
                 <span>View All Participants ({attendees.length})</span>
                 <svg className="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
