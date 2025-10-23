@@ -56,6 +56,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
+    // Capture prior messages for history before we append the new user message
+    const priorMessages = [...messages];
+
     const userMessage: Message = {
       id: Date.now().toString(),
       text: inputText,
@@ -87,6 +90,11 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
         body: JSON.stringify({
           user_id: "chatbot_user", // You can make this dynamic if needed
           query: inputText,
+          // Provide compact prior history as context (last 20 messages)
+          history: priorMessages
+            .map(m => `${m.sender === 'user' ? 'User' : 'Bot'}: ${m.text}`)
+            .slice(-20),
+          isReturningUser: priorMessages.length > 0,
           timestamp: new Date().toISOString(),
         })
       });
