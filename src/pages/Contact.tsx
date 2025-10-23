@@ -6,8 +6,63 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, MapPin, Users, Building, MessageSquare } from "lucide-react";
+import { Mail, MapPin, Users, Building, MessageSquare, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+
+// Validation functions
+const validateName = (name: string): string | null => {
+  if (!name.trim()) {
+    return "Full name is required";
+  }
+  if (name.trim().length < 2) {
+    return "Full name must be at least 2 characters long";
+  }
+  // Only allow letters, spaces, hyphens, and apostrophes (for names like O'Connor, Jean-Pierre)
+  const nameRegex = /^[a-zA-Z\s\-']+$/;
+  if (!nameRegex.test(name.trim())) {
+    return "Full name can only contain letters, spaces, hyphens, and apostrophes";
+  }
+  return null;
+};
+
+const validateEmail = (email: string): string | null => {
+  if (!email.trim()) {
+    return "Email address is required";
+  }
+  // Comprehensive email regex pattern
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(email.trim())) {
+    return "Please enter a valid email address (e.g., user@example.com)";
+  }
+  return null;
+};
+
+const validateSubject = (subject: string): string | null => {
+  if (!subject.trim()) {
+    return "Subject is required";
+  }
+  if (subject.trim().length < 5) {
+    return "Subject must be at least 5 characters long";
+  }
+  return null;
+};
+
+const validateMessage = (message: string): string | null => {
+  if (!message.trim()) {
+    return "Message is required";
+  }
+  if (message.trim().length < 10) {
+    return "Message must be at least 10 characters long";
+  }
+  return null;
+};
+
+const validateInquiryType = (inquiryType: string): string | null => {
+  if (!inquiryType) {
+    return "Please select an inquiry type";
+  }
+  return null;
+};
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -18,26 +73,145 @@ export default function Contact() {
     message: "",
     inquiryType: ""
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  // Validation helper function
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    
+    const nameError = validateName(formData.name);
+    if (nameError) newErrors.name = nameError;
+    
+    const emailError = validateEmail(formData.email);
+    if (emailError) newErrors.email = emailError;
+    
+    const subjectError = validateSubject(formData.subject);
+    if (subjectError) newErrors.subject = subjectError;
+    
+    const messageError = validateMessage(formData.message);
+    if (messageError) newErrors.message = messageError;
+    
+    const inquiryTypeError = validateInquiryType(formData.inquiryType);
+    if (inquiryTypeError) newErrors.inquiryType = inquiryTypeError;
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle field changes with real-time validation
+  const handleFieldChange = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: "" });
+    }
+    
+    // Real-time validation for touched fields
+    if (touched[field]) {
+      let error = "";
+      switch (field) {
+        case "name":
+          error = validateName(value) || "";
+          break;
+        case "email":
+          error = validateEmail(value) || "";
+          break;
+        case "subject":
+          error = validateSubject(value) || "";
+          break;
+        case "message":
+          error = validateMessage(value) || "";
+          break;
+        case "inquiryType":
+          error = validateInquiryType(value) || "";
+          break;
+      }
+      setErrors({ ...errors, [field]: error });
+    }
+  };
+
+  // Handle field blur to mark as touched
+  const handleFieldBlur = (field: string) => {
+    setTouched({ ...touched, [field]: true });
+    
+    // Validate field on blur
+    let error = "";
+    switch (field) {
+      case "name":
+        error = validateName(formData[field]) || "";
+        break;
+      case "email":
+        error = validateEmail(formData[field]) || "";
+        break;
+      case "subject":
+        error = validateSubject(formData[field]) || "";
+        break;
+      case "message":
+        error = validateMessage(formData[field]) || "";
+        break;
+      case "inquiryType":
+        error = validateInquiryType(formData[field]) || "";
+        break;
+    }
+    setErrors({ ...errors, [field]: error });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Mark all fields as touched
+    setTouched({
+      name: true,
+      email: true,
+      subject: true,
+      message: true,
+      inquiryType: true
+    });
+    
+    // Validate form
+    if (!validateForm()) {
+      toast.error("Please fix the errors in the form before submitting.");
+      return;
+    }
+    
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-    toast.success("Thank you! We'll get back to you within 24 hours.");
-    
-    setIsSubmitting(false);
-    setFormData({
-      name: "",
-      email: "",
-      company: "",
-      subject: "",
-      message: "",
-      inquiryType: ""
-    });
+      toast.success("Thank you! We'll get back to you within 24 hours.");
+      
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        company: "",
+        subject: "",
+        message: "",
+        inquiryType: ""
+      });
+      setErrors({});
+      setTouched({});
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Error message component
+  const ErrorMessage = ({ error }: { error?: string }) => {
+    if (!error) return null;
+    return (
+      <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+        <AlertCircle className="h-4 w-4" />
+        <span>{error}</span>
+      </div>
+    );
   };
 
   return (
@@ -165,10 +339,14 @@ export default function Contact() {
                         <Input
                           id="name"
                           value={formData.name}
-                          onChange={(e) => setFormData({...formData, name: e.target.value})}
-                          required
-                          aria-describedby="name-help"
+                          onChange={(e) => handleFieldChange("name", e.target.value)}
+                          onBlur={() => handleFieldBlur("name")}
+                          className={errors.name ? "border-red-500 focus:border-red-500" : ""}
+                          placeholder="Enter your full name"
+                          aria-describedby={errors.name ? "name-error" : "name-help"}
+                          aria-invalid={!!errors.name}
                         />
+                        <ErrorMessage error={errors.name} />
                       </div>
                       <div>
                         <Label htmlFor="email">Email Address *</Label>
@@ -176,10 +354,14 @@ export default function Contact() {
                           id="email"
                           type="email"
                           value={formData.email}
-                          onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          required
-                          aria-describedby="email-help"
+                          onChange={(e) => handleFieldChange("email", e.target.value)}
+                          onBlur={() => handleFieldBlur("email")}
+                          className={errors.email ? "border-red-500 focus:border-red-500" : ""}
+                          placeholder="user@example.com"
+                          aria-describedby={errors.email ? "email-error" : "email-help"}
+                          aria-invalid={!!errors.email}
                         />
+                        <ErrorMessage error={errors.email} />
                       </div>
                     </div>
 
@@ -189,13 +371,17 @@ export default function Contact() {
                         <Input
                           id="company"
                           value={formData.company}
-                          onChange={(e) => setFormData({...formData, company: e.target.value})}
+                          onChange={(e) => handleFieldChange("company", e.target.value)}
+                          placeholder="Your company or organization"
                         />
                       </div>
                       <div>
                         <Label htmlFor="inquiryType">Inquiry Type *</Label>
-                        <Select value={formData.inquiryType} onValueChange={(value) => setFormData({...formData, inquiryType: value})}>
-                          <SelectTrigger>
+                        <Select 
+                          value={formData.inquiryType} 
+                          onValueChange={(value) => handleFieldChange("inquiryType", value)}
+                        >
+                          <SelectTrigger className={errors.inquiryType ? "border-red-500 focus:border-red-500" : ""}>
                             <SelectValue placeholder="Select inquiry type" />
                           </SelectTrigger>
                           <SelectContent>
@@ -208,6 +394,7 @@ export default function Contact() {
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
+                        <ErrorMessage error={errors.inquiryType} />
                       </div>
                     </div>
 
@@ -216,10 +403,14 @@ export default function Contact() {
                       <Input
                         id="subject"
                         value={formData.subject}
-                        onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                        required
+                        onChange={(e) => handleFieldChange("subject", e.target.value)}
+                        onBlur={() => handleFieldBlur("subject")}
+                        className={errors.subject ? "border-red-500 focus:border-red-500" : ""}
                         placeholder="Brief description of your inquiry"
+                        aria-describedby={errors.subject ? "subject-error" : undefined}
+                        aria-invalid={!!errors.subject}
                       />
+                      <ErrorMessage error={errors.subject} />
                     </div>
 
                     <div>
@@ -227,15 +418,21 @@ export default function Contact() {
                       <Textarea
                         id="message"
                         value={formData.message}
-                        onChange={(e) => setFormData({...formData, message: e.target.value})}
-                        required
+                        onChange={(e) => handleFieldChange("message", e.target.value)}
+                        onBlur={() => handleFieldBlur("message")}
+                        className={errors.message ? "border-red-500 focus:border-red-500" : ""}
                         rows={6}
                         placeholder="Please provide details about your inquiry..."
-                        aria-describedby="message-help"
+                        aria-describedby={errors.message ? "message-error" : "message-help"}
+                        aria-invalid={!!errors.message}
                       />
-                      <p id="message-help" className="text-sm text-gray-500 mt-1">
-                        Include any relevant details that would help us respond to your inquiry.
-                      </p>
+                      {errors.message ? (
+                        <ErrorMessage error={errors.message} />
+                      ) : (
+                        <p id="message-help" className="text-sm text-gray-500 mt-1">
+                          Include any relevant details that would help us respond to your inquiry.
+                        </p>
+                      )}
                     </div>
 
                     <Button 
@@ -247,6 +444,10 @@ export default function Contact() {
                       <MessageSquare className="h-4 w-4 mr-2" />
                       {isSubmitting ? "Sending..." : "Send Message"}
                     </Button>
+                    
+                    <p className="text-xs text-gray-500 text-center">
+                      * Required fields. All information will be kept confidential.
+                    </p>
                   </form>
                 </CardContent>
               </Card>
