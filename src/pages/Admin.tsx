@@ -131,6 +131,10 @@ const EventForm = memo(({
           />
           <p className="text-sm text-gray-600">
             Format: mm/dd/yyyy hh:mm AM/PM (e.g., 12/25/2024 02:30 PM)
+            <br />
+            <span className="text-amber-600 font-medium">
+              ⚠️ Event time must be between 6:00 AM and 11:00 PM for practical scheduling
+            </span>
           </p>
         </div>
         <div className="space-y-2">
@@ -1095,6 +1099,13 @@ export default function Admin() {
       return;
     }
 
+    // Validate event time is within practical hours (6 AM to 11 PM)
+    const timeError = validateEventTime(formData.date_time);
+    if (timeError) {
+      toast.error(timeError);
+      return;
+    }
+
     if (!isAdmin) {
       toast.error("Admin access required to create events");
       return;
@@ -1295,6 +1306,13 @@ export default function Admin() {
     const currentDate = new Date();
     if (selectedDate < currentDate) {
       toast.error("Event date and time cannot be in the past");
+      return;
+    }
+
+    // Validate event time is within practical hours (6 AM to 11 PM)
+    const timeError = validateEventTime(formData.date_time);
+    if (timeError) {
+      toast.error(timeError);
       return;
     }
 
@@ -1545,8 +1563,31 @@ export default function Admin() {
     }));
   }, []);
 
+  // Time validation function
+  const validateEventTime = (dateTimeString: string): string | null => {
+    if (!dateTimeString) return null;
+    
+    const eventDate = new Date(dateTimeString);
+    const hour = eventDate.getHours();
+    
+    // Check if time is between 6 AM (6) and 11 PM (23)
+    if (hour < 6 || hour > 23) {
+      return "Event time must be between 6:00 AM and 11:00 PM for practical scheduling";
+    }
+    
+    return null;
+  };
+
   // Create stable event handlers for basic form fields
   const handleDateChange = useCallback((value: string) => {
+    const timeError = validateEventTime(value);
+    
+    if (timeError) {
+      toast.error(timeError);
+      // Don't update the form data if time is invalid
+      return;
+    }
+    
     setFormData(prev => ({ ...prev, date_time: value }));
   }, []);
 
@@ -2126,7 +2167,11 @@ export default function Admin() {
                                 <span className="text-sm">{event.attendees}/{event.capacity}</span>
                                 <Badge 
                                   variant={event.attendees >= event.capacity ? "destructive" : "secondary"}
-                                  className="text-xs"
+                                  className={`text-xs px-2 py-1 rounded-full font-medium min-w-[60px] text-center ${
+                                    event.attendees >= event.capacity 
+                                      ? "bg-red-100 text-red-800 border-red-200" 
+                                      : "bg-green-100 text-green-800 border-green-200"
+                                  }`}
                                 >
                                   {event.attendees >= event.capacity ? "Full" : `${event.capacity - event.attendees} left`}
                                 </Badge>

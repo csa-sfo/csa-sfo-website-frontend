@@ -7,9 +7,44 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, Calendar, Presentation, FileText, Heart, CheckCircle } from "lucide-react";
+import { Users, Calendar, Presentation, FileText, Heart, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { API_ENDPOINTS } from "@/config/api";
+
+// Validation functions
+const validateName = (name: string, fieldName: string): string | null => {
+  if (!name.trim()) {
+    return `${fieldName} is required`;
+  }
+  if (name.trim().length < 2) {
+    return `${fieldName} must be at least 2 characters long`;
+  }
+  // Only allow letters, spaces, hyphens, and apostrophes (for names like O'Connor, Jean-Pierre)
+  const nameRegex = /^[a-zA-Z\s\-']+$/;
+  if (!nameRegex.test(name.trim())) {
+    return `${fieldName} can only contain letters, spaces, hyphens, and apostrophes`;
+  }
+  return null;
+};
+
+const validateEmail = (email: string): string | null => {
+  if (!email.trim()) {
+    return "Email address is required";
+  }
+  // Comprehensive email regex pattern
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(email.trim())) {
+    return "Please enter a valid email address (e.g., user@example.com)";
+  }
+  return null;
+};
+
+const validateInterests = (interests: string[]): string | null => {
+  if (interests.length === 0) {
+    return "Please select at least one volunteer role";
+  }
+  return null;
+};
 
 const volunteerRoles = [
   {
@@ -64,19 +99,103 @@ export default function GetInvolved() {
     availability: "",
     motivation: ""
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  // Validation helper function
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    
+    const firstNameError = validateName(formData.firstName, "First name");
+    if (firstNameError) newErrors.firstName = firstNameError;
+    
+    const lastNameError = validateName(formData.lastName, "Last name");
+    if (lastNameError) newErrors.lastName = lastNameError;
+    
+    const emailError = validateEmail(formData.email);
+    if (emailError) newErrors.email = emailError;
+    
+    const interestsError = validateInterests(formData.interests);
+    if (interestsError) newErrors.interests = interestsError;
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle field changes with real-time validation
+  const handleFieldChange = (field: string, value: string | string[]) => {
+    setFormData({ ...formData, [field]: value });
+    
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: "" });
+    }
+    
+    // Real-time validation for touched fields
+    if (touched[field]) {
+      let error = "";
+      switch (field) {
+        case "firstName":
+          error = validateName(value as string, "First name") || "";
+          break;
+        case "lastName":
+          error = validateName(value as string, "Last name") || "";
+          break;
+        case "email":
+          error = validateEmail(value as string) || "";
+          break;
+        case "interests":
+          error = validateInterests(value as string[]) || "";
+          break;
+      }
+      setErrors({ ...errors, [field]: error });
+    }
+  };
+
+  // Handle field blur to mark as touched
+  const handleFieldBlur = (field: string) => {
+    setTouched({ ...touched, [field]: true });
+    
+    // Validate field on blur
+    let error = "";
+    switch (field) {
+      case "firstName":
+        error = validateName(formData[field], "First name") || "";
+        break;
+      case "lastName":
+        error = validateName(formData[field], "Last name") || "";
+        break;
+      case "email":
+        error = validateEmail(formData[field]) || "";
+        break;
+      case "interests":
+        error = validateInterests(formData[field]) || "";
+        break;
+    }
+    setErrors({ ...errors, [field]: error });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Mark all required fields as touched
+    setTouched({
+      firstName: true,
+      lastName: true,
+      email: true,
+      interests: true
+    });
+    
+    // Validate form
+    if (!validateForm()) {
+      toast.error("Please fix the errors in the form before submitting.");
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
-      // Validate that at least one interest is selected
-      if (formData.interests.length === 0) {
-        toast.error("Please select at least one volunteer role");
-        setIsSubmitting(false);
-        return;
-      }
 
       // Prepare the data to match the backend model
       const volunteerData = {
@@ -124,6 +243,8 @@ export default function GetInvolved() {
         availability: "",
         motivation: ""
       });
+      setErrors({});
+      setTouched({});
     } catch (error) {
       console.error('Error submitting volunteer application:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to submit application. Please try again.');
@@ -133,11 +254,22 @@ export default function GetInvolved() {
   };
 
   const handleInterestChange = (role: string, checked: boolean) => {
-    if (checked) {
-      setFormData({...formData, interests: [...formData.interests, role]});
-    } else {
-      setFormData({...formData, interests: formData.interests.filter(i => i !== role)});
-    }
+    const newInterests = checked 
+      ? [...formData.interests, role]
+      : formData.interests.filter(i => i !== role);
+    
+    handleFieldChange("interests", newInterests);
+  };
+
+  // Error message component
+  const ErrorMessage = ({ error }: { error?: string }) => {
+    if (!error) return null;
+    return (
+      <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+        <AlertCircle className="h-4 w-4" />
+        <span>{error}</span>
+      </div>
+    );
   };
 
   return (
@@ -266,18 +398,28 @@ export default function GetInvolved() {
                         <Input
                           id="firstName"
                           value={formData.firstName}
-                          onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                          required
+                          onChange={(e) => handleFieldChange("firstName", e.target.value)}
+                          onBlur={() => handleFieldBlur("firstName")}
+                          className={errors.firstName ? "border-red-500 focus:border-red-500" : ""}
+                          placeholder="Enter your first name"
+                          aria-describedby={errors.firstName ? "firstName-error" : undefined}
+                          aria-invalid={!!errors.firstName}
                         />
+                        <ErrorMessage error={errors.firstName} />
                       </div>
                       <div>
                         <Label htmlFor="lastName">Last Name *</Label>
                         <Input
                           id="lastName"
                           value={formData.lastName}
-                          onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                          required
+                          onChange={(e) => handleFieldChange("lastName", e.target.value)}
+                          onBlur={() => handleFieldBlur("lastName")}
+                          className={errors.lastName ? "border-red-500 focus:border-red-500" : ""}
+                          placeholder="Enter your last name"
+                          aria-describedby={errors.lastName ? "lastName-error" : undefined}
+                          aria-invalid={!!errors.lastName}
                         />
+                        <ErrorMessage error={errors.lastName} />
                       </div>
                     </div>
 
@@ -288,16 +430,22 @@ export default function GetInvolved() {
                           id="email"
                           type="email"
                           value={formData.email}
-                          onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          required
+                          onChange={(e) => handleFieldChange("email", e.target.value)}
+                          onBlur={() => handleFieldBlur("email")}
+                          className={errors.email ? "border-red-500 focus:border-red-500" : ""}
+                          placeholder="user@example.com"
+                          aria-describedby={errors.email ? "email-error" : undefined}
+                          aria-invalid={!!errors.email}
                         />
+                        <ErrorMessage error={errors.email} />
                       </div>
                       <div>
                         <Label htmlFor="company">Company/Organization</Label>
                         <Input
                           id="company"
                           value={formData.company}
-                          onChange={(e) => setFormData({...formData, company: e.target.value})}
+                          onChange={(e) => handleFieldChange("company", e.target.value)}
+                          placeholder="Your company or organization"
                         />
                       </div>
                     </div>
@@ -307,7 +455,8 @@ export default function GetInvolved() {
                       <Input
                         id="title"
                         value={formData.title}
-                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                        onChange={(e) => handleFieldChange("title", e.target.value)}
+                        placeholder="Your current job title or role"
                       />
                     </div>
                   </div>
@@ -320,7 +469,7 @@ export default function GetInvolved() {
 
                     <div>
                       <Label htmlFor="experience">Cloud Security Experience</Label>
-                      <Select value={formData.experience} onValueChange={(value) => setFormData({...formData, experience: value})}>
+                      <Select value={formData.experience} onValueChange={(value) => handleFieldChange("experience", value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select your experience level" />
                         </SelectTrigger>
@@ -338,7 +487,7 @@ export default function GetInvolved() {
                       <Textarea
                         id="skills"
                         value={formData.skills}
-                        onChange={(e) => setFormData({...formData, skills: e.target.value})}
+                        onChange={(e) => handleFieldChange("skills", e.target.value)}
                         placeholder="Describe your technical skills, certifications, and areas of expertise..."
                         rows={4}
                       />
@@ -370,11 +519,12 @@ export default function GetInvolved() {
                           </div>
                         ))}
                       </div>
+                      <ErrorMessage error={errors.interests} />
                     </div>
 
                     <div>
                       <Label htmlFor="availability">Time Availability</Label>
-                      <Select value={formData.availability} onValueChange={(value) => setFormData({...formData, availability: value})}>
+                      <Select value={formData.availability} onValueChange={(value) => handleFieldChange("availability", value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="How much time can you commit per month?" />
                         </SelectTrigger>
@@ -392,7 +542,7 @@ export default function GetInvolved() {
                       <Textarea
                         id="motivation"
                         value={formData.motivation}
-                        onChange={(e) => setFormData({...formData, motivation: e.target.value})}
+                        onChange={(e) => handleFieldChange("motivation", e.target.value)}
                         placeholder="Tell us about your motivation and what you hope to achieve..."
                         rows={4}
                       />
@@ -408,6 +558,10 @@ export default function GetInvolved() {
                     <Heart className="h-4 w-4 mr-2" />
                     {isSubmitting ? "Submitting Application..." : "Submit Volunteer Application"}
                   </Button>
+                  
+                  <p className="text-xs text-gray-500 text-center">
+                    * Required fields. All information will be kept confidential and used only for volunteer coordination.
+                  </p>
                 </form>
               </CardContent>
             </Card>
