@@ -746,7 +746,7 @@ export default function Index() {
       </section>
 
       {/* Floating Social Media Bar */}
-      <div className="fixed right-4 bottom-24 md:bottom-32 lg:top-1/2 lg:transform lg:-translate-y-1/2 z-30">
+      <div className="fixed right-4 bottom-40 md:bottom-32 lg:top-1/2 lg:transform lg:-translate-y-1/2 z-30">
         <div className="flex flex-col space-y-3 lg:space-y-4">
           <a
             href="https://www.linkedin.com/groups/14049487/"
