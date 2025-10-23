@@ -50,7 +50,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
     try {
       // Pass user data to Supabase for signup to store in user_metadata
       const result = await sendOTP(email, signupData);
-      console.log('Send OTP result:', result);
       
       return true;
     } catch (error) {

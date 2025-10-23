@@ -644,7 +644,7 @@ export default function Events() {
               <CardTitle className="text-xl mb-2 leading-tight">
                 <Link 
                   to={`/events/${event.slug}`}
-                  className="hover:text-csa-blue transition-colors"
+                  className="text-csa-blue hover:font-bold transition-all cursor-pointer"
                 >
                   {event.title}
                 </Link>
@@ -1142,6 +1142,20 @@ export default function Events() {
               className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-fade-in"
               style={{ animationDuration: '0.3s' }}
             />
+            
+            {/* Caption for selected image */}
+            {(() => {
+              const currentImageData = slideshowImages.find(img => img.src === selectedImage);
+              return currentImageData?.caption && (
+                <div className="absolute top-20 left-1/2 transform -translate-x-1/2 max-w-2xl">
+                  <div className="bg-white/10 backdrop-blur-md rounded-lg px-6 py-3 border border-white/20">
+                    <p className="text-white text-base font-medium text-center">
+                      {currentImageData.caption}
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
             
             {/* Image navigation */}
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">

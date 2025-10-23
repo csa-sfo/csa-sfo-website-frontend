@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Users, Calendar, Presentation, FileText, Heart, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { API_ENDPOINTS } from "@/config/api";
 
 const volunteerRoles = [
   {
@@ -69,24 +70,66 @@ export default function GetInvolved() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Validate that at least one interest is selected
+      if (formData.interests.length === 0) {
+        toast.error("Please select at least one volunteer role");
+        setIsSubmitting(false);
+        return;
+      }
 
-    toast.success("Thank you for your interest! We'll be in touch within 48 hours.");
-    
-    setIsSubmitting(false);
-    setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      company: "",
-      title: "",
-      experience: "",
-      interests: [],
-      skills: "",
-      availability: "",
-      motivation: ""
-    });
+      // Prepare the data to match the backend model
+      const volunteerData = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        company: formData.company || null,
+        job_title: formData.title || null,
+        experience_level: formData.experience || null,
+        skills: formData.skills || null,
+        volunteer_roles: formData.interests,
+        availability: formData.availability || null,
+        motivation: formData.motivation || null,
+        img_url: null // Can be added later if needed
+      };
+
+      // Submit to backend
+      const response = await fetch(API_ENDPOINTS.VOLUNTEER_SUBMIT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(volunteerData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to submit application');
+      }
+
+      const result = await response.json();
+      
+      toast.success("Thank you for your interest! We'll be in touch within 48 hours.");
+      
+      // Reset form
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        company: "",
+        title: "",
+        experience: "",
+        interests: [],
+        skills: "",
+        availability: "",
+        motivation: ""
+      });
+    } catch (error) {
+      console.error('Error submitting volunteer application:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit application. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInterestChange = (role: string, checked: boolean) => {
@@ -309,7 +352,7 @@ export default function GetInvolved() {
                     </h3>
                     
                     <div>
-                      <Label>Which volunteer roles interest you? (Select all that apply)</Label>
+                      <Label>Which volunteer roles interest you? <span className="text-red-500">*</span> (Select all that apply)</Label>
                       <div className="space-y-3 mt-3">
                         {volunteerRoles.map(role => (
                           <div key={role.title} className="flex items-start space-x-3">
