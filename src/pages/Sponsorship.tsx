@@ -217,7 +217,7 @@ export default function Sponsorship() {
   return (
     <div className="min-h-screen bg-white">
       {/* Enhanced Hero Section with Slider */}
-      <section className="relative bg-gradient-to-br from-csa-blue via-csa-navy to-slate-900 text-white py-20 lg:py-28 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-csa-blue via-csa-navy to-slate-900 text-white py-12 sm:py-16 lg:py-28 overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-30">
           <div className="w-full h-full" style={{
@@ -226,26 +226,26 @@ export default function Sponsorship() {
           }}></div>
         </div>
         
-        {/* Floating Elements */}
-        <div className="absolute top-20 left-10 w-32 h-32 bg-white/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-40 h-40 bg-csa-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-1/2 left-1/3 w-24 h-24 bg-blue-400/5 rounded-full blur-2xl animate-bounce" style={{ animationDelay: '1s' }}></div>
+        {/* Floating Elements - Hidden on mobile for performance */}
+        <div className="hidden sm:block absolute top-20 left-10 w-32 h-32 bg-white/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="hidden sm:block absolute bottom-20 right-10 w-40 h-40 bg-csa-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="hidden sm:block absolute top-1/2 left-1/3 w-24 h-24 bg-blue-400/5 rounded-full blur-2xl animate-bounce" style={{ animationDelay: '1s' }}></div>
         
-        <div className="container-site relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="container-site relative z-10 px-4 sm:px-6">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-20 items-center">
             {/* Left Column - Dynamic Text Content */}
-            <div className="space-y-8 animate-fade-in">
+            <div className="space-y-6 sm:space-y-8 animate-fade-in text-center lg:text-left">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full border border-white/20">
                 <div className="w-2 h-2 bg-csa-accent rounded-full animate-pulse"></div>
-                <span className="text-sm font-semibold text-gray-100 uppercase tracking-wider">
+                <span className="text-xs sm:text-sm font-semibold text-gray-100 uppercase tracking-wider">
                   {heroSlides[currentSlide].subtitle}
                 </span>
               </div>
               
               {/* Main Heading with Gradient Text */}
-              <div className="space-y-4">
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+              <div className="space-y-3 sm:space-y-4">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
                   <span className="block bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
                     Partner with CSA
                   </span>
@@ -256,17 +256,17 @@ export default function Sponsorship() {
               </div>
               
               {/* Enhanced Description */}
-              <div className="space-y-6">
-                <p className="text-xl md:text-2xl text-gray-100 leading-relaxed font-light transition-all duration-500">
+              <div className="space-y-4 sm:space-y-6">
+                <p className="text-lg sm:text-xl md:text-2xl text-gray-100 leading-relaxed font-light transition-all duration-500">
                   {heroSlides[currentSlide].description}
                 </p>
                 
                 {/* Action Button */}
-                <div className="pt-6">
+                <div className="pt-4 sm:pt-6">
                   <Button 
                     asChild 
                     size="lg" 
-                    className="bg-csa-accent hover:bg-csa-accent/90 text-white text-lg px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                    className="bg-csa-accent hover:bg-csa-accent/90 text-white text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl w-full sm:w-auto"
                   >
                     <Link to="/contact">Get Started Today</Link>
                   </Button>
@@ -275,7 +275,7 @@ export default function Sponsorship() {
             </div>
             
             {/* Right Column - Enhanced Image Slider */}
-            <div className="lg:text-right animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="lg:text-right animate-fade-in order-first lg:order-last" style={{ animationDelay: '0.3s' }}>
               <div className="relative group">
                 {/* Image Container with Modern Effects */}
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/10 to-white/5 p-1 backdrop-blur-sm border border-white/20">
@@ -307,12 +307,12 @@ export default function Sponsorship() {
                 </div>
                 
                 {/* Navigation Dots */}
-                <div className="flex justify-center gap-3 mt-6">
+                <div className="flex justify-center gap-2 sm:gap-3 mt-4 sm:mt-6">
                   {heroSlides.map((_, index) => (
                     <Button
                       key={index}
                       onClick={() => setCurrentSlide(index)}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 p-0 border-0 ${
+                      className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-all duration-300 p-0 border-0 ${
                         index === currentSlide 
                           ? 'bg-csa-accent scale-125' 
                           : 'bg-white/40 hover:bg-white/60'
@@ -324,20 +324,20 @@ export default function Sponsorship() {
                   ))}
                 </div>
                 
-                {/* Floating Benefit Badge */}
-                <div className="absolute -bottom-6 -left-6 bg-white text-csa-navy px-6 py-3 rounded-xl shadow-xl border border-gray-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                {/* Floating Benefit Badge - Hidden on small screens */}
+                <div className="hidden sm:block absolute -bottom-6 -left-6 bg-white text-csa-navy px-4 sm:px-6 py-2 sm:py-3 rounded-xl shadow-xl border border-gray-200">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-2 sm:w-3 h-2 sm:h-3 bg-green-400 rounded-full animate-pulse"></div>
                     <div>
-                      <div className="text-sm font-semibold">Sponsor Benefits</div>
+                      <div className="text-xs sm:text-sm font-semibold">Sponsor Benefits</div>
                       <div className="text-xs text-gray-600">Premium Partnership</div>
                     </div>
                   </div>
                 </div>
                 
-                {/* Decorative Elements */}
-                <div className="absolute -top-4 -right-4 w-8 h-8 bg-csa-accent rounded-full opacity-80 animate-bounce" style={{ animationDelay: '0.5s' }}></div>
-                <div className="absolute top-1/2 -left-3 w-4 h-4 bg-white rounded-full opacity-60 animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+                {/* Decorative Elements - Hidden on mobile */}
+                <div className="hidden sm:block absolute -top-4 -right-4 w-6 sm:w-8 h-6 sm:h-8 bg-csa-accent rounded-full opacity-80 animate-bounce" style={{ animationDelay: '0.5s' }}></div>
+                <div className="hidden sm:block absolute top-1/2 -left-3 w-3 sm:w-4 h-3 sm:h-4 bg-white rounded-full opacity-60 animate-pulse" style={{ animationDelay: '1.5s' }}></div>
               </div>
             </div>
           </div>
@@ -345,27 +345,117 @@ export default function Sponsorship() {
         
         {/* Bottom Wave Effect */}
         <div className="absolute bottom-0 left-0 right-0">
-          <svg className="w-full h-20" viewBox="0 0 1200 120" preserveAspectRatio="none">
+          <svg className="w-full h-12 sm:h-20" viewBox="0 0 1200 120" preserveAspectRatio="none">
             <path d="M0,60 C300,120 600,0 900,60 C1050,90 1150,30 1200,60 L1200,120 L0,120 Z" fill="white" fillOpacity="1"></path>
           </svg>
         </div>
       </section>
 
       {/* Sponsorship Tiers */}
-      <section className="py-16">
-        <div className="container-site">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-csa-navy mb-4">
+      <section className="py-12 sm:py-16">
+        <div className="container-site px-4 sm:px-6">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-csa-navy mb-4">
               Sponsorship Opportunities
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
               Choose the sponsorship level that best fits your organization's 
               goals and budget. All tiers provide valuable networking and branding opportunities.
             </p>
           </div>
 
-          {/* Sponsorship Benefits Table */}
-          <div className="overflow-x-auto mb-8">
+          {/* Mobile Cards Layout */}
+          <div className="block lg:hidden space-y-6 mb-8">
+            {sponsorshipTiers.map((tier, index) => (
+              <Card key={index} className={`relative overflow-hidden ${tier.popular ? 'ring-2 ring-csa-accent' : ''}`}>
+                {tier.popular && (
+                  <div className="absolute top-0 right-0 bg-csa-accent text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                    Popular
+                  </div>
+                )}
+                <CardHeader className="text-center pb-4">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${
+                      index === 0 ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600' :
+                      index === 1 ? 'bg-gradient-to-br from-yellow-300 via-yellow-400 to-orange-500' :
+                      'bg-gradient-to-br from-gray-300 via-gray-400 to-slate-500'
+                    }`}>
+                      <span className="text-white text-lg font-bold">
+                        {index === 0 ? '🏆' : index === 1 ? '🥇' : '🥈'}
+                      </span>
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-bold text-csa-navy">
+                        {tier.name} {index === 1 ? 'Sponsor' : ''}
+                      </CardTitle>
+                      <div className="text-lg font-bold text-gray-700 bg-gray-100 px-4 py-2 rounded-full mt-2">
+                        {tier.price} – ({tier.duration})
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <CardDescription className="text-center text-gray-600">
+                    {tier.description}
+                  </CardDescription>
+                  
+                  {/* Features List */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-800 text-sm">Key Benefits:</h4>
+                    <ul className="space-y-2">
+                      {tier.features.map((feature, featureIndex) => (
+                        <li key={featureIndex} className="flex items-start gap-2 text-sm">
+                          <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                            <span className="text-white text-xs font-bold">✓</span>
+                          </div>
+                          <span className="text-gray-700">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="space-y-3 pt-4">
+                    <Button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleStripeCheckout(tier);
+                      }}
+                      disabled={loadingTier === tier.name}
+                      className="w-full h-12 text-sm font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100 disabled:opacity-70 bg-csa-accent hover:bg-csa-accent/90 text-white border-0"
+                    >
+                      {loadingTier === tier.name ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          Purchase {tier.name}
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      asChild
+                      variant="ghost" 
+                      size="sm"
+                      className="text-gray-600 hover:text-csa-blue text-xs w-full hover:bg-white/50 rounded-lg transition-all duration-200"
+                    >
+                      <Link to="/contact">
+                        Questions? Contact Us
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop Table Layout */}
+          <div className="hidden lg:block overflow-x-auto mb-8">
             <div className="min-w-full bg-white rounded-2xl shadow-2xl border-0 overflow-hidden">
               <table className="w-full table-fixed">
                 <colgroup>
@@ -888,25 +978,25 @@ export default function Sponsorship() {
       </section>
 
       {/* Why Sponsor Section */}
-      <section className="py-16 section-light">
-        <div className="container-site">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-csa-navy mb-4">
+      <section className="py-12 sm:py-16 section-light">
+        <div className="container-site px-4 sm:px-6">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-csa-navy mb-4">
               Why Sponsor CSA San Francisco?
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
               Partner with the premier cloud security organization in the Bay Area 
               and connect with the most influential professionals in the industry.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {benefits.map((benefit, index) => (
-              <Card key={index} className="text-center">
-                <CardContent className="pt-6">
-                  <benefit.icon className="h-12 w-12 text-csa-blue mx-auto mb-4" />
-                  <h3 className="font-semibold text-csa-navy mb-2">{benefit.title}</h3>
-                  <p className="text-gray-600 text-sm">{benefit.description}</p>
+              <Card key={index} className="text-center hover:shadow-lg transition-shadow duration-300">
+                <CardContent className="pt-6 px-4 sm:px-6">
+                  <benefit.icon className="h-10 sm:h-12 w-10 sm:w-12 text-csa-blue mx-auto mb-3 sm:mb-4" />
+                  <h3 className="font-semibold text-csa-navy mb-2 text-sm sm:text-base">{benefit.title}</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">{benefit.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -915,33 +1005,33 @@ export default function Sponsorship() {
       </section>
 
       {/* Current Sponsors */}
-      <section className="py-16">
-        <div className="container-site">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-csa-navy mb-4">
+      <section className="py-12 sm:py-16">
+        <div className="container-site px-4 sm:px-6">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-csa-navy mb-4">
             Executive Member
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
               We're proud to partner with industry-leading organizations that 
               share our commitment to advancing cloud security.
             </p>
           </div>
 
           {/* Technical Partner Section */}
-          <div className="mb-12">
+          <div className="mb-8 sm:mb-12">
             
             <div className="flex justify-center">
               {technicalPartner.map((partner, index) => (
-                <div key={index} className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-csa-blue/20 max-w-xs">
-                  <div className="flex items-center justify-center h-20">
+                <div key={index} className="group relative bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-csa-blue/20 max-w-xs w-full sm:w-auto">
+                  <div className="flex items-center justify-center h-16 sm:h-20">
                     <img 
                       src={partner.logo} 
                       alt={`${partner.name} logo`}
-                      className="max-h-16 max-w-[180px] object-contain transition-all duration-300 group-hover:scale-105"
+                      className="max-h-12 sm:max-h-16 max-w-[140px] sm:max-w-[180px] object-contain transition-all duration-300 group-hover:scale-105"
                     />
                   </div>
-                  <div className="text-center mt-3">
-                    <span className="text-sm font-medium text-gray-700">{partner.name}</span>
+                  <div className="text-center mt-2 sm:mt-3">
+                    <span className="text-xs sm:text-sm font-medium text-gray-700">{partner.name}</span>
                   </div>
                 </div>
               ))}
@@ -949,42 +1039,49 @@ export default function Sponsorship() {
           </div>
 
           {/* Sponsors Section */}
-          <div className="mb-12">
-            <h3 className="text-xl font-semibold text-csa-navy text-center mb-6">Sponsors</h3>
-            <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="mb-8 sm:mb-12">
+            <h3 className="text-lg sm:text-xl font-semibold text-csa-navy text-center mb-4 sm:mb-6">Sponsors</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {sponsors.map((sponsor, index) => (
                 <a 
                   key={index}
                   href={sponsor.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-csa-blue/20 hover:scale-105"
+                  className="group relative bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-csa-blue/20 hover:scale-105"
                 >
                   {/* Background gradient on hover */}
                   <div className="absolute inset-0 bg-gradient-to-br from-csa-blue/5 to-csa-accent/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
                   {/* Logo container */}
-                  <div className="relative z-10 flex items-center justify-center h-16">
+                  <div className="relative z-10 flex items-center justify-center h-12 sm:h-16">
                     <img 
                       src={sponsor.logo} 
                       alt={`${sponsor.name} logo`}
-                      className="max-h-12 max-w-[140px] object-contain transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110"
+                      className="max-h-8 sm:max-h-12 max-w-[100px] sm:max-w-[140px] object-contain transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110"
                     />
                   </div>
                   
-                  {/* Company name overlay on hover */}
-                  <div className="absolute bottom-2 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
+                  {/* Company name overlay on hover - Hidden on mobile for cleaner look */}
+                  <div className="hidden sm:block absolute bottom-2 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
                     <span className="text-xs font-medium text-gray-600 bg-white/80 px-3 py-1 rounded-full backdrop-blur-sm">
                       {sponsor.name}
                     </span>
                   </div>
                   
+                  {/* Mobile: Show name always */}
+                  <div className="sm:hidden text-center mt-2">
+                    <span className="text-xs font-medium text-gray-600">
+                      {sponsor.name}
+                    </span>
+                  </div>
+                  
                   {/* Corner accent */}
-                  <div className="absolute top-3 right-3 w-2 h-2 bg-gradient-to-br from-csa-blue to-csa-accent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute top-2 sm:top-3 right-2 sm:right-3 w-1.5 sm:w-2 h-1.5 sm:h-2 bg-gradient-to-br from-csa-blue to-csa-accent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   
                   {/* External link indicator */}
-                  <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <ExternalLink className="h-3 w-3 text-csa-blue" />
+                  <div className="absolute top-2 sm:top-3 left-2 sm:left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <ExternalLink className="h-2.5 sm:h-3 w-2.5 sm:w-3 text-csa-blue" />
                   </div>
                 </a>
               ))}
@@ -993,41 +1090,48 @@ export default function Sponsorship() {
 
           {/* Partners Section */}
           <div>
-            <h3 className="text-xl font-semibold text-csa-navy text-center mb-6">Community Partners</h3>
-            <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+            <h3 className="text-lg sm:text-xl font-semibold text-csa-navy text-center mb-4 sm:mb-6">Community Partners</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-3xl mx-auto">
               {partners.map((partner, index) => (
                 <a 
                   key={index}
                   href={partner.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-csa-blue/20 hover:scale-105"
+                  className="group relative bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-csa-blue/20 hover:scale-105"
                 >
                   {/* Background gradient on hover */}
                   <div className="absolute inset-0 bg-gradient-to-br from-csa-blue/5 to-csa-accent/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
                   {/* Logo container */}
-                  <div className="relative z-10 flex items-center justify-center h-16">
+                  <div className="relative z-10 flex items-center justify-center h-12 sm:h-16">
                     <img 
                       src={partner.logo} 
                       alt={`${partner.name} logo`}
-                      className="max-h-12 max-w-[140px] object-contain transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110"
+                      className="max-h-8 sm:max-h-12 max-w-[100px] sm:max-w-[140px] object-contain transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110"
                     />
                   </div>
                   
-                  {/* Company name overlay on hover */}
-                  <div className="absolute bottom-2 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
+                  {/* Company name overlay on hover - Hidden on mobile for cleaner look */}
+                  <div className="hidden sm:block absolute bottom-2 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
                     <span className="text-xs font-medium text-gray-600 bg-white/80 px-3 py-1 rounded-full backdrop-blur-sm">
                       {partner.name}
                     </span>
                   </div>
                   
+                  {/* Mobile: Show name always */}
+                  <div className="sm:hidden text-center mt-2">
+                    <span className="text-xs font-medium text-gray-600">
+                      {partner.name}
+                    </span>
+                  </div>
+                  
                   {/* Corner accent */}
-                  <div className="absolute top-3 right-3 w-2 h-2 bg-gradient-to-br from-csa-blue to-csa-accent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute top-2 sm:top-3 right-2 sm:right-3 w-1.5 sm:w-2 h-1.5 sm:h-2 bg-gradient-to-br from-csa-blue to-csa-accent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   
                   {/* External link indicator */}
-                  <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <ExternalLink className="h-3 w-3 text-csa-blue" />
+                  <div className="absolute top-2 sm:top-3 left-2 sm:left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <ExternalLink className="h-2.5 sm:h-3 w-2.5 sm:w-3 text-csa-blue" />
                   </div>
                 </a>
               ))}
@@ -1037,43 +1141,43 @@ export default function Sponsorship() {
       </section>
 
       {/* Custom Sponsorship */}
-      <section className="py-16 section-light">
-        <div className="container-site">
+      <section className="py-12 sm:py-16 section-light">
+        <div className="container-site px-4 sm:px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold text-csa-navy mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-csa-navy mb-4 sm:mb-6">
               Custom Sponsorship Opportunities
             </h2>
-            <p className="text-gray-600 mb-8">
+            <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base">
               Looking for something specific? We can create custom sponsorship packages 
               tailored to your organization's unique needs and objectives.
             </p>
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              <Card>
-                <CardContent className="pt-6 text-center">
-                  <Calendar className="h-8 w-8 text-csa-blue mx-auto mb-4" />
-                  <h3 className="font-semibold text-csa-navy mb-2">Event Sponsorship</h3>
-                  <p className="text-gray-600 text-sm">Sponsor specific events or workshops</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              <Card className="hover:shadow-lg transition-shadow duration-300">
+                <CardContent className="pt-6 text-center px-4 sm:px-6">
+                  <Calendar className="h-6 sm:h-8 w-6 sm:w-8 text-csa-blue mx-auto mb-3 sm:mb-4" />
+                  <h3 className="font-semibold text-csa-navy mb-2 text-sm sm:text-base">Event Sponsorship</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">Sponsor specific events or workshops</p>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="pt-6 text-center">
-                  <Users className="h-8 w-8 text-csa-blue mx-auto mb-4" />
-                  <h3 className="font-semibold text-csa-navy mb-2">Training Programs</h3>
-                  <p className="text-gray-600 text-sm">Support certification and training initiatives</p>
+              <Card className="hover:shadow-lg transition-shadow duration-300">
+                <CardContent className="pt-6 text-center px-4 sm:px-6">
+                  <Users className="h-6 sm:h-8 w-6 sm:w-8 text-csa-blue mx-auto mb-3 sm:mb-4" />
+                  <h3 className="font-semibold text-csa-navy mb-2 text-sm sm:text-base">Training Programs</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">Support certification and training initiatives</p>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="pt-6 text-center">
-                  <Globe className="h-8 w-8 text-csa-blue mx-auto mb-4" />
-                  <h3 className="font-semibold text-csa-navy mb-2">Research Projects</h3>
-                  <p className="text-gray-600 text-sm">Fund cloud security research initiatives</p>
+              <Card className="hover:shadow-lg transition-shadow duration-300 sm:col-span-2 md:col-span-1">
+                <CardContent className="pt-6 text-center px-4 sm:px-6">
+                  <Globe className="h-6 sm:h-8 w-6 sm:w-8 text-csa-blue mx-auto mb-3 sm:mb-4" />
+                  <h3 className="font-semibold text-csa-navy mb-2 text-sm sm:text-base">Research Projects</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">Fund cloud security research initiatives</p>
                 </CardContent>
               </Card>
             </div>
             <Button 
               asChild 
               size="lg" 
-              className="bg-csa-accent hover:bg-csa-accent/90 text-white text-lg px-8 py-3"
+              className="bg-csa-accent hover:bg-csa-accent/90 text-white text-base sm:text-lg px-6 sm:px-8 py-3 w-full sm:w-auto"
             >
               <Link to="/contact">Discuss Custom Options</Link>
             </Button>
