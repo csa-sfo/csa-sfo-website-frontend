@@ -747,11 +747,13 @@ END:VCALENDAR`;
               {event.title}
             </h1>
             
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 text-gray-100">
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-5 w-5 text-csa-accent" />
-                <div>
-                  <div className="font-medium">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 text-gray-100">
+              {/* Date Section */}
+              <div className="flex items-start space-x-3 min-h-[80px]">
+                <Calendar className="h-5 w-5 text-csa-accent mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="font-medium text-white mb-1">Date & Time</div>
+                  <div className="text-sm">
                     {eventDate.toLocaleDateString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
@@ -771,24 +773,27 @@ END:VCALENDAR`;
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3">
+              {/* Location Section */}
+              <div className="flex items-start space-x-3 min-h-[80px]">
                 <MapPin className="h-5 w-5 text-csa-accent mt-0.5 flex-shrink-0" />
-                <div>
-                  <div className="font-medium">Location</div>
+                <div className="flex-1">
+                  <div className="font-medium text-white mb-1">Location</div>
                   <div className="text-sm">{event.location}</div>
                   {event.checkins && (
                     <div className="text-sm mt-1">
-                      <span className="font-medium">Parking/Check In: </span>
+                      <span className="font-medium">Parking: </span>
                       <span>{event.checkins}</span>
                     </div>
                   )}
                 </div>
               </div>
               
-              <div className="flex items-center space-x-3">
-                <Users className="h-5 w-5 text-csa-accent" />
-                <div>
-                  <div className="font-medium">
+              {/* Registration Section */}
+              <div className="flex items-start space-x-3 min-h-[80px]">
+                <Users className="h-5 w-5 text-csa-accent mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="font-medium text-white mb-1">Registration</div>
+                  <div className="text-sm">
                     {attendeesCount}/{event.capacity} registered
                   </div>
                   <div className="text-sm">
