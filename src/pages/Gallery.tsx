@@ -270,12 +270,6 @@ const galleryData = [
         url: "/Events-pictures/2025-july-csa-adobe/DSC02210.JPG",
         caption: "Group photo with speakers and attendees",
         photographer: "CSA SF Chapter"
-      },
-      {
-        id: "42",
-        url: "/Events-pictures/2025-july-csa-adobe/DSC02212.JPG",
-        caption: "Closing remarks and upcoming events announcement",
-        photographer: "CSA SF Chapter"
       }
     ]
   },
