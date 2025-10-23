@@ -619,15 +619,33 @@ interface User {
   registration_count?: number;
 }
 
+interface Volunteer {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  company?: string;
+  job_title?: string;
+  experience_level?: string;
+  skills?: string;
+  volunteer_roles: string[];
+  availability?: string;
+  motivation?: string;
+  img_url?: string;
+  submitted_at: string;
+}
+
 export default function Admin() {
   const { user, isAdmin, fetchUserDetails } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isLoadingVolunteers, setIsLoadingVolunteers] = useState(false);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [updatingEventId, setUpdatingEventId] = useState<string | null>(null);
@@ -635,6 +653,10 @@ export default function Admin() {
   const [uploadingSpeakerId, setUploadingSpeakerId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
+  const [manageEventsCurrentPage, setManageEventsCurrentPage] = useState(1);
+  const [eventsPerPage] = useState(5);
+  const [volunteersCurrentPage, setVolunteersCurrentPage] = useState(1);
+  const [volunteersPerPage] = useState(10);
   const [selectedEventForUsers, setSelectedEventForUsers] = useState<string | null>(null);
   const [eventRegisteredUsers, setEventRegisteredUsers] = useState<any[]>([]);
   const [isLoadingEventUsers, setIsLoadingEventUsers] = useState(false);
@@ -642,6 +664,7 @@ export default function Admin() {
   const [eventRegistrationCounts, setEventRegistrationCounts] = useState<Record<string, number>>({});
   const [eventUsersCurrentPage, setEventUsersCurrentPage] = useState(1);
   const [eventUsersPerPage] = useState(10);
+  const [mainSection, setMainSection] = useState("events");
   const [activeTab, setActiveTab] = useState("manage");
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
@@ -654,6 +677,12 @@ export default function Admin() {
   const [imageToDelete, setImageToDelete] = useState<{ url: string; name: string } | null>(null);
   const [eventImagesCurrentPage, setEventImagesCurrentPage] = useState(1);
   const [eventImagesPerPage] = useState(12); // 12 images per page (3x4 grid)
+  const [editingImageCaption, setEditingImageCaption] = useState<{ url: string; name: string; caption: string } | null>(null);
+  const [isSavingCaption, setIsSavingCaption] = useState(false);
+  
+  // Volunteer details dialog
+  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
+  const [isVolunteerDetailsOpen, setIsVolunteerDetailsOpen] = useState(false);
   
   const [formData, setFormData] = useState<Partial<Event>>({
     title: "",
@@ -839,6 +868,88 @@ export default function Admin() {
     }
   };
 
+  const fetchVolunteers = async () => {
+    if (!isAdmin) {
+      return;
+    }
+
+    setIsLoadingVolunteers(true);
+    try {
+      // Get authentication token
+      const storedTokens = localStorage.getItem('csaTokens');
+      
+      if (!storedTokens) {
+        setVolunteers([]);
+        setIsLoadingVolunteers(false);
+        return;
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      let accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        setVolunteers([]);
+        setIsLoadingVolunteers(false);
+        return;
+      }
+
+      // Fetch volunteers
+      const response = await fetch(API_ENDPOINTS.VOLUNTEER_ALL, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Clear stored tokens
+          localStorage.removeItem('csaTokens');
+          localStorage.removeItem('csaUser');
+          // Open login modal immediately
+          setAuthMode('login');
+          setAuthModalOpen(true);
+          // Show toast after modal opens
+          toast.error('Your session has expired. Please login again.', { duration: 3000 });
+        }
+        return;
+      }
+
+      const data = await response.json();
+      
+      // Parse volunteer_roles if they come as JSON strings
+      const parsedVolunteers = (data.volunteers || []).map((volunteer: any) => {
+        let roles = volunteer.volunteer_roles;
+        
+        // If volunteer_roles is a string, try to parse it as JSON
+        if (typeof roles === 'string') {
+          try {
+            roles = JSON.parse(roles);
+          } catch (e) {
+            roles = [];
+          }
+        }
+        
+        // Ensure it's an array
+        if (!Array.isArray(roles)) {
+          roles = [];
+        }
+        
+        return {
+          ...volunteer,
+          volunteer_roles: roles
+        };
+      });
+      
+      setVolunteers(parsedVolunteers);
+    } catch (error) {
+      console.error('Error fetching volunteers:', error);
+      toast.error('Failed to fetch volunteers');
+    } finally {
+      setIsLoadingVolunteers(false);
+    }
+  };
+
   // Fetch registration counts for all events
   const fetchEventRegistrationCounts = async (eventIds: string[]) => {
     const counts: Record<string, number> = {};
@@ -887,26 +998,38 @@ export default function Admin() {
   };
 
   // Fetch events when component mounts
+  // Initial fetch on mount - only fetch if data doesn't exist
   useEffect(() => {
     if (isAdmin && user) {
-      fetchEvents();
-      fetchUsers(); // Also fetch users for the Users tab
+      if (events.length === 0) {
+        fetchEvents();
+      }
+      if (users.length === 0) {
+        fetchUsers();
+      }
     }
   }, [isAdmin, user]);
 
-  // Fetch events when switching to events tab
+  // Fetch events when switching to events tab (only if not already loaded)
   useEffect(() => {
     if (activeTab === "events" && isAdmin && user && events.length === 0) {
       fetchEvents();
     }
   }, [activeTab, isAdmin, user]);
 
-  // Fetch users when switching to users tab
+  // Fetch users when switching to users tab (only if not already loaded)
   useEffect(() => {
     if (activeTab === "users" && isAdmin && user && users.length === 0) {
       fetchUsers();
     }
   }, [activeTab, isAdmin, user]);
+
+  // Fetch volunteers when switching to volunteers section
+  useEffect(() => {
+    if (mainSection === "volunteers" && isAdmin && user) {
+      fetchVolunteers();
+    }
+  }, [mainSection, isAdmin, user]);
 
   // Refresh registration counts when switching to manage tab
   useEffect(() => {
@@ -1703,6 +1826,57 @@ export default function Admin() {
     }
   };
 
+  const saveImageCaption = async () => {
+    if (!editingImageCaption) return;
+
+    setIsSavingCaption(true);
+    try {
+      // Get token
+      let accessToken = localStorage.getItem('csatoken') || localStorage.getItem('accessToken');
+
+      if (!accessToken) {
+        const supabaseAuthKey = Object.keys(localStorage).find(key => key.includes('auth-token'));
+        if (supabaseAuthKey) {
+          try {
+            const authData = JSON.parse(localStorage.getItem(supabaseAuthKey) || '{}');
+            accessToken = authData.access_token;
+          } catch (e) {
+            // Error parsing
+          }
+        }
+      }
+
+      if (!accessToken) {
+        toast.error('Please login to save captions');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/v1/routes/event-images`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          url: editingImageCaption.url,
+          caption: editingImageCaption.caption.trim()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save caption');
+      }
+
+      toast.success('Caption saved successfully!');
+      setEditingImageCaption(null);
+      fetchEventImages(); // Refresh the images list
+    } catch (error) {
+      toast.error(`Failed to save caption: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSavingCaption(false);
+    }
+  };
+
   const confirmDeleteEventImage = async () => {
     if (!imageToDelete) return;
 
@@ -1790,27 +1964,67 @@ export default function Admin() {
         <div className="container-site py-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-csa-navy">Event Management</h1>
-              <p className="text-gray-600 mt-2">Manage upcoming events and registrations</p>
+              <h1 className="text-3xl font-bold text-csa-navy">Admin Panel</h1>
+              <p className="text-gray-600 mt-2">
+                {mainSection === "events" 
+                  ? "Manage upcoming events, images, and user registrations" 
+                  : "Manage volunteer applications and team"}
+              </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                <Calendar className="h-3 w-3 mr-1" />
-                {events.length} Events
-              </Badge>
+              {mainSection === "events" && (
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  {events.length} Events
+                </Badge>
+              )}
+              {mainSection === "volunteers" && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  <Users className="h-3 w-3 mr-1" />
+                  {volunteers.length} Volunteers
+                </Badge>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       <div className="container-site py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
-            <TabsTrigger value="manage">Manage Events</TabsTrigger>
-            <TabsTrigger value="add">Add New Event</TabsTrigger>
-            <TabsTrigger value="images">Event Images</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-          </TabsList>
+        {/* Main Section Navigation */}
+        <div className="flex gap-3 mb-8 border-b border-gray-200">
+          <button
+            onClick={() => setMainSection("events")}
+            className={`px-6 py-3 font-medium transition-all relative ${
+              mainSection === "events"
+                ? "text-csa-blue border-b-2 border-csa-blue"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            <Calendar className="h-4 w-4 inline-block mr-2" />
+            Event Management
+          </button>
+          <button
+            onClick={() => setMainSection("volunteers")}
+            className={`px-6 py-3 font-medium transition-all relative ${
+              mainSection === "volunteers"
+                ? "text-csa-blue border-b-2 border-csa-blue"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            <Users className="h-4 w-4 inline-block mr-2" />
+            Volunteers
+          </button>
+        </div>
+
+        {/* Event Management Section */}
+        {mainSection === "events" && (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+            <TabsList className="grid w-full max-w-3xl grid-cols-4 bg-gray-100">
+              <TabsTrigger value="manage">Manage Events</TabsTrigger>
+              <TabsTrigger value="add">Add New Event</TabsTrigger>
+              <TabsTrigger value="images">Event Images</TabsTrigger>
+              <TabsTrigger value="users">Users</TabsTrigger>
+            </TabsList>
 
           <TabsContent value="manage" className="space-y-6">
             <Card>
@@ -1872,7 +2086,13 @@ export default function Admin() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {events.map((event) => (
+                        {(() => {
+                          // Calculate pagination for manage events
+                          const indexOfLastEvent = manageEventsCurrentPage * eventsPerPage;
+                          const indexOfFirstEvent = indexOfLastEvent - eventsPerPage;
+                          const currentEvents = events.slice(indexOfFirstEvent, indexOfLastEvent);
+                          
+                          return currentEvents.map((event) => (
                           <TableRow key={event.id}>
                             <TableCell>
                               <div>
@@ -2044,9 +2264,39 @@ export default function Admin() {
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))}
+                          ));
+                        })()}
                       </TableBody>
                     </Table>
+                  </div>
+                )}
+                
+                {/* Pagination Controls for Manage Events */}
+                {!isLoadingEvents && events.length > eventsPerPage && (
+                  <div className="mt-6 flex items-center justify-center gap-4 p-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setManageEventsCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={manageEventsCurrentPage === 1}
+                      className="h-10 w-10 p-0 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-csa-blue hover:text-white"
+                    >
+                      <span className="text-xl font-bold">&lt;</span>
+                    </Button>
+                    
+                    <div className="text-base font-semibold text-gray-700 min-w-[100px] text-center">
+                      {manageEventsCurrentPage} of {Math.ceil(events.length / eventsPerPage)}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setManageEventsCurrentPage(prev => Math.min(prev + 1, Math.ceil(events.length / eventsPerPage)))}
+                      disabled={manageEventsCurrentPage === Math.ceil(events.length / eventsPerPage)}
+                      className="h-10 w-10 p-0 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-csa-blue hover:text-white"
+                    >
+                      <span className="text-xl font-bold">&gt;</span>
+                    </Button>
                   </div>
                 )}
               </CardContent>
@@ -2411,9 +2661,16 @@ export default function Admin() {
                                     e.currentTarget.src = '/placeholder.svg';
                                   }}
                                 />
+                                {/* Caption indicator badge - always visible */}
                                 {image.caption && (
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-                                    <p className="text-white text-sm font-medium p-3 w-full">
+                                  <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold shadow-md pointer-events-none z-20">
+                                    📝 Has Caption
+                                  </div>
+                                )}
+                                {/* Caption overlay - shown on hover */}
+                                {image.caption && (
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none z-10">
+                                    <p className="text-white text-sm font-semibold p-3 w-full drop-shadow-lg">
                                       {image.caption}
                                     </p>
                                   </div>
@@ -2422,6 +2679,13 @@ export default function Admin() {
                                   <Badge variant="secondary" className="bg-white text-gray-800 text-sm font-semibold shadow-md px-2 py-0.5">
                                     {actualIndex + 1}
                                   </Badge>
+                                  <button
+                                    onClick={() => setEditingImageCaption({ url: image.url, name: image.name, caption: image.caption || '' })}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-1.5 transition-colors shadow-lg"
+                                    title="Edit caption"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </button>
                                   <button
                                     onClick={() => setImageToDelete({ url: image.url, name: image.name })}
                                     className="bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors shadow-lg"
@@ -2643,78 +2907,436 @@ export default function Admin() {
                   </div>
                   
                   {/* Pagination Controls */}
-                  <div className="mt-6 flex items-center justify-between bg-gradient-to-r from-gray-50 to-blue-50 p-4 rounded-lg border border-gray-200">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-white border-csa-blue/30 text-gray-700 font-medium px-3 py-1">
-                        Showing {Math.min((currentPage - 1) * usersPerPage + 1, users.length)} - {Math.min(currentPage * usersPerPage, users.length)} of {users.length} users
-                      </Badge>
+                  <div className="mt-6 flex items-center justify-center gap-4 p-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="h-10 w-10 p-0 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-csa-blue hover:text-white"
+                    >
+                      <span className="text-xl font-bold">&lt;</span>
+                    </Button>
+                    
+                    <div className="text-base font-semibold text-gray-700 min-w-[80px] text-center">
+                      {currentPage} of {Math.ceil(users.length / usersPerPage)}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="bg-white hover:bg-csa-blue hover:text-white transition-colors disabled:opacity-50"
-                      >
-                        ← Previous
-                      </Button>
-                      <div className="flex items-center gap-1">
-                        {(() => {
-                          const totalPages = Math.ceil(users.length / usersPerPage);
-                          const pages = [];
-                          
-                          // Show page numbers
-                          for (let i = 1; i <= totalPages; i++) {
-                            // Show first page, last page, current page, and pages around current
-                            if (
-                              i === 1 ||
-                              i === totalPages ||
-                              (i >= currentPage - 1 && i <= currentPage + 1)
-                            ) {
-                              pages.push(
-                                <Button
-                                  key={i}
-                                  variant={currentPage === i ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => setCurrentPage(i)}
-                                  className={currentPage === i 
-                                    ? "bg-gradient-to-r from-csa-blue to-purple-600 hover:from-csa-blue/90 hover:to-purple-600/90 text-white shadow-md font-bold min-w-[2.5rem]" 
-                                    : "bg-white hover:bg-blue-50 hover:border-csa-blue min-w-[2.5rem]"
-                                  }
-                                >
-                                  {i}
-                                </Button>
-                              );
-                            } else if (
-                              i === currentPage - 2 ||
-                              i === currentPage + 2
-                            ) {
-                              pages.push(<span key={i} className="px-2 text-gray-400 font-bold">•••</span>);
-                            }
-                          }
-                          
-                          return pages;
-                        })()}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(users.length / usersPerPage)))}
-                        disabled={currentPage === Math.ceil(users.length / usersPerPage)}
-                        className="bg-white hover:bg-csa-blue hover:text-white transition-colors disabled:opacity-50"
-                      >
-                        Next →
-                      </Button>
-                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(users.length / usersPerPage)))}
+                      disabled={currentPage === Math.ceil(users.length / usersPerPage)}
+                      className="h-10 w-10 p-0 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-csa-blue hover:text-white"
+                    >
+                      <span className="text-xl font-bold">&gt;</span>
+                    </Button>
                   </div>
                   </>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+          </Tabs>
+        )}
+
+        {/* Volunteers Section */}
+        {mainSection === "volunteers" && (
+          <div className="space-y-6">
+            <Card className="border-t-4 border-t-csa-blue">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-2xl font-medium">
+                      <div className="p-2 bg-csa-blue rounded-lg">
+                        <Users className="h-6 w-6 text-white" />
+                      </div>
+                      Volunteer Applications
+                      <Badge variant="secondary" className="ml-2 bg-csa-blue/10 text-csa-blue border-csa-blue/20">
+                        {volunteers.length} Total
+                      </Badge>
+                    </CardTitle>
+                  </div>
+                  <Button
+                    onClick={fetchVolunteers}
+                    disabled={isLoadingVolunteers}
+                    className="bg-csa-blue hover:bg-csa-blue/90 text-white shadow-md"
+                    size="sm"
+                  >
+                    {isLoadingVolunteers ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <Users className="h-4 w-4 mr-2" />
+                    )}
+                    {isLoadingVolunteers ? "Loading..." : "Refresh Volunteers"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isLoadingVolunteers ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-csa-blue"></div>
+                  </div>
+                ) : volunteers.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-lg font-medium">No volunteer applications found</p>
+                    <p className="text-sm mt-2">Applications will appear here when submitted</p>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-gray-200 shadow-sm overflow-x-auto">
+                    <Table className="min-w-[1200px]">
+                      <TableHeader>
+                        <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200">
+                          <TableHead className="font-semibold text-gray-700 min-w-[150px]">Name</TableHead>
+                          <TableHead className="font-semibold text-gray-700 min-w-[200px]">Email</TableHead>
+                          <TableHead className="font-semibold text-gray-700 min-w-[150px]">Company</TableHead>
+                          <TableHead className="font-semibold text-gray-700 min-w-[120px]">Experience</TableHead>
+                          <TableHead className="font-semibold text-gray-700 min-w-[200px]">Skills</TableHead>
+                          <TableHead className="font-semibold text-gray-700 min-w-[200px]">Interested Roles</TableHead>
+                          <TableHead className="font-semibold text-gray-700 min-w-[120px]">Submitted</TableHead>
+                          <TableHead className="font-semibold text-gray-700 min-w-[120px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(() => {
+                          // Calculate pagination for volunteers
+                          const indexOfLastVolunteer = volunteersCurrentPage * volunteersPerPage;
+                          const indexOfFirstVolunteer = indexOfLastVolunteer - volunteersPerPage;
+                          const currentVolunteers = volunteers.slice(indexOfFirstVolunteer, indexOfLastVolunteer);
+                          
+                          return currentVolunteers.map((volunteer) => (
+                          <TableRow key={volunteer.id} className="hover:bg-blue-50/50 transition-colors">
+                            <TableCell>
+                              <div className="font-medium text-gray-900">
+                                {volunteer.first_name} {volunteer.last_name}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm text-gray-600">{volunteer.email}</span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm font-medium text-gray-800">
+                                {volunteer.company || <span className="text-gray-400 italic">No company</span>}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {volunteer.experience_level ? (
+                                <Badge variant="outline" className="capitalize">
+                                  {volunteer.experience_level}
+                                </Badge>
+                              ) : (
+                                <span className="text-gray-400 italic text-sm">Not specified</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm text-gray-700 max-w-[200px] truncate" title={volunteer.skills || ''}>
+                                {volunteer.skills || <span className="text-gray-400 italic">No skills listed</span>}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1 max-w-xs">
+                                {Array.isArray(volunteer.volunteer_roles) && volunteer.volunteer_roles.length > 0 ? (
+                                  volunteer.volunteer_roles.map((role, idx) => (
+                                    <Badge key={idx} className="bg-csa-blue/10 text-csa-blue border-csa-blue/30 text-xs">
+                                      {role}
+                                    </Badge>
+                                  ))
+                                ) : (
+                                  <span className="text-gray-400 italic text-sm">No roles</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm text-gray-600">
+                                {new Date(volunteer.submitted_at).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                onClick={() => {
+                                  setSelectedVolunteer(volunteer);
+                                  setIsVolunteerDetailsOpen(true);
+                                }}
+                                variant="outline"
+                                size="sm"
+                                className="text-csa-blue border-csa-blue hover:bg-csa-blue hover:text-white"
+                              >
+                                View Details
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                          ));
+                        })()}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+                
+                {/* Pagination Controls for Volunteers */}
+                {!isLoadingVolunteers && volunteers.length > volunteersPerPage && (
+                  <div className="mt-6 flex items-center justify-center gap-4 p-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setVolunteersCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={volunteersCurrentPage === 1}
+                      className="h-10 w-10 p-0 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-csa-blue hover:text-white"
+                    >
+                      <span className="text-xl font-bold">&lt;</span>
+                    </Button>
+                    
+                    <div className="text-base font-semibold text-gray-700 min-w-[100px] text-center">
+                      {volunteersCurrentPage} of {Math.ceil(volunteers.length / volunteersPerPage)}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setVolunteersCurrentPage(prev => Math.min(prev + 1, Math.ceil(volunteers.length / volunteersPerPage)))}
+                      disabled={volunteersCurrentPage === Math.ceil(volunteers.length / volunteersPerPage)}
+                      className="h-10 w-10 p-0 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-csa-blue hover:text-white"
+                    >
+                      <span className="text-xl font-bold">&gt;</span>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
+
+      {/* Volunteer Details Dialog */}
+      <Dialog open={isVolunteerDetailsOpen} onOpenChange={setIsVolunteerDetailsOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <Users className="h-6 w-6 text-csa-blue" />
+              Volunteer Application Details
+            </DialogTitle>
+            <DialogDescription>
+              Complete information about this volunteer application
+            </DialogDescription>
+          </DialogHeader>
+          {selectedVolunteer && (
+            <div className="space-y-8 py-4">
+              {/* Personal Info Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-csa-navy border-b-2 border-csa-blue pb-2 mb-4">
+                  👤 Personal Information
+                </h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Name</label>
+                    <p className="text-base text-gray-900 font-medium">
+                      {selectedVolunteer.first_name} {selectedVolunteer.last_name}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Email</label>
+                    <p className="text-base text-gray-900 font-medium">{selectedVolunteer.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Professional Info Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-csa-navy border-b-2 border-csa-blue pb-2 mb-4">
+                  💼 Professional Background
+                </h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Company</label>
+                    <p className="text-base text-gray-900 font-medium">
+                      {selectedVolunteer.company || <span className="text-gray-400 italic">Not provided</span>}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Job Title</label>
+                    <p className="text-base text-gray-900 font-medium">
+                      {selectedVolunteer.job_title || <span className="text-gray-400 italic">Not provided</span>}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Experience Level</label>
+                  <div>
+                    {selectedVolunteer.experience_level ? (
+                      <Badge variant="outline" className="capitalize text-sm">
+                        {selectedVolunteer.experience_level}
+                      </Badge>
+                    ) : (
+                      <span className="text-gray-400 italic">Not specified</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Skills & Interests Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-csa-navy border-b-2 border-csa-blue pb-2 mb-4">
+                  🎯 Skills & Interests
+                </h3>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Skills</label>
+                  <p className="text-base text-gray-900">
+                    {selectedVolunteer.skills || <span className="text-gray-400 italic">No skills listed</span>}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Interested Volunteer Roles</label>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.isArray(selectedVolunteer.volunteer_roles) && selectedVolunteer.volunteer_roles.length > 0 ? (
+                      selectedVolunteer.volunteer_roles.map((role, idx) => (
+                        <Badge key={idx} className="bg-csa-blue/10 text-csa-blue border-csa-blue/30 text-sm">
+                          {role}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-gray-400 italic">No roles specified</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Availability Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-csa-navy border-b-2 border-csa-blue pb-2 mb-4">
+                  ⏰ Time Commitment
+                </h3>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Available Hours</label>
+                  <div>
+                    {selectedVolunteer.availability ? (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-base px-4 py-2">
+                        {selectedVolunteer.availability} hrs/month
+                      </Badge>
+                    ) : (
+                      <span className="text-gray-400 italic">Not specified</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Motivation Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-csa-navy border-b-2 border-csa-blue pb-2 mb-4">
+                  💭 Motivation
+                </h3>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Why They Want to Volunteer</label>
+                  <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-l-4 border-csa-blue shadow-sm">
+                    <p className="text-base text-gray-900 leading-relaxed whitespace-pre-wrap">
+                      {selectedVolunteer.motivation || <span className="text-gray-400 italic">No motivation provided</span>}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Submission Info Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-csa-navy border-b-2 border-csa-blue pb-2 mb-4">
+                  📅 Application Info
+                </h3>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Submitted On</label>
+                  <p className="text-base text-gray-900 font-medium">
+                    {new Date(selectedVolunteer.submitted_at).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button
+              onClick={() => setIsVolunteerDetailsOpen(false)}
+              variant="outline"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Image Caption Dialog */}
+      <Dialog open={!!editingImageCaption} onOpenChange={(open) => !open && setEditingImageCaption(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5 text-blue-500" />
+              Edit Image Caption
+            </DialogTitle>
+            <DialogDescription>
+              Add or edit the caption that will appear when users hover over this image in the slideshow.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {editingImageCaption && (
+              <>
+                <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
+                  <img
+                    src={editingImageCaption.url}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-caption" className="text-sm font-medium">
+                    Caption
+                  </Label>
+                  <Textarea
+                    id="edit-caption"
+                    value={editingImageCaption.caption}
+                    onChange={(e) => setEditingImageCaption({ ...editingImageCaption, caption: e.target.value })}
+                    placeholder="e.g., Community networking and learning at CSA SF event"
+                    rows={3}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    This caption will appear when users hover over the image
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setEditingImageCaption(null)}
+              disabled={isSavingCaption}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveImageCaption}
+              disabled={isSavingCaption}
+              className="bg-blue-500 hover:bg-blue-600"
+            >
+              {isSavingCaption ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Caption
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Event Image Confirmation Dialog */}
       <AlertDialog open={!!imageToDelete} onOpenChange={(open) => !open && setImageToDelete(null)}>

@@ -14,7 +14,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // OTP authentication functions
 export const sendOTP = async (email: string, userData?: { name: string; organization: string }) => {
-  console.log('Sending OTP to:', email, 'with user data:', userData);
   
   const { data, error } = await supabase.auth.signInWithOtp({
     email,
@@ -34,13 +33,10 @@ export const sendOTP = async (email: string, userData?: { name: string; organiza
     throw error
   }
   
-  console.log('OTP sent successfully:', data);
   return data
 }
 
 export const verifyOTP = async (email: string, token: string) => {
-  console.log('Verifying OTP for:', email, 'with token:', token);
-  
   const { data, error } = await supabase.auth.verifyOtp({
     email,
     token,
@@ -51,8 +47,6 @@ export const verifyOTP = async (email: string, token: string) => {
     console.error('Error verifying OTP:', error)
     throw error
   }
-  
-  console.log('OTP verified successfully:', data);
   return data
 }
 
