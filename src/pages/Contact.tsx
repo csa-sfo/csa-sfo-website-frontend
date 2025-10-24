@@ -381,7 +381,12 @@ export default function Contact() {
                           value={formData.inquiryType} 
                           onValueChange={(value) => handleFieldChange("inquiryType", value)}
                         >
-                          <SelectTrigger className={errors.inquiryType ? "border-red-500 focus:border-red-500" : ""}>
+                          <SelectTrigger 
+                            className={errors.inquiryType ? "border-red-500 focus:border-red-500" : ""}
+                            onBlur={() => handleFieldBlur("inquiryType")}
+                            aria-describedby={errors.inquiryType ? "inquiryType-error" : undefined}
+                            aria-invalid={!!errors.inquiryType}
+                          >
                             <SelectValue placeholder="Select inquiry type" />
                           </SelectTrigger>
                           <SelectContent>
