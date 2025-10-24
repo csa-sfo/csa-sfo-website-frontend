@@ -120,6 +120,8 @@ const sponsors = [
   { name: "RAD Security", logo: "/lovable-uploads/RAD-logo.png", website: "https://www.radsecurity.ai/" },
   { name: "Strong DM", logo: "/lovable-uploads/strongdm-logo.png", website: "https://www.strongdm.com/" },
   { name: "SANS", logo: "/lovable-uploads/SANS-logo.png", website: "https://www.sans.org/" },
+  { name: "Horizon3.ai", logo: "/lovable-uploads/horizon3logo.jpg", website: "https://www.horizon3.ai/" },
+  { name: "Palo Alto Networks", logo: "/lovable-uploads/palo.jpg", website: "https://www.paloaltonetworks.com/" },
 ];
 
 const partners = [
@@ -605,7 +607,11 @@ export default function Index() {
                         <img 
                           src={sponsor.logo} 
                           alt={`${sponsor.name} logo`}
-                          className="max-h-12 max-w-[140px] object-contain transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110"
+                          className={`object-contain transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110 ${
+                            sponsor.name === "Horizon3.ai" 
+                              ? "max-h-16 max-w-[180px]" 
+                              : "max-h-12 max-w-[140px]"
+                          }`}
                         />
                       </div>
                       

@@ -46,6 +46,20 @@ const validateInterests = (interests: string[]): string | null => {
   return null;
 };
 
+const validateExperience = (experience: string): string | null => {
+  if (!experience.trim()) {
+    return "Please select your cloud security experience level";
+  }
+  return null;
+};
+
+const validateAvailability = (availability: string): string | null => {
+  if (!availability.trim()) {
+    return "Please select your time availability";
+  }
+  return null;
+};
+
 const volunteerRoles = [
   {
     icon: Calendar,
@@ -119,6 +133,12 @@ export default function GetInvolved() {
     const interestsError = validateInterests(formData.interests);
     if (interestsError) newErrors.interests = interestsError;
     
+    const experienceError = validateExperience(formData.experience);
+    if (experienceError) newErrors.experience = experienceError;
+    
+    const availabilityError = validateAvailability(formData.availability);
+    if (availabilityError) newErrors.availability = availabilityError;
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -132,7 +152,7 @@ export default function GetInvolved() {
       setErrors({ ...errors, [field]: "" });
     }
     
-    // Real-time validation for touched fields
+      // Real-time validation for touched fields
     if (touched[field]) {
       let error = "";
       switch (field) {
@@ -147,6 +167,12 @@ export default function GetInvolved() {
           break;
         case "interests":
           error = validateInterests(value as string[]) || "";
+          break;
+        case "experience":
+          error = validateExperience(value as string) || "";
+          break;
+        case "availability":
+          error = validateAvailability(value as string) || "";
           break;
       }
       setErrors({ ...errors, [field]: error });
@@ -172,6 +198,12 @@ export default function GetInvolved() {
       case "interests":
         error = validateInterests(formData[field]) || "";
         break;
+      case "experience":
+        error = validateExperience(formData[field]) || "";
+        break;
+      case "availability":
+        error = validateAvailability(formData[field]) || "";
+        break;
     }
     setErrors({ ...errors, [field]: error });
   };
@@ -184,7 +216,9 @@ export default function GetInvolved() {
       firstName: true,
       lastName: true,
       email: true,
-      interests: true
+      interests: true,
+      experience: true,
+      availability: true
     });
     
     // Validate form
@@ -468,9 +502,15 @@ export default function GetInvolved() {
                     </h3>
 
                     <div>
-                      <Label htmlFor="experience">Cloud Security Experience</Label>
-                      <Select value={formData.experience} onValueChange={(value) => handleFieldChange("experience", value)}>
-                        <SelectTrigger>
+                      <Label htmlFor="experience">Cloud Security Experience *</Label>
+                      <Select 
+                        value={formData.experience} 
+                        onValueChange={(value) => handleFieldChange("experience", value)}
+                      >
+                        <SelectTrigger 
+                          className={errors.experience ? "border-red-500 focus:border-red-500" : ""}
+                          onBlur={() => handleFieldBlur("experience")}
+                        >
                           <SelectValue placeholder="Select your experience level" />
                         </SelectTrigger>
                         <SelectContent>
@@ -480,6 +520,7 @@ export default function GetInvolved() {
                           <SelectItem value="expert">Expert (10+ years)</SelectItem>
                         </SelectContent>
                       </Select>
+                      <ErrorMessage error={errors.experience} />
                     </div>
 
                     <div>
@@ -523,9 +564,15 @@ export default function GetInvolved() {
                     </div>
 
                     <div>
-                      <Label htmlFor="availability">Time Availability</Label>
-                      <Select value={formData.availability} onValueChange={(value) => handleFieldChange("availability", value)}>
-                        <SelectTrigger>
+                      <Label htmlFor="availability">Time Availability *</Label>
+                      <Select 
+                        value={formData.availability} 
+                        onValueChange={(value) => handleFieldChange("availability", value)}
+                      >
+                        <SelectTrigger 
+                          className={errors.availability ? "border-red-500 focus:border-red-500" : ""}
+                          onBlur={() => handleFieldBlur("availability")}
+                        >
                           <SelectValue placeholder="How much time can you commit per month?" />
                         </SelectTrigger>
                         <SelectContent>
@@ -535,6 +582,7 @@ export default function GetInvolved() {
                           <SelectItem value="10+">More than 10 hours per month</SelectItem>
                         </SelectContent>
                       </Select>
+                      <ErrorMessage error={errors.availability} />
                     </div>
 
                     <div>
