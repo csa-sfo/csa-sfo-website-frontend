@@ -687,6 +687,7 @@ export default function Admin() {
   // Volunteer details dialog
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [isVolunteerDetailsOpen, setIsVolunteerDetailsOpen] = useState(false);
+  const [deletingVolunteerId, setDeletingVolunteerId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<Partial<Event>>({
     title: "",
@@ -951,6 +952,48 @@ export default function Admin() {
       toast.error('Failed to fetch volunteers');
     } finally {
       setIsLoadingVolunteers(false);
+    }
+  };
+
+  // Delete volunteer
+  const handleDeleteVolunteer = async (volunteerId: string) => {
+    if (!isAdmin) {
+      toast.error('Admin access required to delete volunteers');
+      return;
+    }
+
+    setDeletingVolunteerId(volunteerId);
+    try {
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        toast.error('Authentication required');
+        return;
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      const response = await fetch(`${API_ENDPOINTS.VOLUNTEER_DELETE}/${volunteerId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete volunteer');
+      }
+
+      toast.success('Volunteer deleted successfully');
+      
+      // Refresh volunteers list
+      fetchVolunteers();
+    } catch (error) {
+      console.error('Error deleting volunteer:', error);
+      toast.error('Failed to delete volunteer');
+    } finally {
+      setDeletingVolunteerId(null);
     }
   };
 
@@ -3030,17 +3073,17 @@ export default function Admin() {
                   </div>
                 ) : (
                   <div className="rounded-lg border border-gray-200 shadow-sm overflow-x-auto">
-                    <Table className="min-w-[1200px]">
+                    <Table>
                       <TableHeader>
                         <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200">
-                          <TableHead className="font-semibold text-gray-700 min-w-[150px]">Name</TableHead>
-                          <TableHead className="font-semibold text-gray-700 min-w-[200px]">Email</TableHead>
-                          <TableHead className="font-semibold text-gray-700 min-w-[150px]">Company</TableHead>
-                          <TableHead className="font-semibold text-gray-700 min-w-[120px]">Experience</TableHead>
-                          <TableHead className="font-semibold text-gray-700 min-w-[200px]">Skills</TableHead>
-                          <TableHead className="font-semibold text-gray-700 min-w-[200px]">Interested Roles</TableHead>
-                          <TableHead className="font-semibold text-gray-700 min-w-[120px]">Submitted</TableHead>
-                          <TableHead className="font-semibold text-gray-700 min-w-[120px]">Actions</TableHead>
+                          <TableHead className="font-semibold text-gray-700 w-[120px]">Name</TableHead>
+                          <TableHead className="font-semibold text-gray-700 w-[160px]">Email</TableHead>
+                          <TableHead className="font-semibold text-gray-700 w-[110px]">Company</TableHead>
+                          <TableHead className="font-semibold text-gray-700 w-[100px]">Experience</TableHead>
+                          <TableHead className="font-semibold text-gray-700 w-[140px]">Skills</TableHead>
+                          <TableHead className="font-semibold text-gray-700 w-[140px]">Roles</TableHead>
+                          <TableHead className="font-semibold text-gray-700 w-[100px]">Submitted</TableHead>
+                          <TableHead className="font-semibold text-gray-700 w-[150px]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -3053,47 +3096,52 @@ export default function Admin() {
                           return currentVolunteers.map((volunteer) => (
                           <TableRow key={volunteer.id} className="hover:bg-blue-50/50 transition-colors">
                             <TableCell>
-                              <div className="font-medium text-gray-900">
+                              <div className="text-sm font-medium text-gray-900">
                                 {volunteer.first_name} {volunteer.last_name}
                               </div>
                             </TableCell>
                             <TableCell>
-                              <span className="text-sm text-gray-600">{volunteer.email}</span>
+                              <span className="text-xs text-gray-600 truncate block" title={volunteer.email}>{volunteer.email}</span>
                             </TableCell>
                             <TableCell>
-                              <div className="text-sm font-medium text-gray-800">
+                              <div className="text-xs font-medium text-gray-800 truncate" title={volunteer.company || ''}>
                                 {volunteer.company || <span className="text-gray-400 italic">No company</span>}
                               </div>
                             </TableCell>
                             <TableCell>
                               {volunteer.experience_level ? (
-                                <Badge variant="outline" className="capitalize">
+                                <Badge variant="outline" className="capitalize text-xs">
                                   {volunteer.experience_level}
                                 </Badge>
                               ) : (
-                                <span className="text-gray-400 italic text-sm">Not specified</span>
+                                <span className="text-gray-400 italic text-xs">Not specified</span>
                               )}
                             </TableCell>
                             <TableCell>
-                              <div className="text-sm text-gray-700 max-w-[200px] truncate" title={volunteer.skills || ''}>
-                                {volunteer.skills || <span className="text-gray-400 italic">No skills listed</span>}
+                              <div className="text-xs text-gray-700 truncate" title={volunteer.skills || ''}>
+                                {volunteer.skills || <span className="text-gray-400 italic">No skills</span>}
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-wrap gap-1 max-w-xs">
+                              <div className="flex flex-wrap gap-1">
                                 {Array.isArray(volunteer.volunteer_roles) && volunteer.volunteer_roles.length > 0 ? (
-                                  volunteer.volunteer_roles.map((role, idx) => (
+                                  volunteer.volunteer_roles.slice(0, 2).map((role, idx) => (
                                     <Badge key={idx} className="bg-csa-blue/10 text-csa-blue border-csa-blue/30 text-xs">
-                                      {role}
+                                      {role.length > 12 ? role.substring(0, 12) + '...' : role}
                                     </Badge>
                                   ))
                                 ) : (
-                                  <span className="text-gray-400 italic text-sm">No roles</span>
+                                  <span className="text-gray-400 italic text-xs">No roles</span>
+                                )}
+                                {volunteer.volunteer_roles && volunteer.volunteer_roles.length > 2 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{volunteer.volunteer_roles.length - 2}
+                                  </Badge>
                                 )}
                               </div>
                             </TableCell>
                             <TableCell>
-                              <span className="text-sm text-gray-600">
+                              <span className="text-xs text-gray-600">
                                 {new Date(volunteer.submitted_at).toLocaleDateString('en-US', {
                                   month: 'short',
                                   day: 'numeric',
@@ -3102,17 +3150,52 @@ export default function Admin() {
                               </span>
                             </TableCell>
                             <TableCell>
-                              <Button
-                                onClick={() => {
-                                  setSelectedVolunteer(volunteer);
-                                  setIsVolunteerDetailsOpen(true);
-                                }}
-                                variant="outline"
-                                size="sm"
-                                className="text-csa-blue border-csa-blue hover:bg-csa-blue hover:text-white"
-                              >
-                                View Details
-                              </Button>
+                              <div className="flex gap-1">
+                                <Button
+                                  onClick={() => {
+                                    setSelectedVolunteer(volunteer);
+                                    setIsVolunteerDetailsOpen(true);
+                                  }}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-csa-blue border-csa-blue hover:bg-csa-blue hover:text-white text-xs px-2"
+                                >
+                                  View
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={deletingVolunteerId === volunteer.id}
+                                      className="text-red-600 border-red-600 hover:bg-red-600 hover:text-white px-2"
+                                    >
+                                      {deletingVolunteerId === volunteer.id ? (
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
+                                      ) : (
+                                        <Trash2 className="h-3 w-3" />
+                                      )}
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Volunteer Application</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete the application from {volunteer.first_name} {volunteer.last_name}? This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDeleteVolunteer(volunteer.id)}
+                                        className="bg-red-600 hover:bg-red-700"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
                             </TableCell>
                           </TableRow>
                           ));
