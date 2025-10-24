@@ -43,7 +43,7 @@ const heroSlides = [
 
 // Sponsor and Partner data (from Index page)
 const technicalPartner = [
-  { name: "Indrasol", logo: "/lovable-uploads/83c978ae-a49f-42da-9c88-adc23bf34dc3.png" },
+  { name: "Indrasol", logo: "/lovable-uploads/83c978ae-a49f-42da-9c88-adc23bf34dc3.png", website: "https://indrasol.com/" },
 ];
 
 const sponsors = [
@@ -54,6 +54,8 @@ const sponsors = [
   { name: "RAD Security", logo: "/lovable-uploads/RAD-logo.png", website: "https://www.radsecurity.ai/" },
   { name: "Strong DM", logo: "/lovable-uploads/strongdm-logo.png", website: "https://www.strongdm.com/" },
   { name: "SANS", logo: "/lovable-uploads/SANS-logo.png", website: "https://www.sans.org/" },
+  { name: "Horizon3.ai", logo: "/lovable-uploads/horizon3logo.jpg", website: "https://www.horizon3.ai/" },
+  { name: "Palo Alto Networks", logo: "/lovable-uploads/palo.jpg", website: "https://www.paloaltonetworks.com/" },
 ];
 
 const partners = [
@@ -1022,18 +1024,32 @@ export default function Sponsorship() {
             
             <div className="flex justify-center">
               {technicalPartner.map((partner, index) => (
-                <div key={index} className="group relative bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-csa-blue/20 max-w-xs w-full sm:w-auto">
-                  <div className="flex items-center justify-center h-16 sm:h-20">
+                <a 
+                  key={index}
+                  href={partner.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-csa-blue/20 hover:scale-105 max-w-xs w-full sm:w-auto"
+                >
+                  {/* Background gradient on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-csa-blue/5 to-csa-accent/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  <div className="relative z-10 flex items-center justify-center h-16 sm:h-20">
                     <img 
                       src={partner.logo} 
                       alt={`${partner.name} logo`}
-                      className="max-h-12 sm:max-h-16 max-w-[140px] sm:max-w-[180px] object-contain transition-all duration-300 group-hover:scale-105"
+                      className="max-h-12 sm:max-h-16 max-w-[140px] sm:max-w-[180px] object-contain transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110"
                     />
                   </div>
-                  <div className="text-center mt-2 sm:mt-3">
+                  <div className="relative z-10 text-center mt-2 sm:mt-3">
                     <span className="text-xs sm:text-sm font-medium text-gray-700">{partner.name}</span>
                   </div>
-                </div>
+                  
+                  {/* External link indicator */}
+                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <ExternalLink className="h-3 w-3 text-csa-blue" />
+                  </div>
+                </a>
               ))}
             </div>
           </div>
@@ -1058,7 +1074,11 @@ export default function Sponsorship() {
                     <img 
                       src={sponsor.logo} 
                       alt={`${sponsor.name} logo`}
-                      className="max-h-8 sm:max-h-12 max-w-[100px] sm:max-w-[140px] object-contain transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110"
+                      className={`object-contain transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110 ${
+                        sponsor.name === "Horizon3.ai" 
+                          ? "max-h-10 sm:max-h-16 max-w-[120px] sm:max-w-[180px]" 
+                          : "max-h-8 sm:max-h-12 max-w-[100px] sm:max-w-[140px]"
+                      }`}
                     />
                   </div>
                   
