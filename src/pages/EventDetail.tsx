@@ -101,7 +101,7 @@ const eventData: Record<string, Event> = {
   "csa-san-francisco-chapter-meeting-july-2025": {
     id: "fe806e0e-791a-48f0-8910-51b2c5edc58d",
     title: "CSA San Francisco Chapter Meeting July - 2025",
-    date: "2024-07-23T16:30:00-08:00",
+    date: "2025-07-23T16:30:00-08:00",
     location: "Room Names: San Jose State, UC Berkeley & Stanford, Adobe World Headquarters: 345 Park Avenue San Jose, CA 95110, West Tower, 6th Floor",
     parkingCheckIn: "Use the Almaden/East Tower parking garage at 321 Park Avenue San Jose, CA and check in at East Tower lobby.",
     excerpt: "Great opportunity to network with fellow cybersecurity enthusiasts, learn about the latest industry trends, and share your own experiences.",
