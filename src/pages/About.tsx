@@ -18,19 +18,19 @@ const boardMembers = [
   },
   {
     name: "Megha Satish",
-    role: "Treasurer/Program Manager ",
+    role: "Treasurer/Events and Social Media Director ",
     linkedin: "https://www.linkedin.com/in/megha-satish22/",
     image: "/lovable-uploads/members/meghasatish.png"
   },
   {
     name: "Brent Ichien ",
-    role: "Marketing/Sponsorship Coordinator  ",
+    role: "Marketing/Sponsorship Director",
     linkedin: "https://www.linkedin.com/in/brent-ichien-49128650/ ",
     image: "/lovable-uploads/members/brentIchien.png"
   },
   {
     name: "Poonam Dhillon",
-    role: "Program Manager/Sponsorship Coordinator ",
+    role: "Program Manager/Sponsorship Director ",
     linkedin: "https://www.linkedin.com/in/poonamdhillon1/ ",
     image: "/lovable-uploads/members/poonamdhillon.png"
   }
