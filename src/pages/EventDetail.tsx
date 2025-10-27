@@ -1020,22 +1020,14 @@ END:VCALENDAR`;
                       Add to Calendar
                     </Button>
                     
-                    <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="text-xs">
                       <a
                         href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${eventDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${new Date(eventDate.getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent(event.excerpt)}&location=${encodeURIComponent(event.location)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-center p-2 border rounded text-csa-blue hover:bg-csa-light transition-colors"
+                        className="block text-center p-2 border rounded text-csa-blue hover:bg-csa-light transition-colors"
                       >
-                        Google
-                      </a>
-                      <a
-                        href={`https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(event.title)}&startdt=${eventDate.toISOString()}&enddt=${new Date(eventDate.getTime() + 2 * 60 * 60 * 1000).toISOString()}&body=${encodeURIComponent(event.excerpt)}&location=${encodeURIComponent(event.location)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-center p-2 border rounded text-csa-blue hover:bg-csa-light transition-colors"
-                      >
-                        Outlook
+                        Google Calendar
                       </a>
                     </div>
                   </div>
