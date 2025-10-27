@@ -37,13 +37,7 @@ const boardMembers = [
 ];
 
 const advisoryMembers = [
-  {
-    name: "Kapil Raina",
-    title: "Advisory Member",
-    company: "Cloud Security Expert",
-    linkedin: "https://www.linkedin.com/in/kapilraina/",
-    image: "/lovable-uploads/members/Kapilraina.png"
-  }
+  // Advisory members will be added here
 ];
 
 const volunteers = [
@@ -222,6 +216,7 @@ export default function About() {
             </p>
           </div>
 
+          {advisoryMembers.length > 0 && (
           <div className="flex justify-center">
             <div className="grid grid-cols-1 gap-8 max-w-sm">
               {advisoryMembers.map((member, index) => (
@@ -259,6 +254,7 @@ export default function About() {
               ))}
             </div>
           </div>
+          )}
         </div>
       </section>
 
