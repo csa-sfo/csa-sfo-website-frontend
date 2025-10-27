@@ -451,14 +451,19 @@ const EventForm = memo(({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="capacity">Capacity</Label>
+          <Label htmlFor="capacity">Capacity *</Label>
           <Input
             id="capacity"
             type="number"
             value={formData.capacity || ""}
             onChange={(e) => onCapacityChange(e.target.value)}
             placeholder="60"
+            min="1"
+            required
           />
+          <p className="text-sm text-gray-600">
+            Maximum number of attendees for this event (required)
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="attendees">Initial Attendees Count</Label>
@@ -468,7 +473,15 @@ const EventForm = memo(({
             value={formData.attendees ?? ""}
             onChange={(e) => onAttendeesChange(e.target.value)}
             placeholder="Enter initial attendees count"
+            min="0"
+            max={formData.capacity || undefined}
           />
+          <p className="text-sm text-gray-600">
+            {formData.capacity 
+              ? `Current attendees (cannot exceed capacity of ${formData.capacity})`
+              : "Current attendees (set capacity first)"
+            }
+          </p>
         </div>
       </div>
     </div>
@@ -699,7 +712,7 @@ export default function Admin() {
     speakers: [],
     tags: [],
     attendees: undefined,
-    capacity: 0,
+    capacity: undefined, // Changed from 0 to undefined to require explicit input
     agenda: [],
     poster_url: ""
   });
@@ -715,7 +728,7 @@ export default function Admin() {
       speakers: [],
       tags: [],
       attendees: undefined,
-      capacity: 0,
+      capacity: undefined, // Changed from 0 to undefined to require explicit input
       agenda: [],
       poster_url: ""
     });
@@ -1149,6 +1162,18 @@ export default function Admin() {
       return;
     }
 
+    // Validate capacity is required and must be greater than 0
+    if (!formData.capacity || formData.capacity <= 0) {
+      toast.error("Event capacity is required and must be greater than 0");
+      return;
+    }
+
+    // Validate that initial attendees count doesn't exceed capacity
+    if (formData.attendees && formData.attendees > formData.capacity) {
+      toast.error(`Initial attendees count (${formData.attendees}) cannot exceed event capacity (${formData.capacity})`);
+      return;
+    }
+
     if (!isAdmin) {
       toast.error("Admin access required to create events");
       return;
@@ -1356,6 +1381,18 @@ export default function Admin() {
     const timeError = validateEventTime(formData.date_time);
     if (timeError) {
       toast.error(timeError);
+      return;
+    }
+
+    // Validate capacity is required and must be greater than 0
+    if (!formData.capacity || formData.capacity <= 0) {
+      toast.error("Event capacity is required and must be greater than 0");
+      return;
+    }
+
+    // Validate that initial attendees count doesn't exceed capacity
+    if (formData.attendees && formData.attendees > formData.capacity) {
+      toast.error(`Initial attendees count (${formData.attendees}) cannot exceed event capacity (${formData.capacity})`);
       return;
     }
 
@@ -1792,11 +1829,27 @@ export default function Admin() {
   }, []);
 
   const handleCapacityChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, capacity: parseInt(value) || 0 }));
+    const capacity = parseInt(value) || 0;
+    setFormData(prev => ({ ...prev, capacity }));
+    
+    // Show warning if capacity is 0 or negative
+    if (capacity <= 0 && value !== "") {
+      toast.error("Capacity must be greater than 0");
+    }
   }, []);
 
   const handleAttendeesChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, attendees: parseInt(value) || undefined }));
+    const attendees = parseInt(value) || undefined;
+    setFormData(prev => {
+      const newData = { ...prev, attendees };
+      
+      // Show warning if attendees exceed capacity
+      if (attendees && prev.capacity && attendees > prev.capacity) {
+        toast.error(`Attendees count (${attendees}) cannot exceed capacity (${prev.capacity})`);
+      }
+      
+      return newData;
+    });
   }, []);
 
   // Event Images functions

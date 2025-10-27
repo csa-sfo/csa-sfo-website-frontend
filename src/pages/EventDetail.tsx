@@ -963,11 +963,12 @@ END:VCALENDAR`;
                 <div className="space-y-2">
                   <Button 
                     variant="outline" 
-                    className="w-full" 
-                    onClick={generateCalendarFile}
+                    className="w-full opacity-50 cursor-not-allowed" 
+                    disabled
+                    title="Calendar download temporarily disabled"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Add to Calendar
+                    Add to Calendar (Disabled)
                   </Button>
                   
                   <div className="text-xs">
@@ -1013,11 +1014,12 @@ END:VCALENDAR`;
                   <div className="space-y-2">
                     <Button 
                       variant="outline" 
-                      className="w-full" 
-                      onClick={generateCalendarFile}
+                      className="w-full opacity-50 cursor-not-allowed" 
+                      disabled
+                      title="Calendar download temporarily disabled"
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Add to Calendar
+                      Add to Calendar (Disabled)
                     </Button>
                     
                     <div className="text-xs">

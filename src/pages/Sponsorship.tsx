@@ -62,6 +62,7 @@ const partners = [
   { name: "Pacific Hackers Conference", logo: "/lovable-uploads/pacific hacker.png", website: "https://www.phack.org/" },
   { name: "OWASP", logo: "/lovable-uploads/logo-owasp-org.png", website: "https://owasp.org/" },
   { name: "ISC2 Silicon Valley", logo: "/lovable-uploads/ISC2-SiliconValley.png", website: "https://www.isc2-siliconvalley-chapter.org/" },
+  { name: "CSS", logo: "/lovable-uploads/PRIMARY LOGO - CSS_Horiz_Color.png", website: "https://www.css.org/" },
 ];
 
 const sponsorshipTiers = [
@@ -1111,7 +1112,7 @@ export default function Sponsorship() {
           {/* Partners Section */}
           <div>
             <h3 className="text-lg sm:text-xl font-semibold text-csa-navy text-center mb-4 sm:mb-6">Community Partners</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-3xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-4xl mx-auto">
               {partners.map((partner, index) => (
                 <a 
                   key={index}
