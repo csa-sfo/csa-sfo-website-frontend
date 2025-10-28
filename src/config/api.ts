@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
   // Event Management Endpoints
   EVENTS_ALL: `${API_BASE_URL}/v1/routes/events/all`,
   EVENTS_PUBLIC: `${API_BASE_URL}/v1/routes/events/public`,
+  EVENTS_UPCOMING: `${API_BASE_URL}/v1/routes/events/upcoming`,
   EVENT_CREATE: `${API_BASE_URL}/v1/routes/events/create`,
   EVENT_UPDATE: `${API_BASE_URL}/v1/routes/events/update`,
   EVENT_DELETE: `${API_BASE_URL}/v1/routes/events/delete`,

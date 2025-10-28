@@ -38,12 +38,23 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [showZoomOut, setShowZoomOut] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    // Use a bottom sentinel to reliably scroll even with nested ScrollArea viewport
+    bottomRef.current?.scrollIntoView({ behavior, block: 'end' });
+  };
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
+    scrollToBottom('smooth');
   }, [messages]);
+
+  useEffect(() => {
+    if (isTyping) {
+      // Keep nudging scroll while the bot is typing
+      scrollToBottom('smooth');
+    }
+  }, [isTyping]);
 
   useEffect(() => {
     if (isOpen) {
@@ -92,10 +103,18 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
           query: inputText,
           // Provide compact prior history as context (last 20 messages)
           history: priorMessages
-            .map(m => `${m.sender === 'user' ? 'User' : 'Bot'}: ${m.text}`)
+            .map(m => {
+              const ts = new Date(m.timestamp);
+              const dateStr = ts.toLocaleDateString();
+              const timeStr = ts.toLocaleTimeString();
+              const who = m.sender === 'user' ? 'User' : 'Bot';
+              return `${who} [${dateStr} ${timeStr}]: ${m.text}`;
+            })
             .slice(-20),
           isReturningUser: priorMessages.length > 0,
           timestamp: new Date().toISOString(),
+          date: new Date().toLocaleDateString(),
+          time: new Date().toLocaleTimeString(),
         })
       });
 
@@ -245,7 +264,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
                     )}
                   >
                     {message.sender === 'bot' ? (
-                      <div className="prose prose-sm max-w-none">
+                      <div className="prose prose-sm max-w-none [&_a]:underline [&_a]:text-blue-800 [&_a:hover]:text-blue-900 [&_button]:underline [&_button]:text-blue-800 [&_button:hover]:text-blue-900">
                         <ReactMarkdown 
                           remarkPlugins={[remarkGfm]}
                           components={{
@@ -258,6 +277,24 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
                             li: ({ children }) => <li className="mb-1">{children}</li>,
                             code: ({ children }) => <code className="bg-gray-200 px-1 py-0.5 rounded text-sm">{children}</code>,
                             pre: ({ children }) => <pre className="bg-gray-100 p-2 rounded text-sm overflow-x-auto">{children}</pre>,
+                            a: ({ href, children }) => (
+                              <a
+                                href={href as string}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline text-blue-800 hover:text-blue-900"
+                              >
+                                {children}
+                              </a>
+                            ),
+                            button: ({ children, ...props }) => (
+                              <button
+                                {...props}
+                                className="underline text-blue-800 hover:text-blue-900 bg-transparent p-0"
+                              >
+                                {children}
+                              </button>
+                            ),
                           }}
                         >
                           {message.text}
@@ -283,6 +320,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onToggle }) => {
                   </div>
                 </div>
               )}
+              <div ref={bottomRef} />
             </div>
           </ScrollArea>
           <div className="p-4 border-t border-white/10 bg-white/5 backdrop-blur-md">
