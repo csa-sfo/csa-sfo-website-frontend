@@ -42,9 +42,6 @@ const heroSlides = [
 ];
 
 // Sponsor and Partner data (from Index page)
-const technicalPartner = [
-  { name: "Indrasol", logo: "/lovable-uploads/83c978ae-a49f-42da-9c88-adc23bf34dc3.png", website: "https://indrasol.com/" },
-];
 
 const sponsors = [
   { name: "Corgea", logo: "/lovable-uploads/corgea-logo.png", website: "https://corgea.com/" },
@@ -59,6 +56,7 @@ const sponsors = [
 ];
 
 const partners = [
+  { name: "Indrasol", logo: "/lovable-uploads/83c978ae-a49f-42da-9c88-adc23bf34dc3.png", website: "https://indrasol.com/" },
   { name: "Pacific Hackers Conference", logo: "/lovable-uploads/pacific hacker.png", website: "https://www.phack.org/" },
   { name: "OWASP", logo: "/lovable-uploads/logo-owasp-org.png", website: "https://owasp.org/" },
   { name: "ISC2 Silicon Valley", logo: "/lovable-uploads/ISC2-SiliconValley.png", website: "https://www.isc2-siliconvalley-chapter.org/" },
@@ -1010,50 +1008,6 @@ export default function Sponsorship() {
       {/* Current Sponsors */}
       <section className="py-12 sm:py-16">
         <div className="container-site px-4 sm:px-6">
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-csa-navy mb-4">
-            Executive Member
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
-              We're proud to partner with industry-leading organizations that 
-              share our commitment to advancing cloud security.
-            </p>
-          </div>
-
-          {/* Technical Partner Section */}
-          <div className="mb-8 sm:mb-12">
-            
-            <div className="flex justify-center">
-              {technicalPartner.map((partner, index) => (
-                <a 
-                  key={index}
-                  href={partner.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-csa-blue/20 hover:scale-105 max-w-xs w-full sm:w-auto"
-                >
-                  {/* Background gradient on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-csa-blue/5 to-csa-accent/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  
-                  <div className="relative z-10 flex items-center justify-center h-16 sm:h-20">
-                    <img 
-                      src={partner.logo} 
-                      alt={`${partner.name} logo`}
-                      className="max-h-12 sm:max-h-16 max-w-[140px] sm:max-w-[180px] object-contain transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110"
-                    />
-                  </div>
-                  <div className="relative z-10 text-center mt-2 sm:mt-3">
-                    <span className="text-xs sm:text-sm font-medium text-gray-700">{partner.name}</span>
-                  </div>
-                  
-                  {/* External link indicator */}
-                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <ExternalLink className="h-3 w-3 text-csa-blue" />
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
 
           {/* Sponsors Section */}
           <div className="mb-8 sm:mb-12">
@@ -1112,7 +1066,7 @@ export default function Sponsorship() {
           {/* Partners Section */}
           <div>
             <h3 className="text-lg sm:text-xl font-semibold text-csa-navy text-center mb-4 sm:mb-6">Community Partners</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 sm:gap-6 max-w-5xl mx-auto">
               {partners.map((partner, index) => (
                 <a 
                   key={index}
