@@ -29,7 +29,10 @@ export const API_ENDPOINTS = {
   SIMPLE_REGISTRATION: `${API_BASE_URL}/v1/routes/simple-registration`,
   // User Management Endpoints
   USERS_ALL: `${API_BASE_URL}/v1/routes/users/all`,
+  USER_DELETE: `${API_BASE_URL}/v1/routes/users/delete`,
   CHECK_EMAIL: `${API_BASE_URL}/v1/routes/check-email`,
+  // Admin Endpoints
+  ADMIN_CHECK: `${API_BASE_URL}/v1/routes/admin/check`,
   // Upload Endpoints
   UPLOAD_IMAGE: `${API_BASE_URL}/v1/routes/upload/image`,
   // Event Images Endpoints
