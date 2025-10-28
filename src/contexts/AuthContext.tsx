@@ -20,7 +20,7 @@ interface AuthContextType {
   adminLogin: (email: string, password: string) => Promise<boolean>;
   signup: (name: string, email: string, password: string, organization: string) => Promise<boolean>;
   loginWithOtp: (supabaseUser: any) => Promise<boolean>;
-  signupWithOtp: (supabaseUser: any) => Promise<boolean>;
+  signupWithOtp: (supabaseUser: any, userName?: string, organization?: string) => Promise<boolean>;
   completeProfile: (profileData: { companyName: string; jobRole: string }) => Promise<void>;
   logout: () => Promise<void>;
   clearDemoData: () => void;
@@ -309,18 +309,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signupWithOtp = async (supabaseUser: any): Promise<boolean> => {
+  const signupWithOtp = async (supabaseUser: any, userName?: string, organization?: string): Promise<boolean> => {
     setLoading(true);
     
     try {
-      // Create user from Supabase user_metadata (standard practice)
+      // Create user from form data or fallback to Supabase metadata
       const frontendUser: User = {
         id: supabaseUser.id,
         email: supabaseUser.email,
-        name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || supabaseUser.email.split('@')[0],
+        name: userName || supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || supabaseUser.email.split('@')[0],
         role: 'user'
-        // Removed: companyName, jobRole, profileCompleted
       };
+      
+      // Always upsert to custom users table to save name and company
+      try {
+        const upsertPayload = {
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          name: frontendUser.name,
+          company_name: organization || '',
+          provider: 'email',  // OTP/Email signup
+        };
+        
+        const upsertResponse = await fetch(API_ENDPOINTS.LINKEDIN_UPSERT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(upsertPayload)
+        });
+        
+        if (!upsertResponse.ok) {
+          console.error('Failed to save user data:', await upsertResponse.text());
+        }
+      } catch (syncError) {
+        console.error('Error saving user data:', syncError);
+      }
       
       setUser(frontendUser);
       persistState(frontendUser, {});

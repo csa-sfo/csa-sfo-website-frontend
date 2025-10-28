@@ -701,6 +701,7 @@ export default function Admin() {
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [isVolunteerDetailsOpen, setIsVolunteerDetailsOpen] = useState(false);
   const [deletingVolunteerId, setDeletingVolunteerId] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<Partial<Event>>({
     title: "",
@@ -1007,6 +1008,53 @@ export default function Admin() {
       toast.error('Failed to delete volunteer');
     } finally {
       setDeletingVolunteerId(null);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!isAdmin) {
+      toast.error('Admin access required to delete users');
+      return;
+    }
+
+    setDeletingUserId(userId);
+    try {
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        toast.error('Authentication required');
+        return;
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      const response = await fetch(`${API_ENDPOINTS.USER_DELETE}/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to delete user');
+      }
+
+      const result = await response.json();
+      
+      toast.success(
+        `User deleted successfully. ${result.registrations_removed || 0} registration(s) removed, ${result.events_updated || 0} event(s) updated.`
+      );
+      
+      // Refresh both users and events lists to reflect updated attendee counts
+      fetchUsers();
+      fetchEvents();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete user');
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -2921,9 +2969,9 @@ export default function Admin() {
                           <TableHead className="font-semibold text-gray-700">Name</TableHead>
                           <TableHead className="font-semibold text-gray-700">Email</TableHead>
                           <TableHead className="font-semibold text-gray-700">Company</TableHead>
-                          <TableHead className="font-semibold text-gray-700">Role</TableHead>
                           <TableHead className="font-semibold text-gray-700">Provider</TableHead>
                           <TableHead className="font-semibold text-gray-700">Registered Events</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -2960,11 +3008,6 @@ export default function Admin() {
                             <TableCell>
                               <span className={`${usr.company_name ? 'text-gray-800 font-medium' : 'text-gray-400 italic'}`}>
                                 {usr.company_name || 'No company'}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <span className={`${usr.role || usr.headline ? 'text-gray-800' : 'text-gray-400 italic'}`}>
-                                {usr.role || usr.headline || 'No role'}
                               </span>
                             </TableCell>
                             <TableCell>
@@ -3039,6 +3082,45 @@ export default function Admin() {
                                   No registrations
                                 </Badge>
                               )}
+                            </TableCell>
+                            <TableCell>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={deletingUserId === usr.id}
+                                    className="text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
+                                  >
+                                    {deletingUserId === usr.id ? (
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                    ) : (
+                                      <Trash2 className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete User</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete <strong>{usr.name}</strong>?
+                                      <br /><br />
+                                      This will delete all events registered by user.
+                                      <br />
+                                      <strong className="text-red-600">This action cannot be undone.</strong>
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteUser(usr.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Delete User
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </TableCell>
                           </TableRow>
                           ));

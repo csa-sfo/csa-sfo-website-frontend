@@ -88,8 +88,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
             }
           }
           
-          const success = await signupWithOtp(user);
-          console.log("Signup result:", success);
+          const success = await signupWithOtp(user, name, organization);
           
           if (success) {
             toast.success("Account created successfully!");
