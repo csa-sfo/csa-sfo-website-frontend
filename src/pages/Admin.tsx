@@ -1113,7 +1113,7 @@ export default function Admin() {
         prevUsers.filter(user => user.id !== userId)
       );
       
-      toast.success('✅ User removed from event successfully!', { duration: 4000 });
+      toast.success('User removed from event successfully!', { duration: 4000 });
       
       // Reset to first page if we deleted the last user on a page
       if (eventRegisteredUsers.length % eventUsersPerPage === 1 && eventUsersCurrentPage > 1) {
