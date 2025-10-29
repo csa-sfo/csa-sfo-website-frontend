@@ -156,7 +156,7 @@ export function Footer() {
             </div>
             <div className="flex items-center space-x-2 px-3 py-1.5 bg-blue-500/10 rounded-full border border-blue-500/20">
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-300 font-medium">Website and Voice Assistant developed by <span className="text-blue-400 font-semibold">Indrasol</span></span>
+              <span className="text-sm text-gray-300 font-medium">Website and AI Assistant developed by <span className="text-blue-400 font-semibold">Indrasol</span></span>
             </div>
           </div>
         </div>
