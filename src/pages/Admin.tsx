@@ -702,6 +702,7 @@ export default function Admin() {
   const [isVolunteerDetailsOpen, setIsVolunteerDetailsOpen] = useState(false);
   const [deletingVolunteerId, setDeletingVolunteerId] = useState<string | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [deletingRegistrationUserId, setDeletingRegistrationUserId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<Partial<Event>>({
     title: "",
@@ -1043,18 +1044,109 @@ export default function Admin() {
 
       const result = await response.json();
       
-      toast.success(
-        `User deleted successfully. ${result.registrations_removed || 0} registration(s) removed, ${result.events_updated || 0} event(s) updated.`
+      // Remove the user from the list (no refetch needed)
+      setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+      
+      toast.success('✅ User deleted successfully!', { duration: 4000 });
+      
+      // Reset to first page if we deleted the last user on a page
+      if (users.length % usersPerPage === 1 && currentPage > 1) {
+        setCurrentPage(prev => prev - 1);
+      }
+      
+      // Also remove from event registered users dialog if it's open
+      setEventRegisteredUsers(prevUsers => 
+        prevUsers.filter(user => user.id !== userId)
       );
       
-      // Refresh both users and events lists to reflect updated attendee counts
-      fetchUsers();
-      fetchEvents();
+      // Reset event users page if needed
+      if (eventRegisteredUsers.length % eventUsersPerPage === 1 && eventUsersCurrentPage > 1) {
+        setEventUsersCurrentPage(prev => prev - 1);
+      }
+      
+      // Update event attendee counts only for affected events (no full refetch)
+      // Note: The backend doesn't return which events were affected, so we'll skip this
+      // If you need exact counts, you can add a small targeted refetch only for affected events
     } catch (error) {
       console.error('Error deleting user:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to delete user');
     } finally {
       setDeletingUserId(null);
+    }
+  };
+
+  // Delete event registration for a specific user
+  const handleDeleteEventRegistration = async (userId: string, eventId: string) => {
+    if (!isAdmin) {
+      toast.error('Admin access required to delete registrations');
+      return;
+    }
+
+    setDeletingRegistrationUserId(userId);
+    try {
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        toast.error('Authentication required');
+        return;
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      const response = await fetch(`${API_ENDPOINTS.EVENT_REGISTRATION_DELETE}/${eventId}/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to delete registration');
+      }
+
+      const result = await response.json();
+      
+      // Remove the user from the dialog list (no refetch needed)
+      setEventRegisteredUsers(prevUsers => 
+        prevUsers.filter(user => user.id !== userId)
+      );
+      
+      toast.success('✅ User removed from event successfully!', { duration: 4000 });
+      
+      // Reset to first page if we deleted the last user on a page
+      if (eventRegisteredUsers.length % eventUsersPerPage === 1 && eventUsersCurrentPage > 1) {
+        setEventUsersCurrentPage(prev => prev - 1);
+      }
+      
+      // Update ONLY the attendee count for this specific event (no full refetch)
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === eventId 
+            ? { ...event, attendees: result.updated_attendees }
+            : event
+        )
+      );
+      
+      // Update the user's registrations in the Users tab as well (no full refetch)
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId
+            ? {
+                ...user,
+                registrations: user.registrations?.filter(
+                  (reg: any) => reg.event_id !== eventId
+                ) || []
+              }
+            : user
+        )
+      );
+    } catch (error) {
+      console.error('Error deleting registration:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete registration');
+    } finally {
+      setDeletingRegistrationUserId(null);
     }
   };
 
@@ -1569,9 +1661,15 @@ export default function Admin() {
         throw new Error(errorData.detail || 'Failed to delete event');
       }
 
-      // Update local state
+      // Update local state (no refetch needed)
       setEvents(prev => prev.filter(event => event.id !== eventId));
-      toast.success("Event deleted successfully!");
+      
+      // Reset to first page if we deleted the last event on a page
+      if (events.length % eventsPerPage === 1 && manageEventsCurrentPage > 1) {
+        setManageEventsCurrentPage(prev => prev - 1);
+      }
+      
+      toast.success("✅ Event deleted successfully!", { duration: 4000 });
       
     } catch (error) {
       toast.error(`Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -2426,9 +2524,11 @@ export default function Admin() {
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
-                                      <AlertDialogTitle>Delete Event</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Are you sure you want to delete "{event.title}"? This action cannot be undone.
+                                      <AlertDialogTitle className="text-red-600">⚠️ Delete Event</AlertDialogTitle>
+                                      <AlertDialogDescription className="space-y-2">
+                                        <p>Are you sure you want to delete <span className="font-semibold">"{event.title}"</span>?</p>
+                                        <p className="text-orange-600 font-medium">All event data and registrations will be permanently deleted.</p>
+                                        <p className="text-red-600 font-bold">This action cannot be undone!</p>
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
@@ -2436,7 +2536,7 @@ export default function Admin() {
                                       <AlertDialogAction 
                                         onClick={() => handleDeleteEvent(event.id)}
                                         disabled={deletingEventId === event.id}
-                                        className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                                        className="bg-red-600 hover:bg-red-700 disabled:opacity-50 focus:ring-red-500"
                                       >
                                         {deletingEventId === event.id ? (
                                           <div className="flex items-center space-x-2">
@@ -2444,7 +2544,7 @@ export default function Admin() {
                                             <span>Deleting...</span>
                                           </div>
                                         ) : (
-                                          "Delete"
+                                          "Yes, Delete Event"
                                         )}
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
@@ -2566,7 +2666,7 @@ export default function Admin() {
                                 )}
                               </div>
                               
-                              <div className="flex-shrink-0">
+                              <div className="flex-shrink-0 flex items-center gap-2">
                                 {user.user_type === 'admin' ? (
                                   <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
                                     Admin
@@ -2576,6 +2676,44 @@ export default function Admin() {
                                     User
                                   </Badge>
                                 )}
+                                
+                                {/* Delete Registration Button */}
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      disabled={deletingRegistrationUserId === user.id}
+                                    >
+                                      {deletingRegistrationUserId === user.id ? (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Remove User from Event</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to remove <strong>{user.name}</strong> from this event?
+                                        <br />
+                                        <br />
+                                        <strong className="text-red-600">This action cannot be undone.</strong>
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDeleteEventRegistration(user.id, selectedEventForUsers!)}
+                                        className="bg-red-600 hover:bg-red-700"
+                                      >
+                                        Remove
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               </div>
                             </div>
                           );
@@ -3101,22 +3239,20 @@ export default function Admin() {
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete User</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete <strong>{usr.name}</strong>?
-                                      <br /><br />
-                                      This will delete all events registered by user.
-                                      <br />
-                                      <strong className="text-red-600">This action cannot be undone.</strong>
+                                    <AlertDialogTitle className="text-red-600">⚠️ Delete User</AlertDialogTitle>
+                                    <AlertDialogDescription className="space-y-2">
+                                      <p>Are you sure you want to delete <span className="font-semibold">{usr.name || usr.email}</span>?</p>
+                                      <p className="text-orange-600 font-medium">This will delete all events registered by this user.</p>
+                                      <p className="text-red-600 font-bold">This action cannot be undone!</p>
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                                     <AlertDialogAction
                                       onClick={() => handleDeleteUser(usr.id)}
-                                      className="bg-red-600 hover:bg-red-700"
+                                      className="bg-red-600 hover:bg-red-700 focus:ring-red-500"
                                     >
-                                      Delete User
+                                      Yes, Delete User
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
