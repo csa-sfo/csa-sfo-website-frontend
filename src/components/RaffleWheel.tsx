@@ -18,6 +18,8 @@ export const RaffleWheel = ({ isOpen, onClose, attendees, eventTitle }: RaffleWh
   const [displayNames, setDisplayNames] = useState<string[]>([]);
   const [spinDuration, setSpinDuration] = useState(10000);
   const [hasSpunOnce, setHasSpunOnce] = useState(false);
+  const [participantsPage, setParticipantsPage] = useState(1);
+  const participantsPerPage = 15;
 
   useEffect(() => {
     if (attendees.length > 0) {
@@ -30,6 +32,8 @@ export const RaffleWheel = ({ isOpen, onClose, attendees, eventTitle }: RaffleWh
       }
       setDisplayNames(repeatedNames);
     }
+    // Reset to first page when attendees change
+    setParticipantsPage(1);
   }, [attendees]);
 
   const fireConfetti = () => {
@@ -299,40 +303,48 @@ export const RaffleWheel = ({ isOpen, onClose, attendees, eventTitle }: RaffleWh
                 </svg>
               </summary>
               <div className="mt-4">
-                {/* Search/Filter if many participants */}
-                {attendees.length > 20 && (
-                  <div className="mb-3">
-                    <input
-                      type="text"
-                      placeholder="Search participants..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                      onChange={(e) => {
-                        const searchTerm = e.target.value.toLowerCase();
-                        const filteredItems = Array.from(e.target.parentElement?.nextElementSibling?.children || []);
-                        filteredItems.forEach((item: any) => {
-                          const text = item.textContent?.toLowerCase() || '';
-                          item.style.display = text.includes(searchTerm) ? 'block' : 'none';
-                        });
-                      }}
-                    />
+                {/* Paginated participant list */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {attendees
+                    .slice((participantsPage - 1) * participantsPerPage, participantsPage * participantsPerPage)
+                    .map((attendee, index) => (
+                      <div 
+                        key={index} 
+                        className="text-sm text-gray-600 bg-white px-3 py-2 rounded shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <div className="font-semibold text-gray-800">
+                          {attendee.name}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+                
+                {/* Pagination Controls */}
+                {attendees.length > participantsPerPage && (
+                  <div className="mt-4 flex items-center justify-center gap-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setParticipantsPage(prev => Math.max(1, prev - 1))}
+                      disabled={participantsPage === 1}
+                      className="text-sm"
+                    >
+                      &lt;
+                    </Button>
+                    <span className="text-sm font-medium text-gray-700">
+                      {participantsPage} of {Math.ceil(attendees.length / participantsPerPage)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setParticipantsPage(prev => Math.min(Math.ceil(attendees.length / participantsPerPage), prev + 1))}
+                      disabled={participantsPage === Math.ceil(attendees.length / participantsPerPage)}
+                      className="text-sm"
+                    >
+                      &gt;
+                    </Button>
                   </div>
                 )}
-                
-                {/* Scrollable participant list */}
-                <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 overflow-y-auto ${
-                  attendees.length > 50 ? 'max-h-60' : attendees.length > 20 ? 'max-h-48' : 'max-h-40'
-                }`}>
-                  {attendees.map((attendee, index) => (
-                    <div 
-                      key={index} 
-                      className="text-sm text-gray-600 bg-white px-3 py-2 rounded shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="font-semibold text-gray-800">
-                        {attendee.name}
-                      </div>
-                    </div>
-                  ))}
-                </div>
                 
                 {/* Participant count summary */}
                 <div className="mt-3 text-center text-xs text-gray-500 border-t pt-2">
