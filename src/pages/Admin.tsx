@@ -9,13 +9,37 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Calendar, MapPin, Users, Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon, ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import { Calendar, MapPin, Users, Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon, ChevronLeft, ChevronRight, Lock, Menu, LayoutDashboard, UserCheck, Images, TrendingUp, Activity, BarChart3, PieChart, CheckSquare, Wallpaper, Settings, Clock, Share2, Sparkles, Send, Calendar as CalendarIcon, Hash, Facebook, Instagram, Linkedin, Youtube, RefreshCw, FileText, Copy, CheckCircle2, Loader2, PanelLeftClose, PanelLeftOpen, Bot, User, Home, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { Event, AgendaItem, Speaker } from "@/types/event";
 import { API_BASE_URL, API_ENDPOINTS } from "@/config/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
 // import { handleApiError, handleAuthError } from "@/utils/authUtils";
+
+// Custom X (Twitter) Icon Component
+const XIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
+
+// Custom TikTok Icon Component
+const TikTokIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+  </svg>
+);
 
 // Separate EventForm component to prevent re-renders
 interface EventFormProps {
@@ -99,7 +123,7 @@ const EventForm = memo(({
   };
 
   return (
-  <div className="space-y-6">
+  <div className="space-y-4">
     <div className="grid gap-4">
       <div className="space-y-2">
         <Label htmlFor="title">Event Title *</Label>
@@ -681,10 +705,12 @@ export default function Admin() {
   const [eventRegistrationCounts, setEventRegistrationCounts] = useState<Record<string, number>>({});
   const [eventUsersCurrentPage, setEventUsersCurrentPage] = useState(1);
   const [eventUsersPerPage] = useState(10);
-  const [mainSection, setMainSection] = useState("events");
+  const [mainSection, setMainSection] = useState("dashboard");
   const [activeTab, setActiveTab] = useState("manage");
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
   
   // Event Images state
   const [eventImages, setEventImages] = useState<any[]>([]);
@@ -703,6 +729,21 @@ export default function Admin() {
   const [deletingVolunteerId, setDeletingVolunteerId] = useState<string | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [deletingRegistrationUserId, setDeletingRegistrationUserId] = useState<string | null>(null);
+  
+  // Social Media Agent state
+  const [selectedEventForSocial, setSelectedEventForSocial] = useState<string>("");
+  const [generatedCaption, setGeneratedCaption] = useState("");
+  const [generatedHashtags, setGeneratedHashtags] = useState<string[]>([]);
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [scheduledTime, setScheduledTime] = useState("");
+  const [customCaption, setCustomCaption] = useState("");
+  const [customHashtags, setCustomHashtags] = useState("");
+  const [isSchedulingPost, setIsSchedulingPost] = useState(false);
+  const [scheduledPosts, setScheduledPosts] = useState<any[]>([]);
+  const [isLoadingScheduledPosts, setIsLoadingScheduledPosts] = useState(false);
+  const [postPreviewPlatform, setPostPreviewPlatform] = useState<string>("linkedin");
   
   const [formData, setFormData] = useState<Partial<Event>>({
     title: "",
@@ -1230,6 +1271,15 @@ export default function Admin() {
       fetchVolunteers();
     }
   }, [mainSection, isAdmin, user]);
+
+  // Update current date and time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Refresh registration counts when switching to manage tab
   useEffect(() => {
@@ -2241,75 +2291,728 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="container-site py-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-csa-navy">Admin Panel</h1>
-              <p className="text-gray-600 mt-2">
-                {mainSection === "events" 
-                  ? "Manage upcoming events, images, and user registrations" 
-                  : "Manage volunteer applications and team"}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {mainSection === "events" && (
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  <Calendar className="h-3 w-3 mr-1" />
-                  {events.length} Events
-                </Badge>
+    <div className="h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 flex overflow-hidden">
+      {/* Side Navigation - Modern Design */}
+      <aside
+        className={`
+          fixed lg:relative left-0 h-screen bg-gradient-to-b from-white to-gray-50/50 
+          backdrop-blur-xl border-r border-gray-200/80 shadow-xl
+          transition-all duration-300 ease-in-out z-40 flex-shrink-0
+          ${isSidebarCollapsed ? '-translate-x-full lg:translate-x-0 lg:w-20' : 'translate-x-0 w-72'}
+        `}
+      >
+          <nav className="p-4 h-full overflow-y-auto flex flex-col custom-scrollbar">
+            {/* Header Section with Logo/Brand and Toggle Button */}
+            <div className="mb-6 px-2">
+              {!isSidebarCollapsed ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-csa-blue to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <User className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-gray-900">Profile</h2>
+                      <p className="text-xs text-gray-500">{user?.name || 'Admin'}</p>
+                    </div>
+                  </div>
+                  {/* Toggle Button - Expanded State */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                    className="hidden lg:flex hover:bg-gray-100 h-9 w-9 p-0 rounded-xl transition-all duration-200 hover:shadow-md"
+                    title="Collapse sidebar"
+                  >
+                    <PanelLeftClose className="h-4 w-4 text-gray-700" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-csa-blue to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <User className="h-5 w-5 text-white" />
+                  </div>
+                  {/* Toggle Button - Collapsed State */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                    className="hidden lg:flex hover:bg-gray-100 h-9 w-9 p-0 rounded-xl transition-all duration-200 hover:shadow-md"
+                    title="Expand sidebar"
+                  >
+                    <PanelLeftOpen className="h-4 w-4 text-gray-700" />
+                  </Button>
+                </div>
               )}
-              {mainSection === "volunteers" && (
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  <Users className="h-3 w-3 mr-1" />
-                  {volunteers.length} Volunteers
-                </Badge>
-              )}
             </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="container-site py-8">
-        {/* Main Section Navigation */}
-        <div className="flex gap-3 mb-8 border-b border-gray-200">
-          <button
-            onClick={() => setMainSection("events")}
-            className={`px-6 py-3 font-medium transition-all relative ${
-              mainSection === "events"
-                ? "text-csa-blue border-b-2 border-csa-blue"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
+            {/* Main Navigation Items */}
+            <div className="space-y-1 flex-1">
+            
+            {/* MAIN Section - All items under one section */}
+            {!isSidebarCollapsed && (
+              <div className="px-3 py-1 mb-1">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Main</h3>
+              </div>
+            )}
+            
+            {/* Dashboard */}
+            <button
+              onClick={() => setMainSection("dashboard")}
+              className={`
+                w-full flex items-center gap-3 rounded-xl transition-all duration-200
+                group relative overflow-hidden
+                ${isSidebarCollapsed ? 'justify-center px-2 py-2' : 'px-3 py-2'}
+                ${mainSection === "dashboard"
+                  ? "bg-gradient-to-r from-csa-blue to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                  : "text-gray-700 hover:bg-white hover:shadow-md"
+                }
+              `}
+              title="Dashboard"
+            >
+              <div className={`p-1.5 rounded-lg transition-all ${
+                mainSection === "dashboard" 
+                  ? "bg-white/20" 
+                  : "bg-blue-50 group-hover:bg-blue-100"
+              }`}>
+                <Home className={`h-5 w-5 flex-shrink-0 ${
+                  mainSection === "dashboard" ? "text-white" : "text-csa-blue"
+                }`} />
+              </div>
+              {!isSidebarCollapsed && (
+                <span className="font-semibold text-sm">Dashboard</span>
+              )}
+            </button>
+
+            {/* Event Management */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setMainSection("events")}
+                className={`
+                  w-full flex items-center gap-3 rounded-xl transition-all duration-200
+                  group relative overflow-hidden
+                  ${isSidebarCollapsed ? 'justify-center px-2 py-2' : 'px-3 py-2'}
+                  ${mainSection === "events"
+                    ? "bg-gradient-to-r from-csa-blue to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                    : "text-gray-700 hover:bg-white hover:shadow-md"
+                  }
+                `}
+                title="Event Management"
+              >
+                <div className={`p-1.5 rounded-lg transition-all ${
+                  mainSection === "events" 
+                    ? "bg-white/20" 
+                    : "bg-green-50 group-hover:bg-green-100"
+                }`}>
+                  <Calendar className={`h-5 w-5 flex-shrink-0 ${
+                    mainSection === "events" ? "text-white" : "text-green-600"
+                  }`} />
+                </div>
+                {!isSidebarCollapsed && (
+                  <span className="font-semibold text-sm">Events</span>
+                )}
+              </button>
+
+              {/* Event Sub-items with Modern Design */}
+              {mainSection === "events" && !isSidebarCollapsed && (
+                <div className="ml-6 space-y-1 pl-4 border-l-2 border-blue-200">
+                  <button
+                    onClick={() => setActiveTab("manage")}
+                    className={`
+                      w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs 
+                      transition-all duration-200 group
+                      ${activeTab === "manage"
+                        ? "bg-blue-50 text-csa-blue font-semibold border border-blue-200"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      }
+                    `}
+                  >
+                    <Calendar className="h-4 w-4" />
+                    <span>Manage Events</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("add")}
+                    className={`
+                      w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs 
+                      transition-all duration-200 group
+                      ${activeTab === "add"
+                        ? "bg-blue-50 text-csa-blue font-semibold border border-blue-200"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      }
+                    `}
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Add New Event</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("images")}
+                    className={`
+                      w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs 
+                      transition-all duration-200 group
+                      ${activeTab === "images"
+                        ? "bg-blue-50 text-csa-blue font-semibold border border-blue-200"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      }
+                    `}
+                  >
+                    <Images className="h-4 w-4" />
+                    <span>Event Images</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("users")}
+                    className={`
+                      w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs 
+                      transition-all duration-200 group
+                      ${activeTab === "users"
+                        ? "bg-blue-50 text-csa-blue font-semibold border border-blue-200"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      }
+                    `}
+                  >
+                    <UserCheck className="h-4 w-4" />
+                    <span>Users</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Volunteers */}
+            <button
+              onClick={() => setMainSection("volunteers")}
+              className={`
+                w-full flex items-center gap-3 rounded-xl transition-all duration-200
+                group relative overflow-hidden
+                ${isSidebarCollapsed ? 'justify-center px-2 py-2' : 'px-3 py-2'}
+                ${mainSection === "volunteers"
+                  ? "bg-gradient-to-r from-csa-blue to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                  : "text-gray-700 hover:bg-white hover:shadow-md"
+                }
+              `}
+              title="Volunteers"
+            >
+              <div className={`p-1.5 rounded-lg transition-all ${
+                mainSection === "volunteers" 
+                  ? "bg-white/20" 
+                  : "bg-purple-50 group-hover:bg-purple-100"
+              }`}>
+                <Users className={`h-5 w-5 flex-shrink-0 ${
+                  mainSection === "volunteers" ? "text-white" : "text-purple-600"
+                }`} />
+              </div>
+              {!isSidebarCollapsed && (
+                <span className="font-semibold text-sm">Volunteers</span>
+              )}
+            </button>
+
+            {/* RSVPs */}
+            <button
+              onClick={() => setMainSection("rsvps")}
+              className={`
+                w-full flex items-center gap-3 rounded-xl transition-all duration-200
+                group relative overflow-hidden
+                ${isSidebarCollapsed ? 'justify-center px-2 py-2' : 'px-3 py-2'}
+                ${mainSection === "rsvps"
+                  ? "bg-gradient-to-r from-csa-blue to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                  : "text-gray-700 hover:bg-white hover:shadow-md"
+                }
+              `}
+              title="RSVPs"
+            >
+              <div className={`p-1.5 rounded-lg transition-all ${
+                mainSection === "rsvps" 
+                  ? "bg-white/20" 
+                  : "bg-amber-50 group-hover:bg-amber-100"
+              }`}>
+                <CheckSquare className={`h-5 w-5 flex-shrink-0 ${
+                  mainSection === "rsvps" ? "text-white" : "text-amber-600"
+                }`} />
+              </div>
+              {!isSidebarCollapsed && (
+                <span className="font-semibold text-sm">RSVPs</span>
+              )}
+            </button>
+
+            {/* Gallery */}
+            <button
+              onClick={() => setMainSection("gallery")}
+              className={`
+                w-full flex items-center gap-3 rounded-xl transition-all duration-200
+                group relative overflow-hidden
+                ${isSidebarCollapsed ? 'justify-center px-2 py-2' : 'px-3 py-2'}
+                ${mainSection === "gallery"
+                  ? "bg-gradient-to-r from-csa-blue to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                  : "text-gray-700 hover:bg-white hover:shadow-md"
+                }
+              `}
+              title="Gallery"
+            >
+              <div className={`p-1.5 rounded-lg transition-all ${
+                mainSection === "gallery" 
+                  ? "bg-white/20" 
+                  : "bg-pink-50 group-hover:bg-pink-100"
+              }`}>
+                <Wallpaper className={`h-5 w-5 flex-shrink-0 ${
+                  mainSection === "gallery" ? "text-white" : "text-pink-600"
+                }`} />
+              </div>
+              {!isSidebarCollapsed && (
+                <span className="font-semibold text-sm">Gallery</span>
+              )}
+            </button>
+
+            {/* Settings */}
+            <button
+              onClick={() => setMainSection("settings")}
+              className={`
+                w-full flex items-center gap-3 rounded-xl transition-all duration-200
+                group relative overflow-hidden
+                ${isSidebarCollapsed ? 'justify-center px-2 py-2' : 'px-3 py-2'}
+                ${mainSection === "settings"
+                  ? "bg-gradient-to-r from-csa-blue to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                  : "text-gray-700 hover:bg-white hover:shadow-md"
+                }
+              `}
+              title="Settings"
+            >
+              <div className={`p-1.5 rounded-lg transition-all ${
+                mainSection === "settings" 
+                  ? "bg-white/20" 
+                  : "bg-gray-100 group-hover:bg-gray-200"
+              }`}>
+                <Settings className={`h-5 w-5 flex-shrink-0 ${
+                  mainSection === "settings" ? "text-white" : "text-gray-600"
+                }`} />
+              </div>
+              {!isSidebarCollapsed && (
+                <span className="font-semibold text-sm">Settings</span>
+              )}
+            </button>
+
+            {/* Social Media AI Agent - Separate with visual distinction */}
+            <div className="pt-2 mt-2 border-t border-gray-200">
+              {!isSidebarCollapsed && (
+                <div className="px-3 py-1 mb-1 flex items-center gap-2">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">AI Agents</h3>
+                  <Brain className="h-3 w-3 text-orange-500" />
+                </div>
+              )}
+              <button
+                onClick={() => setMainSection("social-media")}
+                className={`
+                  w-full flex items-center gap-3 rounded-xl transition-all duration-200
+                  group relative overflow-hidden
+                  ${isSidebarCollapsed ? 'justify-center px-2 py-2' : 'px-3 py-2'}
+                  ${mainSection === "social-media"
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30"
+                    : "text-gray-700 hover:bg-white hover:shadow-md"
+                  }
+                `}
+                title="Social Media Agent"
+              >
+                <div className={`p-1.5 rounded-lg transition-all relative ${
+                  mainSection === "social-media" 
+                    ? "bg-white/20" 
+                    : "bg-gradient-to-br from-orange-50 to-orange-100 group-hover:from-orange-100 group-hover:to-orange-200"
+                }`}>
+                  <Bot className={`h-5 w-5 flex-shrink-0 ${
+                    mainSection === "social-media" ? "text-white" : "text-orange-600"
+                  }`} />
+                  <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full p-0.5">
+                    <Send className={`h-2.5 w-2.5 ${
+                      mainSection === "social-media" ? "text-orange-500" : "text-orange-600"
+                    }`} />
+                  </div>
+                </div>
+                {!isSidebarCollapsed && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm">Social Media</span>
+                    {mainSection !== "social-media" && (
+                      <Badge className="bg-orange-100 text-orange-700 text-[10px] px-1.5 py-0 border-0">AI</Badge>
+                    )}
+                  </div>
+                )}
+              </button>
+            </div>
+            </div>
+          </nav>
+        </aside>
+
+        {/* Overlay for mobile */}
+        {!isSidebarCollapsed && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+            onClick={() => setIsSidebarCollapsed(true)}
+          />
+        )}
+
+        {/* Right Side - Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Mobile Menu Button - Floating */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="lg:hidden fixed top-4 left-4 z-50 bg-white shadow-lg"
           >
-            <Calendar className="h-4 w-4 inline-block mr-2" />
-            Event Management
-          </button>
-          <button
-            onClick={() => setMainSection("volunteers")}
-            className={`px-6 py-3 font-medium transition-all relative ${
-              mainSection === "volunteers"
-                ? "text-csa-blue border-b-2 border-csa-blue"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            <Users className="h-4 w-4 inline-block mr-2" />
-            Volunteers
-          </button>
-        </div>
+            <Menu className="h-4 w-4" />
+          </Button>
+
+          {/* Main Content Area */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="container-site pt-0 pb-4">
+            
+            {/* Section Header - Above Body Content */}
+            <div className="mb-2">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                {/* Title and Description */}
+                <div className="flex-1 min-w-[200px]">
+                  <h1 className="text-3xl font-bold text-csa-navy mb-2">
+                    {mainSection === "dashboard" 
+                      ? "Dashboard" 
+                      : mainSection === "events" 
+                      ? "Event Management" 
+                      : mainSection === "volunteers"
+                      ? "Volunteers"
+                      : mainSection === "gallery"
+                      ? "Gallery"
+                      : mainSection === "rsvps"
+                      ? "RSVPs"
+                      : mainSection === "social-media"
+                      ? ""
+                      : "Settings"}
+                  </h1>
+                  <p className="text-gray-600 text-base">
+                    {mainSection === "dashboard" 
+                      ? "Overview of key metrics and recent activity" 
+                      : mainSection === "events" 
+                      ? "Manage upcoming events, images, and user registrations" 
+                      : mainSection === "volunteers"
+                      ? "Manage volunteer applications and team"
+                      : mainSection === "gallery"
+                      ? "Browse and manage event photo gallery"
+                      : mainSection === "rsvps"
+                      ? "View and manage event RSVPs and registrations"
+                      : mainSection === "social-media"
+                      ? ""
+                      : "Configure system settings and preferences"}
+                  </p>
+                </div>
+
+                {/* Badges */}
+                <div className="flex items-center gap-3">
+                  {mainSection === "events" && (
+                    <Badge variant="secondary" className="bg-green-100 text-green-800 px-4 py-2">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      <span className="font-semibold">{events.length} Events</span>
+                    </Badge>
+                  )}
+                  {mainSection === "volunteers" && (
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 px-4 py-2">
+                      <Users className="h-4 w-4 mr-2" />
+                      <span className="font-semibold">{volunteers.length} Volunteers</span>
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+
+        {/* Dashboard Section */}
+        {mainSection === "dashboard" && (
+          <div className="space-y-4">
+            {/* Key Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Total Events Card */}
+              <Card className="border-t-4 border-t-csa-blue hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-600">Total Events</CardTitle>
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Calendar className="h-5 w-5 text-csa-blue" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-csa-navy">{events.length}</div>
+                  <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3 text-green-500" />
+                    <span className="text-green-600 font-medium">
+                      {events.filter(e => new Date(e.date_time) > new Date()).length} upcoming
+                    </span>
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Total Registrations Card */}
+              <Card className="border-t-4 border-t-green-500 hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-600">Total Attendees</CardTitle>
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <UserCheck className="h-5 w-5 text-green-600" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-csa-navy">
+                    {events.reduce((sum, event) => sum + (event.attendees || 0), 0)}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                    <Activity className="h-3 w-3 text-blue-500" />
+                    <span>across all events</span>
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Total Volunteers Card */}
+              <Card className="border-t-4 border-t-purple-500 hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-600">Volunteers</CardTitle>
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <Users className="h-5 w-5 text-purple-600" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-csa-navy">{volunteers.length}</div>
+                  <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3 text-purple-500" />
+                    <span>registered volunteers</span>
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Capacity Utilization Card */}
+              <Card className="border-t-4 border-t-orange-500 hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-600">Avg Capacity</CardTitle>
+                    <div className="p-2 bg-orange-100 rounded-lg">
+                      <BarChart3 className="h-5 w-5 text-orange-600" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-csa-navy">
+                    {events.length > 0
+                      ? Math.round(
+                          (events.reduce((sum, e) => sum + (e.attendees || 0), 0) /
+                            events.reduce((sum, e) => sum + (e.capacity || 1), 0)) *
+                            100
+                        )
+                      : 0}%
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                    <PieChart className="h-3 w-3 text-orange-500" />
+                    <span>utilization rate</span>
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Events and Quick Actions */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Recent Events */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-csa-blue" />
+                    Recent Events
+                  </CardTitle>
+                  <CardDescription>Latest 5 events in the system</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingEvents ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : events.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500 text-sm">No events yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {events.slice(0, 5).map((event) => (
+                        <div
+                          key={event.id}
+                          className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
+                          onClick={() => setMainSection("events")}
+                        >
+                          <div className="p-2 bg-blue-50 rounded-lg">
+                            <Calendar className="h-4 w-4 text-csa-blue" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm text-csa-navy truncate">
+                              {event.title}
+                            </h4>
+                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {new Date(event.date_time).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Users className="h-3 w-3" />
+                                {event.attendees}/{event.capacity}
+                              </span>
+                            </div>
+                          </div>
+                          <Badge
+                            variant={event.attendees >= event.capacity ? "destructive" : "secondary"}
+                            className={`text-xs ${
+                              event.attendees >= event.capacity
+                                ? "bg-red-100 text-red-700"
+                                : "bg-green-100 text-green-700"
+                            }`}
+                          >
+                            {event.attendees >= event.capacity ? "Full" : "Open"}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-csa-blue" />
+                    Quick Actions
+                  </CardTitle>
+                  <CardDescription>Common administrative tasks</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <Button
+                      onClick={() => {
+                        setMainSection("events");
+                        setActiveTab("add");
+                      }}
+                      className="w-full justify-start bg-gradient-to-r from-csa-blue to-csa-navy hover:opacity-90"
+                      size="lg"
+                    >
+                      <Plus className="h-5 w-5 mr-2" />
+                      Create New Event
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        setMainSection("events");
+                        setActiveTab("manage");
+                      }}
+                      variant="outline"
+                      className="w-full justify-start border-csa-blue text-csa-blue hover:bg-blue-50"
+                      size="lg"
+                    >
+                      <Calendar className="h-5 w-5 mr-2" />
+                      Manage Events
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        setMainSection("events");
+                        setActiveTab("images");
+                      }}
+                      variant="outline"
+                      className="w-full justify-start border-purple-500 text-purple-600 hover:bg-purple-50"
+                      size="lg"
+                    >
+                      <Images className="h-5 w-5 mr-2" />
+                      Upload Event Images
+                    </Button>
+                    
+                    <Button
+                      onClick={() => setMainSection("volunteers")}
+                      variant="outline"
+                      className="w-full justify-start border-green-500 text-green-600 hover:bg-green-50"
+                      size="lg"
+                    >
+                      <Users className="h-5 w-5 mr-2" />
+                      View Volunteers
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Event Statistics */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-csa-blue" />
+                  Event Statistics
+                </CardTitle>
+                <CardDescription>Overview of event capacity and attendance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {events.length === 0 ? (
+                  <div className="text-center py-12">
+                    <BarChart3 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No event data available</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {events.slice(0, 6).map((event) => {
+                      const utilizationPercent = Math.round((event.attendees / event.capacity) * 100);
+                      return (
+                        <div key={event.id} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700 truncate max-w-xs">
+                              {event.title}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500">
+                                {event.attendees}/{event.capacity}
+                              </span>
+                              <Badge
+                                variant="secondary"
+                                className={`text-xs ${
+                                  utilizationPercent >= 90
+                                    ? "bg-red-100 text-red-700"
+                                    : utilizationPercent >= 70
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-green-100 text-green-700"
+                                }`}
+                              >
+                                {utilizationPercent}%
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                            <div
+                              className={`h-2 rounded-full transition-all ${
+                                utilizationPercent >= 90
+                                  ? "bg-red-500"
+                                  : utilizationPercent >= 70
+                                  ? "bg-yellow-500"
+                                  : "bg-green-500"
+                              }`}
+                              style={{ width: `${Math.min(utilizationPercent, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Event Management Section */}
         {mainSection === "events" && (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-            <TabsList className="grid w-full max-w-3xl grid-cols-4 bg-gray-100">
-              <TabsTrigger value="manage">Manage Events</TabsTrigger>
-              <TabsTrigger value="add">Add New Event</TabsTrigger>
-              <TabsTrigger value="images">Event Images</TabsTrigger>
-              <TabsTrigger value="users">Users</TabsTrigger>
-            </TabsList>
-
-          <TabsContent value="manage" className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsContent value="manage" className="space-y-4">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -2807,7 +3510,7 @@ export default function Admin() {
             </Dialog>
           </TabsContent>
 
-          <TabsContent value="add" className="space-y-6">
+          <TabsContent value="add" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -2853,7 +3556,7 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="images" className="space-y-6">
+          <TabsContent value="images" className="space-y-4">
             <Card className="border-t-4 border-t-purple-500">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -2879,10 +3582,10 @@ export default function Admin() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 {/* Upload Section */}
-                <div className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-dashed border-purple-300 rounded-xl p-8">
-                  <div className="max-w-2xl mx-auto space-y-6">
+                <div className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-dashed border-purple-300 rounded-xl p-6">
+                  <div className="max-w-2xl mx-auto space-y-4">
                     <div className="text-center">
                       <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-purple-100 mb-4">
                         <Upload className="h-8 w-8 text-purple-600" />
@@ -3057,7 +3760,7 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-6">
+          <TabsContent value="users" className="space-y-4">
             <Card className="border-t-4 border-t-csa-blue">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -3301,7 +4004,7 @@ export default function Admin() {
 
         {/* Volunteers Section */}
         {mainSection === "volunteers" && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <Card className="border-t-4 border-t-csa-blue">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -3508,7 +4211,935 @@ export default function Admin() {
             </Card>
           </div>
         )}
-      </div>
+
+        {/* Gallery Section */}
+        {mainSection === "gallery" && (
+          <div className="space-y-4">
+            <Card className="border-t-4 border-t-purple-500">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Wallpaper className="h-5 w-5 text-purple-600" />
+                      Event Gallery
+                    </CardTitle>
+                    <CardDescription>
+                      Browse and manage all event photos
+                    </CardDescription>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setMainSection("events");
+                      setActiveTab("images");
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Upload Images
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isLoadingEventImages ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="aspect-video bg-gray-200 rounded-lg"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : eventImages.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Wallpaper className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-600 mb-2">No images yet</h3>
+                    <p className="text-gray-500 mb-4">Upload your first event photo to get started!</p>
+                    <Button
+                      onClick={() => {
+                        setMainSection("events");
+                        setActiveTab("images");
+                      }}
+                      className="bg-csa-blue hover:bg-csa-navy"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Images
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {eventImages.map((image, index) => (
+                      <div
+                        key={index}
+                        className="group relative aspect-video rounded-lg overflow-hidden border border-gray-200 hover:shadow-lg transition-all cursor-pointer"
+                      >
+                        <img
+                          src={image.url}
+                          alt={image.caption || `Event image ${index + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="absolute bottom-0 left-0 right-0 p-3">
+                            <p className="text-white text-xs font-medium truncate">
+                              {image.caption || 'No caption'}
+                            </p>
+                            <p className="text-white/80 text-xs">
+                              {new Date(image.uploaded_at).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {eventImages.length > 0 && (
+                  <div className="mt-6 flex justify-between items-center">
+                    <p className="text-sm text-gray-500">
+                      Showing {eventImages.length} {eventImages.length === 1 ? 'image' : 'images'}
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setMainSection("events");
+                        setActiveTab("images");
+                      }}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Manage Images
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* RSVPs Section */}
+        {mainSection === "rsvps" && (
+          <div className="space-y-4">
+            <Card className="border-t-4 border-t-green-500">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckSquare className="h-5 w-5 text-green-600" />
+                      Event RSVPs & Registrations
+                    </CardTitle>
+                    <CardDescription>
+                      View all event registrations and attendee information
+                    </CardDescription>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setMainSection("events");
+                      setActiveTab("users");
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <UserCheck className="h-4 w-4" />
+                    Manage Users
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isLoadingEvents ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-20 bg-gray-200 rounded-lg"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : events.length === 0 ? (
+                  <div className="text-center py-12">
+                    <CheckSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-600 mb-2">No events with RSVPs</h3>
+                    <p className="text-gray-500">Create an event to start receiving registrations!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {events.map((event) => {
+                      const registrationCount = eventRegistrationCounts[event.id] || 0;
+                      const utilizationPercent = Math.round((event.attendees / event.capacity) * 100);
+                      
+                      return (
+                        <div
+                          key={event.id}
+                          className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg text-csa-navy mb-1">
+                                {event.title}
+                              </h3>
+                              <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-4 w-4" />
+                                  {new Date(event.date_time).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="h-4 w-4" />
+                                  {event.location.split(',')[0]}
+                                </span>
+                              </div>
+                            </div>
+                            <Button
+                              onClick={() => fetchEventRegisteredUsers(event.id)}
+                              variant="outline"
+                              size="sm"
+                              className="ml-4"
+                            >
+                              View RSVPs
+                            </Button>
+                          </div>
+                          
+                          <div className="grid grid-cols-3 gap-4 mb-3">
+                            <div className="bg-blue-50 rounded-lg p-3">
+                              <div className="text-xs text-gray-600 mb-1">Registered</div>
+                              <div className="text-2xl font-bold text-csa-blue">
+                                {registrationCount}
+                              </div>
+                            </div>
+                            <div className="bg-green-50 rounded-lg p-3">
+                              <div className="text-xs text-gray-600 mb-1">Capacity</div>
+                              <div className="text-2xl font-bold text-green-600">
+                                {event.capacity}
+                              </div>
+                            </div>
+                            <div className="bg-purple-50 rounded-lg p-3">
+                              <div className="text-xs text-gray-600 mb-1">Available</div>
+                              <div className="text-2xl font-bold text-purple-600">
+                                {Math.max(0, event.capacity - event.attendees)}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-600">Capacity Utilization</span>
+                              <Badge
+                                variant="secondary"
+                                className={`${
+                                  utilizationPercent >= 90
+                                    ? "bg-red-100 text-red-700"
+                                    : utilizationPercent >= 70
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-green-100 text-green-700"
+                                }`}
+                              >
+                                {utilizationPercent}%
+                              </Badge>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                              <div
+                                className={`h-2 rounded-full transition-all ${
+                                  utilizationPercent >= 90
+                                    ? "bg-red-500"
+                                    : utilizationPercent >= 70
+                                    ? "bg-yellow-500"
+                                    : "bg-green-500"
+                                }`}
+                                style={{ width: `${Math.min(utilizationPercent, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Social Media Agent Section */}
+        {mainSection === "social-media" && (
+          <div className="space-y-2">
+            {/* Header Card */}
+            <Card className="border-t-4 border-t-csa-accent bg-gradient-to-br from-csa-light via-blue-50/30 to-orange-50/20">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-md relative">
+                    <Bot className="h-6 w-6 text-white" />
+                    <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5">
+                      <Send className="h-3 w-3 text-orange-500" />
+                    </div>
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl font-bold bg-gradient-to-r from-csa-navy to-csa-blue bg-clip-text text-transparent">
+                      AI-Powered Social Media Agent
+                    </CardTitle>
+                    <CardDescription className="text-base mt-2 text-gray-600">
+                      Generate compelling content with AI, connect platforms, and amplify your social media reach—all in one place
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* Platform Integrations */}
+            <Card className="border-t-4 border-t-csa-blue">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Share2 className="h-5 w-5 text-csa-blue" />
+                  Platform Integrations
+                </CardTitle>
+                <CardDescription>
+                  Connect with platforms to and create your social media posts
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {[
+                    { 
+                      id: 'linkedin', 
+                      name: 'LinkedIn', 
+                      icon: Linkedin, 
+                      platformColor: 'bg-[#0077B5]',
+                      platformIcon: 'text-[#0077B5]',
+                      loginUrl: 'https://www.linkedin.com/oauth/v2/authorization'
+                    },
+                    { 
+                      id: 'twitter', 
+                      name: 'X', 
+                      icon: XIcon, 
+                      platformColor: 'bg-black',
+                      platformIcon: 'text-black',
+                      loginUrl: 'https://twitter.com/i/oauth2/authorize'
+                    },
+                    { 
+                      id: 'facebook', 
+                      name: 'Facebook', 
+                      icon: Facebook, 
+                      platformColor: 'bg-[#1877F2]',
+                      platformIcon: 'text-[#1877F2]',
+                      loginUrl: 'https://www.facebook.com/v18.0/dialog/oauth'
+                    },
+                    { 
+                      id: 'instagram', 
+                      name: 'Instagram', 
+                      icon: Instagram, 
+                      platformColor: 'bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500',
+                      platformIcon: 'text-pink-600',
+                      loginUrl: 'https://api.instagram.com/oauth/authorize'
+                    },
+                    { 
+                      id: 'youtube', 
+                      name: 'YouTube', 
+                      icon: Youtube, 
+                      platformColor: 'bg-[#FF0000]',
+                      platformIcon: 'text-[#FF0000]',
+                      loginUrl: 'https://accounts.google.com/o/oauth2/v2/auth'
+                    },
+                    { 
+                      id: 'tiktok', 
+                      name: 'TikTok', 
+                      icon: TikTokIcon, 
+                      platformColor: 'bg-black',
+                      platformIcon: 'text-black',
+                      loginUrl: 'https://www.tiktok.com/auth/authorize/'
+                    },
+                  ].map((platform) => {
+                    const isConnected = selectedPlatforms.includes(platform.id);
+                    return (
+                      <Card 
+                        key={platform.id}
+                        className={`relative overflow-hidden transition-all duration-300 ${
+                          isConnected 
+                            ? 'border-2 border-green-500 bg-green-50 shadow-md' 
+                            : 'border border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                        }`}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex flex-col items-center text-center space-y-3">
+                            {/* Platform Icon */}
+                            <div className={`p-3 rounded-full transition-all ${
+                              isConnected 
+                                ? 'bg-green-500' 
+                                : `${platform.platformColor}`
+                            }`}>
+                              <platform.icon className="h-5 w-5 text-white" />
+                            </div>
+                            
+                            {/* Platform Name */}
+                            <h3 className="font-medium text-sm text-gray-900">
+                              {platform.name}
+                            </h3>
+
+                            {/* Modern Toggle Button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isConnected) {
+                                  // Disconnect
+                                  setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform.id));
+                                  toast.success(`${platform.name} disconnected`);
+                                } else {
+                                  // Connect - open login window
+                                  toast.info(`Opening ${platform.name} login...`);
+                                  window.open(
+                                    platform.loginUrl,
+                                    '_blank',
+                                    'width=600,height=700,scrollbars=yes'
+                                  );
+                                  // Simulate connection after window opens (in real app, this would be handled by OAuth callback)
+                                  setTimeout(() => {
+                                    setSelectedPlatforms([...selectedPlatforms, platform.id]);
+                                    toast.success(`${platform.name} connected successfully!`);
+                                  }, 2000);
+                                }
+                              }}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                                isConnected
+                                  ? 'bg-green-500 focus:ring-green-500'
+                                  : 'bg-gray-300 focus:ring-gray-400'
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                  isConnected ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                              >
+                                {isConnected ? (
+                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <X className="h-4 w-4 text-gray-400" />
+                                )}
+                              </span>
+                            </button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Content Generator */}
+            <Card className={`border-t-4 border-t-csa-accent bg-gradient-to-br from-csa-light to-orange-50/30 relative ${
+              selectedPlatforms.length === 0 ? 'opacity-60' : ''
+            }`}>
+              {/* Disabled Overlay */}
+              {selectedPlatforms.length === 0 && (
+                <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+                  <Card className="max-w-md mx-4 shadow-xl border-2 border-csa-blue">
+                    <CardContent className="p-6 text-center">
+                      <div className="p-4 bg-gradient-to-br from-csa-blue/20 to-csa-accent/20 rounded-full inline-flex mb-4">
+                        <Lock className="h-8 w-8 text-csa-blue" />
+                      </div>
+                      <h3 className="text-xl font-bold text-csa-navy mb-2">Platform Required</h3>
+                      <p className="text-gray-600 mb-4">
+                        Please connect at least one social media platform above to unlock the AI Content Generator.
+                      </p>
+                      <Badge variant="secondary" className="bg-csa-blue/10 text-csa-blue px-3 py-1.5">
+                        <Share2 className="h-3.5 w-3.5 mr-1.5" />
+                        Connect a Platform First
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              
+              <CardHeader className="space-y-1">
+                <CardTitle className="flex items-center gap-2 text-2xl">
+                  <div className="p-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg">
+                    <Sparkles className="h-5 w-5 text-white" />
+                  </div>
+                  AI Content Generator
+                </CardTitle>
+                <CardDescription className="text-base">
+                  Generate engaging social media content powered by AI
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left Column - Input */}
+                  <div className="space-y-4">
+                    <Card className="border-csa-blue/30 bg-white">
+                      <CardContent className="p-5 space-y-4">
+                  <div className="space-y-3">
+                          <Label className="text-base font-semibold flex items-center gap-2 text-gray-800">
+                            <CalendarIcon className="h-4 w-4 text-orange-500" />
+                    Select Event
+                  </Label>
+                  <div className="relative">
+                    <select
+                      value={selectedEventForSocial}
+                      onChange={(e) => setSelectedEventForSocial(e.target.value)}
+                      className="w-full px-4 py-3.5 pr-12 border-2 border-orange-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 bg-white hover:border-orange-300 transition-all appearance-none cursor-pointer font-medium text-gray-900 shadow-sm hover:shadow-md"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%23f97316' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 0.75rem center',
+                        backgroundSize: '1.25rem'
+                      }}
+                    >
+                      <option value="" disabled>Choose an event to promote</option>
+                      {events.map((event) => (
+                        <option key={event.id} value={event.id}>
+                          {event.title} • {new Date(event.date_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => {
+                    if (!selectedEventForSocial) {
+                      toast.error("Please select an event first");
+                      return;
+                    }
+                    if (selectedPlatforms.length === 0) {
+                      toast.error("Please connect at least one platform first");
+                      return;
+                    }
+                    setIsGeneratingContent(true);
+                    // Simulate AI generation
+                    setTimeout(() => {
+                      const event = events.find(e => e.id === selectedEventForSocial);
+                      if (event) {
+                        const caption = `🎯 Exciting news! Join us for "${event.title}" 🚀\n\n📅 ${new Date(event.date_time).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}\n📍 ${event.location}\n\n${event.excerpt || 'An amazing opportunity to learn, network, and grow with industry experts!'}\n\n🎟️ Limited spots available - Register now!\n\n#cybersecurity #cloudsecurity #infosec #tech`;
+                        setGeneratedCaption(caption);
+                        setGeneratedHashtags(['CloudSecurity', 'CyberSecurity', 'InfoSec', 'TechEvent', 'CSA', 'NetworkingSF', 'TechCommunity', 'LearnAndGrow']);
+                        setCustomCaption(caption);
+                        setCustomHashtags('CloudSecurity, CyberSecurity, InfoSec, TechEvent, CSA, NetworkingSF, TechCommunity, LearnAndGrow');
+                        toast.success("Content generated successfully!");
+                      }
+                      setIsGeneratingContent(false);
+                    }, 2000);
+                  }}
+                  disabled={!selectedEventForSocial || isGeneratingContent || selectedPlatforms.length === 0}
+                          className="w-full bg-gradient-to-r from-csa-blue to-csa-accent hover:from-csa-navy hover:to-orange-600 text-white shadow-lg shadow-csa-blue/30"
+                  size="lg"
+                >
+                  {isGeneratingContent ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                              Generating with AI...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-5 w-5 mr-2" />
+                              Generate Content
+                    </>
+                  )}
+                </Button>
+
+                        {/* AI Features List */}
+                        <div className="pt-4 border-t border-gray-200">
+                          <p className="text-sm font-medium text-csa-navy mb-3">AI-Powered Features:</p>
+                          <div className="space-y-2">
+                            {[
+                              'Smart caption generation',
+                              'Trending hashtags',
+                              'Emoji optimization',
+                              'Platform-specific formatting'
+                            ].map((feature, idx) => (
+                              <div key={idx} className="flex items-center gap-2 text-sm text-gray-600">
+                                <CheckCircle2 className="h-4 w-4 text-csa-blue flex-shrink-0" />
+                                <span>{feature}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Right Column - Generated Content */}
+                  <div className="space-y-4">
+                    {generatedCaption ? (
+                      <Card className="border-green-200 bg-white">
+                        <CardContent className="p-5 space-y-4">
+                          <div className="flex items-center gap-2 pb-2 border-b border-green-200">
+                            <div className="p-1.5 bg-green-100 rounded-full">
+                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            </div>
+                            <span className="font-semibold text-green-700">Content Generated!</span>
+                    </div>
+
+                    {/* Caption */}
+                          <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                              <Label className="text-sm font-semibold flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-csa-blue" />
+                                Caption
+                        </Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(generatedCaption);
+                                  toast.success("Caption copied!");
+                          }}
+                                className="h-8"
+                        >
+                                <Copy className="h-3.5 w-3.5 mr-1.5" />
+                          Copy
+                        </Button>
+                      </div>
+                      <Textarea
+                        value={customCaption}
+                        onChange={(e) => setCustomCaption(e.target.value)}
+                              rows={6}
+                              className="text-sm bg-gray-50 border-gray-200 focus:border-csa-blue focus:ring-csa-blue"
+                        placeholder="AI-generated caption will appear here..."
+                      />
+                    </div>
+
+                    {/* Hashtags */}
+                          <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                              <Label className="text-sm font-semibold flex items-center gap-2">
+                                <Hash className="h-4 w-4 text-csa-accent" />
+                                Hashtags
+                        </Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(generatedHashtags.map(tag => `#${tag}`).join(' '));
+                                  toast.success("Hashtags copied!");
+                          }}
+                                className="h-8"
+                        >
+                                <Copy className="h-3.5 w-3.5 mr-1.5" />
+                          Copy
+                        </Button>
+                      </div>
+                            <div className="flex flex-wrap gap-2 p-3 bg-gradient-to-br from-csa-light to-orange-50 rounded-lg border border-csa-blue/30">
+                        {generatedHashtags.map((tag, idx) => (
+                                <Badge 
+                                  key={idx} 
+                                  variant="secondary" 
+                                  className="bg-white text-csa-blue border border-csa-blue/30 px-2.5 py-1 text-xs font-medium"
+                                >
+                            #{tag}
+                          </Badge>
+                        ))}
+                      </div>
+                      <Input
+                        value={customHashtags}
+                        onChange={(e) => setCustomHashtags(e.target.value)}
+                        placeholder="Edit hashtags (comma-separated)"
+                              className="bg-gray-50 border-gray-200 text-sm focus:border-csa-blue focus:ring-csa-blue"
+                      />
+                    </div>
+              </CardContent>
+            </Card>
+                    ) : (
+                      <Card className="border-dashed border-2 border-csa-blue/30 bg-csa-light">
+                        <CardContent className="p-12 flex flex-col items-center justify-center text-center">
+                          <div className="p-4 bg-gradient-to-br from-csa-blue/20 to-csa-accent/20 rounded-full mb-4">
+                            <Sparkles className="h-8 w-8 text-csa-blue" />
+                  </div>
+                          <h3 className="text-lg font-semibold text-csa-navy mb-2">Ready to Generate</h3>
+                          <p className="text-sm text-gray-500 max-w-xs">
+                            Select an event and click "Generate Content" to create AI-powered social media posts
+                          </p>
+                </CardContent>
+              </Card>
+            )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Settings Section */}
+        {mainSection === "settings" && (
+          <div className="space-y-4">
+            {/* General Settings */}
+            <Card className="border-t-4 border-t-orange-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-orange-600" />
+                  General Settings
+                </CardTitle>
+                <CardDescription>
+                  Configure general system preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Organization Info */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Organization Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="org-name" className="text-sm font-medium">Organization Name</Label>
+                        <Input
+                          id="org-name"
+                          type="text"
+                          placeholder="CSA San Francisco"
+                          defaultValue="CSA San Francisco"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="org-email" className="text-sm font-medium">Contact Email</Label>
+                        <Input
+                          id="org-email"
+                          type="email"
+                          placeholder="contact@csasfo.org"
+                          defaultValue="contact@csasfo.org"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="org-phone" className="text-sm font-medium">Phone Number</Label>
+                        <Input
+                          id="org-phone"
+                          type="tel"
+                          placeholder="+1 (555) 123-4567"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="org-website" className="text-sm font-medium">Website URL</Label>
+                        <Input
+                          id="org-website"
+                          type="url"
+                          placeholder="https://csasfo.org"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Event Settings */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Event Settings</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="default-capacity" className="text-sm font-medium">Default Event Capacity</Label>
+                        <Input
+                          id="default-capacity"
+                          type="number"
+                          placeholder="100"
+                          defaultValue="100"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="event-timezone" className="text-sm font-medium">Event Timezone</Label>
+                        <Input
+                          id="event-timezone"
+                          type="text"
+                          placeholder="America/Los_Angeles"
+                          defaultValue="America/Los_Angeles"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notification Settings */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Notification Settings</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Email notifications for new registrations</p>
+                          <p className="text-xs text-gray-500 mt-0.5">Receive alerts when users register for events</p>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          <Lock className="h-4 w-4 mr-1" />
+                          Enabled
+                        </Button>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Volunteer application alerts</p>
+                          <p className="text-xs text-gray-500 mt-0.5">Get notified about new volunteer submissions</p>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          <Lock className="h-4 w-4 mr-1" />
+                          Enabled
+                        </Button>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Weekly summary reports</p>
+                          <p className="text-xs text-gray-500 mt-0.5">Receive weekly digest of activity</p>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          <Lock className="h-4 w-4 mr-1" />
+                          Enabled
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4 border-t">
+                    <Button className="bg-csa-blue hover:bg-csa-navy">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Settings
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* User Profile Settings */}
+            <Card className="border-t-4 border-t-blue-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCheck className="h-5 w-5 text-blue-600" />
+                  Admin Profile
+                </CardTitle>
+                <CardDescription>
+                  Manage your admin account information
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 pb-4 border-b">
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-csa-blue to-csa-navy flex items-center justify-center text-white text-2xl font-bold">
+                      {user?.name?.charAt(0)?.toUpperCase() || 'A'}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg text-csa-navy">{user?.name || 'Admin User'}</h3>
+                      <p className="text-sm text-gray-600">{user?.email}</p>
+                      <Badge className="mt-1 bg-csa-blue">Administrator</Badge>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="admin-name" className="text-sm font-medium">Full Name</Label>
+                      <Input
+                        id="admin-name"
+                        type="text"
+                        placeholder="John Doe"
+                        defaultValue={user?.name || ''}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="admin-email" className="text-sm font-medium">Email Address</Label>
+                      <Input
+                        id="admin-email"
+                        type="email"
+                        placeholder="admin@example.com"
+                        defaultValue={user?.email || ''}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="admin-role" className="text-sm font-medium">Role</Label>
+                      <Input
+                        id="admin-role"
+                        type="text"
+                        defaultValue={user?.role || 'Admin'}
+                        disabled
+                        className="mt-1 bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="admin-joined" className="text-sm font-medium">Member Since</Label>
+                      <Input
+                        id="admin-joined"
+                        type="text"
+                        defaultValue={new Date().toLocaleDateString('en-US', {
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                        disabled
+                        className="mt-1 bg-gray-50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4 border-t">
+                    <Button className="bg-csa-blue hover:bg-csa-navy">
+                      <Save className="h-4 w-4 mr-2" />
+                      Update Profile
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* System Information */}
+            <Card className="border-t-4 border-t-gray-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-gray-600" />
+                  System Information
+                </CardTitle>
+                <CardDescription>
+                  Platform statistics and version details
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                      <span className="text-sm font-medium text-gray-700">Total Events</span>
+                    </div>
+                    <p className="text-3xl font-bold text-csa-navy">{events.length}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="h-5 w-5 text-green-600" />
+                      <span className="text-sm font-medium text-gray-700">Total Users</span>
+                    </div>
+                    <p className="text-3xl font-bold text-csa-navy">{users.length}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <UserCheck className="h-5 w-5 text-purple-600" />
+                      <span className="text-sm font-medium text-gray-700">Volunteers</span>
+                    </div>
+                    <p className="text-3xl font-bold text-csa-navy">{volunteers.length}</p>
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-2 text-sm text-gray-600">
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="font-medium">Platform Version</span>
+                    <span className="text-gray-700">v2.0.0</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="font-medium">Last Updated</span>
+                    <span className="text-gray-700">{new Date().toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="font-medium">Database Status</span>
+                    <Badge className="bg-green-500">Connected</Badge>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="font-medium">API Status</span>
+                    <Badge className="bg-green-500">Active</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+            </div>
+          </div>
+        </div>
 
       {/* Volunteer Details Dialog */}
       <Dialog open={isVolunteerDetailsOpen} onOpenChange={setIsVolunteerDetailsOpen}>

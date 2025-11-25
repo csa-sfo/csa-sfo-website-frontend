@@ -1,5 +1,5 @@
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import About from "./pages/About";
@@ -27,6 +27,41 @@ import ScrollToTop from "@/components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
+const Layout = () => {
+  const location = useLocation();
+  const isAdminPage = location.pathname === "/admin";
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1 w-full">
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/events/:slug" element={<EventDetail />} />
+          {/* <Route path="/archive" element={<Archive />} /> */}
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/get-involved" element={<GetInvolved />} />
+          <Route path="/google-callback" element={<AuthCallback />} />
+          <Route path="/linkedin-callback" element={<AuthCallback />} />
+          <Route path="/sponsorship" element={<Sponsorship />} />
+            <Route path="/sponsorship/success" element={<SponsorshipSuccess />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/admin" element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          } />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      {!isAdminPage && <Footer />}
+      {!isAdminPage && <ChatBotWrapper />}
+    </div>
+  );
+};
+
 const AppContent = () => {
   const { showProfileDialog, completeProfile, loading } = useAuth();
 
@@ -36,33 +71,7 @@ const AppContent = () => {
       <Sonner />
       <BrowserRouter>
         <ScrollToTop />
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-1 w-full">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/events/:slug" element={<EventDetail />} />
-              {/* <Route path="/archive" element={<Archive />} /> */}
-              <Route path="/gallery" element={<Gallery />} />
-              <Route path="/get-involved" element={<GetInvolved />} />
-              <Route path="/google-callback" element={<AuthCallback />} />
-              <Route path="/linkedin-callback" element={<AuthCallback />} />
-              <Route path="/sponsorship" element={<Sponsorship />} />
-                <Route path="/sponsorship/success" element={<SponsorshipSuccess />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/admin" element={
-                <AdminRoute>
-                  <Admin />
-                </AdminRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-          <ChatBotWrapper />
-        </div>
+        <Layout />
       </BrowserRouter>
       <UserProfileDialog
         isOpen={showProfileDialog}
