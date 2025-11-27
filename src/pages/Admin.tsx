@@ -9,12 +9,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, MapPin, Users, Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon, ChevronLeft, ChevronRight, Lock, Menu, LayoutDashboard, UserCheck, Images, TrendingUp, Activity, BarChart3, PieChart, CheckSquare, Wallpaper, Settings, Clock, Share2, Sparkles, Send, Calendar as CalendarIcon, Hash, Facebook, Instagram, Linkedin, Youtube, RefreshCw, FileText, Copy, CheckCircle2, Loader2, PanelLeftClose, PanelLeftOpen, Bot, User, Home, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { Event, AgendaItem, Speaker } from "@/types/event";
 import { API_BASE_URL, API_ENDPOINTS } from "@/config/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { LinkedInConnectModal } from "@/components/admin/LinkedInConnectModal";
 // import { handleApiError, handleAuthError } from "@/utils/authUtils";
 
 // Custom X (Twitter) Icon Component
@@ -744,6 +746,9 @@ export default function Admin() {
   const [scheduledPosts, setScheduledPosts] = useState<any[]>([]);
   const [isLoadingScheduledPosts, setIsLoadingScheduledPosts] = useState(false);
   const [postPreviewPlatform, setPostPreviewPlatform] = useState<string>("linkedin");
+  
+  // LinkedIn OAuth Modal state
+  const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
   
   const [formData, setFormData] = useState<Partial<Event>>({
     title: "",
@@ -4510,46 +4515,46 @@ export default function Admin() {
                       platformIcon: 'text-[#0077B5]',
                       loginUrl: 'https://www.linkedin.com/oauth/v2/authorization'
                     },
-                    { 
-                      id: 'twitter', 
-                      name: 'X', 
-                      icon: XIcon, 
-                      platformColor: 'bg-black',
-                      platformIcon: 'text-black',
-                      loginUrl: 'https://twitter.com/i/oauth2/authorize'
-                    },
-                    { 
-                      id: 'facebook', 
-                      name: 'Facebook', 
-                      icon: Facebook, 
-                      platformColor: 'bg-[#1877F2]',
-                      platformIcon: 'text-[#1877F2]',
-                      loginUrl: 'https://www.facebook.com/v18.0/dialog/oauth'
-                    },
-                    { 
-                      id: 'instagram', 
-                      name: 'Instagram', 
-                      icon: Instagram, 
-                      platformColor: 'bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500',
-                      platformIcon: 'text-pink-600',
-                      loginUrl: 'https://api.instagram.com/oauth/authorize'
-                    },
-                    { 
-                      id: 'youtube', 
-                      name: 'YouTube', 
-                      icon: Youtube, 
-                      platformColor: 'bg-[#FF0000]',
-                      platformIcon: 'text-[#FF0000]',
-                      loginUrl: 'https://accounts.google.com/o/oauth2/v2/auth'
-                    },
-                    { 
-                      id: 'tiktok', 
-                      name: 'TikTok', 
-                      icon: TikTokIcon, 
-                      platformColor: 'bg-black',
-                      platformIcon: 'text-black',
-                      loginUrl: 'https://www.tiktok.com/auth/authorize/'
-                    },
+                    // { 
+                    //   id: 'twitter', 
+                    //   name: 'X', 
+                    //   icon: XIcon, 
+                    //   platformColor: 'bg-black',
+                    //   platformIcon: 'text-black',
+                    //   loginUrl: 'https://twitter.com/i/oauth2/authorize'
+                    // },
+                    // { 
+                    //   id: 'facebook', 
+                    //   name: 'Facebook', 
+                    //   icon: Facebook, 
+                    //   platformColor: 'bg-[#1877F2]',
+                    //   platformIcon: 'text-[#1877F2]',
+                    //   loginUrl: 'https://www.facebook.com/v18.0/dialog/oauth'
+                    // },
+                    // { 
+                    //   id: 'instagram', 
+                    //   name: 'Instagram', 
+                    //   icon: Instagram, 
+                    //   platformColor: 'bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500',
+                    //   platformIcon: 'text-pink-600',
+                    //   loginUrl: 'https://api.instagram.com/oauth/authorize'
+                    // },
+                    // { 
+                    //   id: 'youtube', 
+                    //   name: 'YouTube', 
+                    //   icon: Youtube, 
+                    //   platformColor: 'bg-[#FF0000]',
+                    //   platformIcon: 'text-[#FF0000]',
+                    //   loginUrl: 'https://accounts.google.com/o/oauth2/v2/auth'
+                    // },
+                    // { 
+                    //   id: 'tiktok', 
+                    //   name: 'TikTok', 
+                    //   icon: TikTokIcon, 
+                    //   platformColor: 'bg-black',
+                    //   platformIcon: 'text-black',
+                    //   loginUrl: 'https://www.tiktok.com/auth/authorize/'
+                    // },
                   ].map((platform) => {
                     const isConnected = selectedPlatforms.includes(platform.id);
                     return (
@@ -4586,18 +4591,23 @@ export default function Admin() {
                                   setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform.id));
                                   toast.success(`${platform.name} disconnected`);
                                 } else {
-                                  // Connect - open login window
-                                  toast.info(`Opening ${platform.name} login...`);
-                                  window.open(
-                                    platform.loginUrl,
-                                    '_blank',
-                                    'width=600,height=700,scrollbars=yes'
-                                  );
-                                  // Simulate connection after window opens (in real app, this would be handled by OAuth callback)
-                                  setTimeout(() => {
-                                    setSelectedPlatforms([...selectedPlatforms, platform.id]);
-                                    toast.success(`${platform.name} connected successfully!`);
-                                  }, 2000);
+                                  // Connect - open modal for LinkedIn
+                                  if (platform.id === 'linkedin') {
+                                    setIsLinkedInModalOpen(true);
+                                  } else {
+                                    // For other platforms (when uncommented)
+                                    toast.info(`Opening ${platform.name} login...`);
+                                    window.open(
+                                      platform.loginUrl,
+                                      '_blank',
+                                      'width=600,height=700,scrollbars=yes'
+                                    );
+                                    // Simulate connection after window opens (in real app, this would be handled by OAuth callback)
+                                    setTimeout(() => {
+                                      setSelectedPlatforms([...selectedPlatforms, platform.id]);
+                                      toast.success(`${platform.name} connected successfully!`);
+                                    }, 2000);
+                                  }
                                 }
                               }}
                               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
@@ -4674,26 +4684,35 @@ export default function Admin() {
                             <CalendarIcon className="h-4 w-4 text-orange-500" />
                     Select Event
                   </Label>
-                  <div className="relative">
-                    <select
-                      value={selectedEventForSocial}
-                      onChange={(e) => setSelectedEventForSocial(e.target.value)}
-                      className="w-full px-4 py-3.5 pr-12 border-2 border-orange-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 bg-white hover:border-orange-300 transition-all appearance-none cursor-pointer font-medium text-gray-900 shadow-sm hover:shadow-md"
-                      style={{
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%23f97316' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'right 0.75rem center',
-                        backgroundSize: '1.25rem'
-                      }}
-                    >
-                      <option value="" disabled>Choose an event to promote</option>
+                  <Select
+                    value={selectedEventForSocial}
+                    onValueChange={setSelectedEventForSocial}
+                  >
+                    <SelectTrigger className="w-full px-4 py-3.5 h-auto border-2 border-orange-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 bg-white hover:border-orange-300 transition-all font-medium text-gray-900 shadow-sm hover:shadow-md">
+                      <SelectValue placeholder="Choose an event to promote" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
                       {events.map((event) => (
-                        <option key={event.id} value={event.id}>
-                          {event.title} • {new Date(event.date_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </option>
+                        <SelectItem 
+                          key={event.id} 
+                          value={event.id}
+                          className="cursor-pointer py-3 px-2"
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-900">{event.title}</span>
+                            <span className="text-sm text-gray-500 mt-0.5">
+                              {new Date(event.date_time).toLocaleDateString('en-US', { 
+                                weekday: 'short',
+                                month: 'short', 
+                                day: 'numeric', 
+                                year: 'numeric' 
+                              })}
+                            </span>
+                          </div>
+                        </SelectItem>
                       ))}
-                    </select>
-                  </div>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <Button
@@ -5395,6 +5414,18 @@ export default function Admin() {
         onClose={() => setAuthModalOpen(false)}
         mode={authMode}
         onModeChange={setAuthMode}
+      />
+
+      {/* LinkedIn OAuth Configuration Modal */}
+      <LinkedInConnectModal
+        isOpen={isLinkedInModalOpen}
+        onClose={() => setIsLinkedInModalOpen(false)}
+        onConnect={(clientId, clientSecret) => {
+          // Add LinkedIn to connected platforms
+          setSelectedPlatforms([...selectedPlatforms, 'linkedin']);
+          // Here you can store the credentials or initiate OAuth flow
+          console.log('LinkedIn credentials:', { clientId, clientSecret });
+        }}
       />
     </div>
   );
