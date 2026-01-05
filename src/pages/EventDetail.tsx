@@ -788,7 +788,7 @@ END:VCALENDAR`;
                 </div>
               </div>
               
-              {/* Registration Section */}
+              {/* Registration Section - Commented out
               <div className="flex items-start space-x-3 min-h-[80px]">
                 <Users className="h-5 w-5 text-csa-accent mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
@@ -801,6 +801,7 @@ END:VCALENDAR`;
                   </div>
                 </div>
               </div>
+              */}
             </div>
             </div>
 
@@ -918,7 +919,7 @@ END:VCALENDAR`;
                 <div className="flex items-center justify-between p-3 bg-csa-light rounded-lg">
                   <span className="font-medium text-csa-navy">Status:</span>
                   <span className={`font-medium ${isRegistered ? 'text-green-600' : (isFullyBooked ? 'text-red-600' : 'text-green-600')}`}>
-                    {isRegistered ? "Registered" : (isFullyBooked ? "Waitlist Only" : `${spotsLeft} spots left`)}
+                    {isRegistered ? "Registered" : (isFullyBooked ? "Waitlist Only" : "Available")}
                   </span>
                 </div>
 
@@ -999,7 +1000,7 @@ END:VCALENDAR`;
                   <div className="flex items-center justify-between p-3 bg-csa-light rounded-lg">
                     <span className="font-medium text-csa-navy">Event Status:</span>
                     <span className="font-medium text-blue-600">
-                      {isFullyBooked ? "Fully Booked" : `${spotsLeft} spots left`}
+                      {isFullyBooked ? "Fully Booked" : "Available"}
                     </span>
                   </div>
                   

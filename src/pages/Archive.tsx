@@ -224,10 +224,12 @@ export default function Archive() {
                             <span className="text-sm text-csa-blue font-medium">
                               {formatEventDate(event.date)}
                             </span>
+                            {/* Disabled: Attendees count display
                             <div className="flex items-center space-x-2 text-sm text-gray-500">
                               <Users className="h-4 w-4" />
                               <span>{event.attendees} attendees</span>
                             </div>
+                            */}
                           </div>
                           
                           <h2 className="text-2xl font-bold text-csa-navy mb-3">
