@@ -2663,7 +2663,7 @@ export default function Admin() {
 
           {/* Main Content Area */}
           <div className="flex-1 overflow-y-auto">
-            <div className="container-site pt-0 pb-4">
+            <div className="container-site pt-6 pb-4">
             
             {/* Section Header - Above Body Content */}
             <div className="mb-2">
