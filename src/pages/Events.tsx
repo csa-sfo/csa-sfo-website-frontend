@@ -666,10 +666,12 @@ export default function Events() {
               <Calendar className="h-4 w-4 text-csa-blue" />
               <span>{dateInfo.time}</span>
             </div>
-            {/*<div className="flex items-center space-x-2">
+            {/*
+            <div className="flex items-center space-x-2">
               <Users className="h-4 w-4 text-csa-blue" />
               <span>{currentAttendees}/{event.capacity}</span>
-            </div>*/}
+            </div>
+            */}
           </div>
           
           <div className="flex items-start space-x-2 text-sm text-gray-600">
@@ -714,15 +716,17 @@ export default function Events() {
           {showRegistration && (
             <div className="pt-2 border-t">
               <div className="flex items-center justify-between">
+                {/* Disabled: Spots remaining display
                 <div className="text-sm">
                   {spotsLeft > 0 ? (
                     <span className="text-green-600 font-medium">
-                      Available
+                      {spotsLeft} spots remaining
                     </span>
                   ) : (
                     <span className="text-red-600 font-medium">Waitlist only</span>
                   )}
                 </div>
+                */}
                 <Button asChild className="bg-csa-blue hover:bg-csa-blue/90">
                   <Link to={`/events/${event.slug}`}>
                     {spotsLeft > 0 ? "Register" : "Join Waitlist"}
