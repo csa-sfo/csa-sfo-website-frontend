@@ -747,7 +747,7 @@ END:VCALENDAR`;
               {event.title}
             </h1>
             
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 text-gray-100">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 text-gray-100">
               {/* Date Section */}
               <div className="flex items-start space-x-3 min-h-[80px]">
                 <Calendar className="h-5 w-5 text-csa-accent mt-0.5 flex-shrink-0" />

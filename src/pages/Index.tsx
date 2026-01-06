@@ -361,12 +361,14 @@ export default function Index() {
                         <MapPin className="h-5 w-5 text-primary mt-0.5" />
                         <span>{displayEvent.location}</span>
                       </div>
-                      {/*attendeesCount > 0 && (
+                      {/*
+                      {attendeesCount > 0 && (
                         <div className="flex items-center space-x-3 text-gray-700">
                           <Users className="h-5 w-5 text-primary" />
                           <span className="font-medium">{attendeesCount} attendees registered</span>
                         </div>
-                      )*/}
+                      )}
+                      */}
                     </div>
                     <div className="space-y-4">
                       <div>
