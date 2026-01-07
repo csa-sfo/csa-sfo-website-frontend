@@ -38,6 +38,8 @@ export const API_ENDPOINTS = {
   UPLOAD_IMAGE: `${API_BASE_URL}/v1/routes/upload/image`,
   // Event Images Endpoints
   LIST_EVENT_IMAGES: `${API_BASE_URL}/v1/routes/event-images`,
+  // Gallery Images Endpoints (separate from event-images which is for slideshow)
+  GALLERY_IMAGES: `${API_BASE_URL}/v1/routes/gallery-images`,
   // Volunteer Endpoints
   VOLUNTEER_SUBMIT: `${API_BASE_URL}/v1/routes/volunteers/submit`,
   VOLUNTEER_ALL: `${API_BASE_URL}/v1/routes/volunteers/all`,
