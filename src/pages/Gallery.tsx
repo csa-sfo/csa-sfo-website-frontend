@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Calendar, Search, Filter, X, ChevronLeft, ChevronRight, Folder, ArrowLeft, Image as ImageIcon } from "lucide-react";
+import { API_ENDPOINTS, API_BASE_URL } from "@/config/api";
 
 // Gallery data organized by events
 const galleryData = [
@@ -300,7 +301,7 @@ interface Photo {
   id: string;
   url: string;
   caption: string;
-  photographer: string;
+  photographer?: string; // Optional, not used for Google Drive images
 }
 
 interface GalleryEvent {
@@ -320,15 +321,122 @@ export default function Gallery() {
   const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
   const [viewMode, setViewMode] = useState<'folders' | 'photos'>('folders');
   const [selectedEventData, setSelectedEventData] = useState<GalleryEvent | null>(null);
+  const [apiGalleryEvents, setApiGalleryEvents] = useState<GalleryEvent[]>([]);
+  const [isLoadingApiImages, setIsLoadingApiImages] = useState(true);
+
+  // Fetch gallery images from API (separate from event-images which is for slideshow)
+  useEffect(() => {
+    const fetchGalleryImages = async () => {
+      try {
+        // Add timeout to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        const response = await fetch(API_ENDPOINTS.GALLERY_IMAGES, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const data = await response.json();
+          const galleryEvents = data.events || [];
+          
+          // Transform to GalleryEvent format
+          const apiEvents: GalleryEvent[] = galleryEvents
+            .filter((event: any) => event.photos && event.photos.length > 0) // Only include events with photos
+            .map((event: any) => {
+              // Filter out photos with empty or invalid URLs
+              // Accept both absolute URLs (http/https) and relative paths (starting with /)
+              const photos = (event.photos || [])
+                .filter((photo: any) => {
+                  const url = photo.url || photo.image_url || '';
+                  if (!url || url.trim() === '') return false;
+                  // Accept absolute URLs (http/https) or relative paths (starting with /)
+                  return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/');
+                })
+                .map((photo: any, index: number) => {
+                  let url = photo.url || photo.image_url || '';
+                  // If it's a relative proxy URL, construct full URL using API base
+                  if (url.startsWith('/v1/routes/gallery-images/proxy/')) {
+                    url = `${API_BASE_URL}${url}`;
+                  }
+                  return {
+                    id: `gallery-${photo.name || photo.filename || index}-${index}`,
+                    url: url,
+                    caption: photo.caption || ''
+                  };
+                });
+              
+              return {
+                id: event.id,
+                eventTitle: event.eventTitle,
+                date: event.date || '',
+                location: event.location || '',
+                tags: event.tags || [],
+                photos: photos
+              };
+            })
+            .filter((event: GalleryEvent) => event.photos.length > 0); // Only include events with valid photos
+          
+          setApiGalleryEvents(apiEvents);
+        } else {
+          // If gallery_images table doesn't exist, silently fail (images will sync later)
+          const errorText = await response.text();
+          console.error('Gallery images endpoint error:', response.status, errorText);
+        }
+      } catch (error) {
+        // Silently handle errors - backend might not be running or endpoint might not be available
+        if (error instanceof Error && error.name !== 'AbortError') {
+          // Only log non-timeout errors
+          console.error('Error fetching gallery images:', error);
+        }
+        // Don't show error to user - gallery will work with static data
+      } finally {
+        setIsLoadingApiImages(false);
+      }
+    };
+    
+    fetchGalleryImages();
+  }, []);
+
+  // Merge existing galleryData with API events
+  // Keep existing events intact, add API events that don't match existing ones
+  const mergedGalleryData = (() => {
+    const merged = [...galleryData];
+    const existingEventTitles = new Set(galleryData.map(e => e.eventTitle.toLowerCase()));
+    
+    apiGalleryEvents.forEach(apiEvent => {
+      const apiEventTitleLower = apiEvent.eventTitle.toLowerCase();
+      
+      // Check if this event already exists in galleryData
+      const existingEventIndex = merged.findIndex(
+        e => e.eventTitle.toLowerCase() === apiEventTitleLower
+      );
+      
+      if (existingEventIndex >= 0) {
+        // Event exists - add API photos to existing event (don't replace existing photos)
+        const existingEvent = merged[existingEventIndex];
+        // Only add photos that don't already exist (by URL)
+        const existingUrls = new Set(existingEvent.photos.map(p => p.url));
+        const newPhotos = apiEvent.photos.filter(p => !existingUrls.has(p.url));
+        existingEvent.photos = [...existingEvent.photos, ...newPhotos];
+      } else {
+        // New event from API - add it to merged data
+        merged.push(apiEvent);
+      }
+    });
+    
+    return merged;
+  })();
 
   // Get all unique events for filter
-  const events = galleryData.map(event => ({ id: event.id, title: event.eventTitle }));
+  const events = mergedGalleryData.map(event => ({ id: event.id, title: event.eventTitle }));
   
   // Get all unique tags
-  const allTags = Array.from(new Set(galleryData.flatMap(event => event.tags)));
+  const allTags = Array.from(new Set(mergedGalleryData.flatMap(event => event.tags)));
 
   // Filter events based on search and selection
-  const filteredEvents = galleryData.filter(event => {
+  const filteredEvents = mergedGalleryData.filter(event => {
     const matchesSearch = event.eventTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          event.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          event.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -569,16 +677,45 @@ export default function Gallery() {
                         <Dialog>
                           <DialogTrigger asChild>
                           <div onClick={() => openLightbox(photo, selectedEventData.photos)}>
-                              <div className="aspect-square overflow-hidden">
-                                <img
-                                  src={photo.url}
-                                  alt={photo.caption}
-                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                                />
+                              <div className="aspect-square overflow-hidden bg-gray-100 flex items-center justify-center relative">
+                                {photo.url && (photo.url.startsWith('http://') || photo.url.startsWith('https://') || photo.url.startsWith('/')) ? (
+                                  <img
+                                    src={photo.url}
+                                    alt={photo.caption || 'Gallery image'}
+                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                    onError={(e) => {
+                                      // If image fails to load, hide the image and show placeholder
+                                      const target = e.currentTarget;
+                                      target.style.display = 'none';
+                                      // Create error placeholder if it doesn't exist
+                                      const parent = target.parentElement;
+                                      if (parent && !parent.querySelector('.image-error-placeholder')) {
+                                        const placeholder = document.createElement('div');
+                                        placeholder.className = 'image-error-placeholder w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 absolute inset-0';
+                                        placeholder.innerHTML = `
+                                          <div class="text-center p-4">
+                                            <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <p class="text-xs">Image unavailable</p>
+                                          </div>
+                                        `;
+                                        parent.appendChild(placeholder);
+                                      }
+                                    }}
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                                    <div className="text-center p-4">
+                                      <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                      <p className="text-xs">Invalid image URL</p>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                               <CardContent className="p-4">
-                              <p className="text-sm text-gray-600 line-clamp-2">{photo.caption}</p>
-                              <p className="text-xs text-gray-400 mt-1">© {photo.photographer}</p>
+                              <p className="text-sm text-gray-600 line-clamp-2">{photo.caption || 'Gallery image'}</p>
                               </CardContent>
                             </div>
                           </DialogTrigger>
@@ -603,6 +740,17 @@ export default function Gallery() {
       {selectedPhoto && (
         <Dialog open={!!selectedPhoto} onOpenChange={closeLightbox}>
           <DialogContent className="max-w-4xl w-full h-[90vh] p-0">
+            {/* Hidden title and description for accessibility */}
+            <DialogTitle className="sr-only">
+              {selectedPhoto?.caption || 'Gallery Image Viewer'}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              {selectedPhoto?.caption 
+                ? `Viewing image: ${selectedPhoto.caption}${selectedPhoto.photographer ? ` by ${selectedPhoto.photographer}` : ''}${allPhotos.length > 1 ? `. Image ${currentPhotoIndex + 1} of ${allPhotos.length}` : ''}`
+                : 'Viewing gallery image'
+              }
+            </DialogDescription>
+            
             <div className="relative w-full h-full flex flex-col">
               {/* Close button */}
               <Button
@@ -647,8 +795,10 @@ export default function Gallery() {
 
               {/* Caption */}
               <div className="bg-white p-6 border-t">
-                <p className="text-gray-800 mb-2">{selectedPhoto.caption}</p>
-                <p className="text-sm text-gray-500">Photo by {selectedPhoto.photographer}</p>
+                <p className="text-gray-800 mb-2">{selectedPhoto.caption || 'Gallery image'}</p>
+                {selectedPhoto.photographer && (
+                  <p className="text-sm text-gray-500">Photo by {selectedPhoto.photographer}</p>
+                )}
                 {allPhotos.length > 1 && (
                   <p className="text-xs text-gray-400 mt-2">
                     {currentPhotoIndex + 1} of {allPhotos.length}
