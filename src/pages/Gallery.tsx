@@ -325,78 +325,91 @@ export default function Gallery() {
   const [isLoadingApiImages, setIsLoadingApiImages] = useState(true);
 
   // Fetch gallery images from API (separate from event-images which is for slideshow)
-  useEffect(() => {
-    const fetchGalleryImages = async () => {
-      try {
-        // Add timeout to prevent hanging
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+  const fetchGalleryImages = async () => {
+    try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
+      const response = await fetch(API_ENDPOINTS.GALLERY_IMAGES, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const galleryEvents = data.events || [];
         
-        const response = await fetch(API_ENDPOINTS.GALLERY_IMAGES, {
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+        // Transform to GalleryEvent format
+        const apiEvents: GalleryEvent[] = galleryEvents
+          .filter((event: any) => event.photos && event.photos.length > 0) // Only include events with photos
+          .map((event: any) => {
+            // Filter out photos with empty or invalid URLs
+            // Accept both absolute URLs (http/https) and relative paths (starting with /)
+            const photos = (event.photos || [])
+              .filter((photo: any) => {
+                const url = photo.url || photo.image_url || '';
+                if (!url || url.trim() === '') return false;
+                // Accept absolute URLs (http/https) or relative paths (starting with /)
+                return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/');
+              })
+              .map((photo: any, index: number) => {
+                let url = photo.url || photo.image_url || '';
+                // If it's a relative proxy URL, construct full URL using API base
+                if (url.startsWith('/v1/routes/gallery-images/proxy/')) {
+                  url = `${API_BASE_URL}${url}`;
+                }
+                return {
+                  id: `gallery-${photo.name || photo.filename || index}-${index}`,
+                  url: url,
+                  caption: photo.caption || ''
+                };
+              });
+            
+            return {
+              id: event.id,
+              eventTitle: event.eventTitle,
+              date: event.date || '',
+              location: event.location || '',
+              tags: event.tags || [],
+              photos: photos
+            };
+          })
+          .filter((event: GalleryEvent) => event.photos.length > 0); // Only include events with valid photos
         
-        if (response.ok) {
-          const data = await response.json();
-          const galleryEvents = data.events || [];
-          
-          // Transform to GalleryEvent format
-          const apiEvents: GalleryEvent[] = galleryEvents
-            .filter((event: any) => event.photos && event.photos.length > 0) // Only include events with photos
-            .map((event: any) => {
-              // Filter out photos with empty or invalid URLs
-              // Accept both absolute URLs (http/https) and relative paths (starting with /)
-              const photos = (event.photos || [])
-                .filter((photo: any) => {
-                  const url = photo.url || photo.image_url || '';
-                  if (!url || url.trim() === '') return false;
-                  // Accept absolute URLs (http/https) or relative paths (starting with /)
-                  return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/');
-                })
-                .map((photo: any, index: number) => {
-                  let url = photo.url || photo.image_url || '';
-                  // If it's a relative proxy URL, construct full URL using API base
-                  if (url.startsWith('/v1/routes/gallery-images/proxy/')) {
-                    url = `${API_BASE_URL}${url}`;
-                  }
-                  return {
-                    id: `gallery-${photo.name || photo.filename || index}-${index}`,
-                    url: url,
-                    caption: photo.caption || ''
-                  };
-                });
-              
-              return {
-                id: event.id,
-                eventTitle: event.eventTitle,
-                date: event.date || '',
-                location: event.location || '',
-                tags: event.tags || [],
-                photos: photos
-              };
-            })
-            .filter((event: GalleryEvent) => event.photos.length > 0); // Only include events with valid photos
-          
-          setApiGalleryEvents(apiEvents);
-        } else {
-          // If gallery_images table doesn't exist, silently fail (images will sync later)
-          const errorText = await response.text();
-          console.error('Gallery images endpoint error:', response.status, errorText);
-        }
-      } catch (error) {
-        // Silently handle errors - backend might not be running or endpoint might not be available
-        if (error instanceof Error && error.name !== 'AbortError') {
-          // Only log non-timeout errors
-          console.error('Error fetching gallery images:', error);
-        }
-        // Don't show error to user - gallery will work with static data
-      } finally {
-        setIsLoadingApiImages(false);
+        setApiGalleryEvents(apiEvents);
+      } else {
+        // If gallery_images table doesn't exist, silently fail (images will sync later)
+        const errorText = await response.text();
+        console.error('Gallery images endpoint error:', response.status, errorText);
       }
+    } catch (error) {
+      // Silently handle errors - backend might not be running or endpoint might not be available
+      if (error instanceof Error && error.name !== 'AbortError') {
+        // Only log non-timeout errors
+        console.error('Error fetching gallery images:', error);
+      }
+      // Don't show error to user - gallery will work with static data
+    } finally {
+      setIsLoadingApiImages(false);
+    }
+  };
+
+  useEffect(() => {
+    // Fetch immediately on mount
+    fetchGalleryImages();
+    
+    // Refresh when user returns to the tab (optional - checks on focus)
+    const handleFocus = () => {
+      fetchGalleryImages();
     };
     
-    fetchGalleryImages();
+    window.addEventListener('focus', handleFocus);
+    
+    // Cleanup on unmount
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   // Merge existing galleryData with API events
