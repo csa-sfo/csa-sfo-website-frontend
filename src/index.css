@@ -4,6 +4,51 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ReactQuill Editor Styling */
+.quill {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ql-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.ql-editor {
+  flex: 1;
+  min-height: 200px;
+}
+
+.ql-editor p {
+  margin: 0 0 1em 0;
+}
+
+.ql-editor p:last-child {
+  margin-bottom: 0;
+}
+
+.ql-editor ul,
+.ql-editor ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.ql-editor li {
+  margin: 0.25em 0;
+}
+
+.ql-editor strong {
+  font-weight: 600;
+}
+
+.ql-editor em {
+  font-style: italic;
+}
+
 /* CSA Brand Color System */
 @layer base {
   :root {

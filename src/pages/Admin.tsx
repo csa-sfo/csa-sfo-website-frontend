@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Users, Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon, ChevronLeft, ChevronRight, Lock, Menu, LayoutDashboard, UserCheck, Images, TrendingUp, Activity, BarChart3, PieChart, CheckSquare, Wallpaper, Settings, Clock, Share2, Sparkles, Send, Calendar as CalendarIcon, Hash, Facebook, Instagram, Linkedin, Youtube, RefreshCw, FileText, Copy, CheckCircle2, Loader2, PanelLeftClose, PanelLeftOpen, Bot, User, Home, Brain } from "lucide-react";
+import { Calendar, MapPin, Users, Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon, ChevronLeft, ChevronRight, Lock, Menu, LayoutDashboard, UserCheck, Images, TrendingUp, Activity, BarChart3, PieChart, CheckSquare, Wallpaper, Settings, Clock, Share2, Sparkles, Send, Calendar as CalendarIcon, Facebook, Instagram, Linkedin, Youtube, RefreshCw, FileText, Copy, CheckCircle2, Loader2, PanelLeftClose, PanelLeftOpen, Bot, User, Home, Brain, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 import { Event, AgendaItem, Speaker } from "@/types/event";
 import { API_BASE_URL, API_ENDPOINTS } from "@/config/api";
@@ -742,13 +742,229 @@ export default function Admin() {
   const [scheduledTime, setScheduledTime] = useState("");
   const [customCaption, setCustomCaption] = useState("");
   const [customHashtags, setCustomHashtags] = useState("");
+  const [isEditingContent, setIsEditingContent] = useState(false);
   const [isSchedulingPost, setIsSchedulingPost] = useState(false);
   const [scheduledPosts, setScheduledPosts] = useState<any[]>([]);
   const [isLoadingScheduledPosts, setIsLoadingScheduledPosts] = useState(false);
   const [postPreviewPlatform, setPostPreviewPlatform] = useState<string>("linkedin");
+  const [generatedImagePath, setGeneratedImagePath] = useState<string>("");
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isPostingToLinkedIn, setIsPostingToLinkedIn] = useState(false);
+  
+  // Handler function to generate image
+  const handleGenerateImage = async () => {
+    if (!selectedEventForSocial) {
+      toast.error("Please select an event first");
+      return;
+    }
+    
+    setIsGeneratingImage(true);
+    
+    try {
+      // Get authentication token
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        toast.error('Please log in first');
+        setIsGeneratingImage(false);
+        return;
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        toast.error('Authentication token not found');
+        setIsGeneratingImage(false);
+        return;
+      }
+
+      // Call backend to generate image
+      const imageResponse = await fetch(API_ENDPOINTS.GENERATE_EVENT_IMAGE, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_id: selectedEventForSocial
+        }),
+      });
+
+      // Handle image response
+      if (!imageResponse.ok) {
+        const errorData = await imageResponse.json().catch(() => ({ detail: 'Failed to generate image' }));
+        throw new Error(errorData.detail || 'Failed to generate image');
+      }
+
+      const imageData = await imageResponse.json();
+      const imagePath = imageData.image_path;
+
+      if (imagePath) {
+        setGeneratedImagePath(imagePath);
+        toast.success("Image regenerated successfully!");
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast.error(`Failed to generate image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  // Handler function to generate content
+  const handleGenerateContent = async () => {
+    if (!selectedEventForSocial) {
+      toast.error("Please select an event first");
+      return;
+    }
+    
+    setIsGeneratingContent(true);
+    
+    try {
+      // Get authentication token
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        toast.error('Please log in first');
+        setIsGeneratingContent(false);
+        return;
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        toast.error('Authentication token not found');
+        setIsGeneratingContent(false);
+        return;
+      }
+
+      // Call backend to generate content
+      const contentResponse = await fetch(API_ENDPOINTS.GENERATE_EVENT_CONTENT, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_id: selectedEventForSocial
+        }),
+      });
+
+      // Handle content response
+      if (!contentResponse.ok) {
+        const errorData = await contentResponse.json().catch(() => ({ detail: 'Failed to generate content' }));
+        throw new Error(errorData.detail || 'Failed to generate content');
+      }
+
+      const contentData = await contentResponse.json();
+      const generatedContent = contentData.content;
+
+      if (generatedContent) {
+        setGeneratedCaption(generatedContent);
+        // Store raw text directly (no HTML conversion)
+        // Normalize line endings
+        const normalizedContent = generatedContent
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n');
+        setCustomCaption(normalizedContent);
+        setIsEditingContent(false); // Start in view mode
+        toast.success("Content regenerated successfully!");
+      }
+    } catch (error) {
+      console.error('Error generating content:', error);
+      toast.error(`Failed to generate content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsGeneratingContent(false);
+    }
+  };
+  
+  // Handler function to post to LinkedIn
+  const handlePostToLinkedIn = async () => {
+    if (!selectedPlatforms.includes('linkedin')) {
+      toast.error("LinkedIn is not selected. Please connect LinkedIn first.");
+      return;
+    }
+    
+    if (!customCaption || customCaption.trim().length === 0) {
+      toast.error("Please generate content first before posting");
+      return;
+    }
+    
+    setIsPostingToLinkedIn(true);
+    
+    try {
+      // Get authentication token
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        toast.error('Please log in first');
+        setIsPostingToLinkedIn(false);
+        return;
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        toast.error('Authentication token not found');
+        setIsPostingToLinkedIn(false);
+        return;
+      }
+
+      // Use raw text directly (customCaption already contains plain text)
+      const textContent = customCaption.trim();
+      
+      if (!textContent) {
+        toast.error("Content is empty. Please generate content first.");
+        setIsPostingToLinkedIn(false);
+        return;
+      }
+
+      // Prepare post data
+      const postData: any = {
+        text: textContent
+      };
+      
+      // Add image URL/data URL if available
+      // The backend will download it to a temp file and pass to LinkedIn MCP
+      if (generatedImagePath && generatedImagePath.trim()) {
+        postData.image_path = generatedImagePath;
+      }
+
+      // Call backend to post to LinkedIn
+      const response = await fetch(API_ENDPOINTS.LINKEDIN_POST, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(postData),
+      });
+
+      // Handle response
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to post to LinkedIn' }));
+        throw new Error(errorData.detail || 'Failed to post to LinkedIn');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success(`Posted to LinkedIn successfully! Post URN: ${data.post_urn || 'N/A'}`);
+      } else {
+        throw new Error(data.message || 'Failed to post to LinkedIn');
+      }
+    } catch (error) {
+      console.error('Error posting to LinkedIn:', error);
+      toast.error(`Failed to post to LinkedIn: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsPostingToLinkedIn(false);
+    }
+  };
   
   // LinkedIn OAuth Modal state
   const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
+  const [isConnectingLinkedIn, setIsConnectingLinkedIn] = useState(false);
+  const [linkedInConnected, setLinkedInConnected] = useState(false);
   
   const [formData, setFormData] = useState<Partial<Event>>({
     title: "",
@@ -1276,6 +1492,186 @@ export default function Admin() {
       fetchVolunteers();
     }
   }, [mainSection, isAdmin, user]);
+
+  // Check LinkedIn connection status on mount and when switching to social media section
+  const checkLinkedInStatus = useCallback(async () => {
+    if (!isAdmin || !user) return;
+
+    try {
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        setLinkedInConnected(false);
+        setSelectedPlatforms(prev => prev.filter(p => p !== 'linkedin'));
+        return;
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        setLinkedInConnected(false);
+        setSelectedPlatforms(prev => prev.filter(p => p !== 'linkedin'));
+        return;
+      }
+
+      const response = await fetch(API_ENDPOINTS.LINKEDIN_STATUS, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        setLinkedInConnected(false);
+        setSelectedPlatforms(prev => prev.filter(p => p !== 'linkedin'));
+        return;
+      }
+
+      const data = await response.json();
+      if (data.connected && !data.expired) {
+        setLinkedInConnected(true);
+        setSelectedPlatforms(prev => {
+          if (!prev.includes('linkedin')) {
+            return [...prev, 'linkedin'];
+          }
+          return prev;
+        });
+      } else {
+        setLinkedInConnected(false);
+        setSelectedPlatforms(prev => prev.filter(p => p !== 'linkedin'));
+        if (data.expired) {
+          toast.info('LinkedIn token expired. Please reconnect.');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking LinkedIn status:', error);
+      setLinkedInConnected(false);
+      setSelectedPlatforms(prev => prev.filter(p => p !== 'linkedin'));
+    }
+  }, [isAdmin, user]);
+
+  // Note: LinkedIn status is NOT checked on mount or when switching sections
+  // LinkedIn will start in OFF state and only connect when user toggles ON
+  // Status check only happens:
+  // 1. After OAuth callback (via URL parameter)
+  // 2. When user explicitly toggles ON (via handleLinkedInConnect)
+
+  // Handle LinkedIn callback from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const linkedinParam = urlParams.get('linkedin');
+    
+    if (linkedinParam === 'connected') {
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Switch to social media section
+      setMainSection('social-media');
+      
+      // Check status and update connection
+      checkLinkedInStatus().then(() => {
+        toast.success('LinkedIn connected successfully!');
+      });
+    } else if (linkedinParam === 'error') {
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      toast.error('LinkedIn connection failed. Please try again.');
+    }
+  }, [checkLinkedInStatus]);
+
+  // Connect to LinkedIn
+  const handleLinkedInConnect = async () => {
+    if (!isAdmin || !user) {
+      toast.error("Admin access required");
+      return;
+    }
+
+    setIsConnectingLinkedIn(true);
+    try {
+      // Get authentication token
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        toast.error('Please log in first');
+        setIsConnectingLinkedIn(false);
+        return;
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        toast.error('Authentication token not found');
+        setIsConnectingLinkedIn(false);
+        return;
+      }
+
+      // First, check if there's already a valid token in Supabase
+      try {
+        const statusResponse = await fetch(API_ENDPOINTS.LINKEDIN_STATUS, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          // If token exists and is not expired, just use it (no OAuth needed)
+          // This allows reconnection after disconnect without going through OAuth again
+          if (statusData.connected && !statusData.expired) {
+            setLinkedInConnected(true);
+            setSelectedPlatforms(prev => {
+              if (!prev.includes('linkedin')) {
+                return [...prev, 'linkedin'];
+              }
+              return prev;
+            });
+            setIsConnectingLinkedIn(false);
+            toast.success('LinkedIn connected successfully!');
+            return;
+          }
+          // If token is expired or doesn't exist, proceed with OAuth
+        }
+      } catch (statusError) {
+        // If status check fails, proceed with OAuth flow
+        console.log('Status check failed, proceeding with OAuth:', statusError);
+      }
+
+      // No valid token found or token expired, proceed with OAuth flow via MCP
+      // Call the backend endpoint to get the LinkedIn OAuth URL
+      const response = await fetch(API_ENDPOINTS.LINKEDIN_CONNECT, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to connect to LinkedIn' }));
+        throw new Error(errorData.detail || 'Failed to connect to LinkedIn');
+      }
+
+      const data = await response.json();
+      const linkedInUrl = data.url;
+
+      if (!linkedInUrl) {
+        throw new Error('No redirect URL received from server');
+      }
+
+      // Redirect to LinkedIn OAuth
+      window.location.href = linkedInUrl;
+      // Note: setIsConnectingLinkedIn will remain true since we're redirecting
+      // The callback will handle resetting the state
+    } catch (error) {
+      console.error('Error connecting to LinkedIn:', error);
+      toast.error(`Failed to connect to LinkedIn: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setIsConnectingLinkedIn(false);
+    }
+  };
 
   // Update current date and time every minute
   useEffect(() => {
@@ -4584,18 +4980,75 @@ export default function Admin() {
 
                             {/* Modern Toggle Button */}
                             <button
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                if (isConnected) {
-                                  // Disconnect
-                                  setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform.id));
-                                  toast.success(`${platform.name} disconnected`);
+                                if (platform.id === 'linkedin' && isConnected) {
+                                  // For LinkedIn when already connected, check if token is expired
+                                  // If expired, trigger re-authentication. Otherwise, just disconnect.
+                                  try {
+                                    const storedTokens = localStorage.getItem('csaTokens');
+                                    if (!storedTokens) {
+                                      setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform.id));
+                                      setLinkedInConnected(false);
+                                      toast.success(`${platform.name} disconnected`);
+                                      return;
+                                    }
+
+                                    const tokens = JSON.parse(storedTokens);
+                                    const accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+                                    if (!accessToken) {
+                                      setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform.id));
+                                      setLinkedInConnected(false);
+                                      toast.success(`${platform.name} disconnected`);
+                                      return;
+                                    }
+
+                                    // Check token status
+                                    const statusResponse = await fetch(API_ENDPOINTS.LINKEDIN_STATUS, {
+                                      method: 'GET',
+                                      headers: {
+                                        'Authorization': `Bearer ${accessToken}`,
+                                        'Content-Type': 'application/json',
+                                      },
+                                    });
+
+                                    if (statusResponse.ok) {
+                                      const statusData = await statusResponse.json();
+                                      if (statusData.expired) {
+                                        // Token expired, trigger re-authentication
+                                        toast.info('LinkedIn token expired. Reconnecting...');
+                                        await handleLinkedInConnect();
+                                      } else {
+                                        // Token valid, just disconnect (toggle OFF)
+                                        setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform.id));
+                                        setLinkedInConnected(false);
+                                        toast.success(`${platform.name} disconnected`);
+                                      }
+                                    } else {
+                                      // Error checking status, allow disconnect
+                                      setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform.id));
+                                      setLinkedInConnected(false);
+                                      toast.success(`${platform.name} disconnected`);
+                                    }
+                                  } catch (error) {
+                                    console.error('Error checking LinkedIn status:', error);
+                                    // On error, allow disconnect
+                                    setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform.id));
+                                    setLinkedInConnected(false);
+                                    toast.success(`${platform.name} disconnected`);
+                                  }
+                                } else if (platform.id === 'linkedin' && !isConnected) {
+                                  // Connect - call backend API for LinkedIn
+                                  await handleLinkedInConnect();
                                 } else {
-                                  // Connect - open modal for LinkedIn
-                                  if (platform.id === 'linkedin') {
-                                    setIsLinkedInModalOpen(true);
+                                  // For other platforms
+                                  if (isConnected) {
+                                    // Disconnect
+                                    setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform.id));
+                                    toast.success(`${platform.name} disconnected`);
                                   } else {
-                                    // For other platforms (when uncommented)
+                                    // Connect
                                     toast.info(`Opening ${platform.name} login...`);
                                     window.open(
                                       platform.loginUrl,
@@ -4610,11 +5063,12 @@ export default function Admin() {
                                   }
                                 }
                               }}
+                              disabled={platform.id === 'linkedin' && isConnectingLinkedIn}
                               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                                 isConnected
                                   ? 'bg-green-500 focus:ring-green-500'
                                   : 'bg-gray-300 focus:ring-gray-400'
-                              }`}
+                              } ${platform.id === 'linkedin' && isConnectingLinkedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                               <span
                                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -4674,9 +5128,8 @@ export default function Admin() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Left Column - Input */}
-                  <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Event Selection Section */}
                     <Card className="border-csa-blue/30 bg-white">
                       <CardContent className="p-5 space-y-4">
                   <div className="space-y-3">
@@ -4716,7 +5169,7 @@ export default function Admin() {
                 </div>
 
                 <Button
-                  onClick={() => {
+                        onClick={async () => {
                     if (!selectedEventForSocial) {
                       toast.error("Please select an event first");
                       return;
@@ -4725,26 +5178,15 @@ export default function Admin() {
                       toast.error("Please connect at least one platform first");
                       return;
                     }
-                    setIsGeneratingContent(true);
-                    // Simulate AI generation
-                    setTimeout(() => {
-                      const event = events.find(e => e.id === selectedEventForSocial);
-                      if (event) {
-                        const caption = `🎯 Exciting news! Join us for "${event.title}" 🚀\n\n📅 ${new Date(event.date_time).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}\n📍 ${event.location}\n\n${event.excerpt || 'An amazing opportunity to learn, network, and grow with industry experts!'}\n\n🎟️ Limited spots available - Register now!\n\n#cybersecurity #cloudsecurity #infosec #tech`;
-                        setGeneratedCaption(caption);
-                        setGeneratedHashtags(['CloudSecurity', 'CyberSecurity', 'InfoSec', 'TechEvent', 'CSA', 'NetworkingSF', 'TechCommunity', 'LearnAndGrow']);
-                        setCustomCaption(caption);
-                        setCustomHashtags('CloudSecurity, CyberSecurity, InfoSec, TechEvent, CSA, NetworkingSF, TechCommunity, LearnAndGrow');
-                        toast.success("Content generated successfully!");
-                      }
-                      setIsGeneratingContent(false);
-                    }, 2000);
-                  }}
-                  disabled={!selectedEventForSocial || isGeneratingContent || selectedPlatforms.length === 0}
+                    // Generate both image and content
+                    await handleGenerateImage();
+                    await handleGenerateContent();
+                        }}
+                  disabled={!selectedEventForSocial || isGeneratingContent || isGeneratingImage || selectedPlatforms.length === 0}
                           className="w-full bg-gradient-to-r from-csa-blue to-csa-accent hover:from-csa-navy hover:to-orange-600 text-white shadow-lg shadow-csa-blue/30"
                   size="lg"
                 >
-                  {isGeneratingContent ? (
+                  {(isGeneratingContent || isGeneratingImage) ? (
                     <>
                       <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                               Generating with AI...
@@ -4776,103 +5218,164 @@ export default function Admin() {
                         </div>
                       </CardContent>
                     </Card>
-                  </div>
 
-                  {/* Right Column - Generated Content */}
-                  <div className="space-y-4">
-                    {generatedCaption ? (
-                      <Card className="border-green-200 bg-white">
-                        <CardContent className="p-5 space-y-4">
-                          <div className="flex items-center gap-2 pb-2 border-b border-green-200">
-                            <div className="p-1.5 bg-green-100 rounded-full">
-                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  {/* Generated Content Section - Side by Side */}
+                  {(generatedCaption || generatedImagePath) && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Left Column - Generated Image */}
+                      {generatedImagePath && (
+                        <Card className="border-green-200 bg-white flex flex-col">
+                          <CardContent className="p-5 flex flex-col flex-1">
+                            <div className="flex items-center justify-between pb-2 border-b border-green-200 mb-4">
+                              <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-green-100 rounded-full">
+                                  <ImageIcon className="h-4 w-4 text-green-600" />
+                                </div>
+                                <span className="font-semibold text-green-700">Generated Image</span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleGenerateImage}
+                                disabled={isGeneratingImage}
+                                className="h-8"
+                                title="Regenerate image"
+                              >
+                                {isGeneratingImage ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin text-csa-blue" />
+                                ) : (
+                                  <RefreshCw className="h-3.5 w-3.5 text-csa-blue" />
+                                )}
+                              </Button>
                             </div>
-                            <span className="font-semibold text-green-700">Content Generated!</span>
-                    </div>
+                            <div className="relative flex-1 flex items-center">
+                              <img
+                                src={generatedImagePath}
+                                alt="Generated event image"
+                                className="w-full h-auto rounded-lg border-2 border-gray-200 shadow-md"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/placeholder.svg';
+                                  toast.error("Failed to load generated image");
+                                }}
+                              />
+                              {isGeneratingImage && (
+                                <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
+                                  <div className="flex flex-col items-center gap-2">
+                                    <Loader2 className="h-8 w-8 animate-spin text-csa-blue" />
+                                    <span className="text-sm text-gray-600">Generating image...</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
 
-                    {/* Caption */}
-                          <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                              <Label className="text-sm font-semibold flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-csa-blue" />
-                                Caption
-                        </Label>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            navigator.clipboard.writeText(generatedCaption);
-                                  toast.success("Caption copied!");
-                          }}
-                                className="h-8"
-                        >
-                                <Copy className="h-3.5 w-3.5 mr-1.5" />
-                          Copy
-                        </Button>
-                      </div>
-                      <Textarea
-                        value={customCaption}
-                        onChange={(e) => setCustomCaption(e.target.value)}
-                              rows={6}
-                              className="text-sm bg-gray-50 border-gray-200 focus:border-csa-blue focus:ring-csa-blue"
-                        placeholder="AI-generated caption will appear here..."
-                      />
-                    </div>
-
-                    {/* Hashtags */}
-                          <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                              <Label className="text-sm font-semibold flex items-center gap-2">
-                                <Hash className="h-4 w-4 text-csa-accent" />
-                                Hashtags
-                        </Label>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            navigator.clipboard.writeText(generatedHashtags.map(tag => `#${tag}`).join(' '));
-                                  toast.success("Hashtags copied!");
-                          }}
-                                className="h-8"
-                        >
-                                <Copy className="h-3.5 w-3.5 mr-1.5" />
-                          Copy
-                        </Button>
-                      </div>
-                            <div className="flex flex-wrap gap-2 p-3 bg-gradient-to-br from-csa-light to-orange-50 rounded-lg border border-csa-blue/30">
-                        {generatedHashtags.map((tag, idx) => (
-                                <Badge 
-                                  key={idx} 
-                                  variant="secondary" 
-                                  className="bg-white text-csa-blue border border-csa-blue/30 px-2.5 py-1 text-xs font-medium"
+                      {/* Right Column - Generated Content Editor */}
+                      {generatedCaption && (
+                        <Card className="border-green-200 bg-white flex flex-col">
+                          <CardContent className="p-5 flex flex-col flex-1">
+                            <div className="flex items-center justify-between pb-2 border-b border-green-200 mb-4">
+                              <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-green-100 rounded-full">
+                                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                </div>
+                                <Label className="text-sm font-semibold flex items-center gap-2 text-green-700">
+                                  <FileText className="h-4 w-4 text-csa-blue" />
+                                  Generated Content
+                                </Label>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleGenerateContent}
+                                  disabled={isGeneratingContent}
+                                  className="h-8"
+                                  title="Regenerate content"
                                 >
-                            #{tag}
-                          </Badge>
-                        ))}
-                      </div>
-                      <Input
-                        value={customHashtags}
-                        onChange={(e) => setCustomHashtags(e.target.value)}
-                        placeholder="Edit hashtags (comma-separated)"
-                              className="bg-gray-50 border-gray-200 text-sm focus:border-csa-blue focus:ring-csa-blue"
-                      />
+                                  {isGeneratingContent ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin text-csa-blue" />
+                                  ) : (
+                                    <RefreshCw className="h-3.5 w-3.5 text-csa-blue" />
+                                  )}
+                                </Button>
+                                {!isEditingContent && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      // Copy raw text directly (customCaption already contains plain text)
+                                      navigator.clipboard.writeText(customCaption);
+                                      toast.success("Content copied!");
+                                    }}
+                                    className="h-8"
+                                  >
+                                    <Copy className="h-3.5 w-3.5 mr-1.5" />
+                                    Copy
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setIsEditingContent(!isEditingContent)}
+                                  className="h-8"
+                                >
+                                  {isEditingContent ? (
+                                    <>
+                                      <Save className="h-3.5 w-3.5 mr-1.5" />
+                                      Save
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Edit2 className="h-3.5 w-3.5 mr-1.5" />
+                                      Edit
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Content Display/Editor */}
+                            <div className="flex-1 flex flex-col min-h-[400px]">
+                              <Textarea
+                                value={customCaption}
+                                onChange={(e) => setCustomCaption(e.target.value)}
+                                placeholder="AI-generated content will appear here. You can edit it..."
+                                readOnly={!isEditingContent}
+                                className={`flex-1 min-h-[400px] resize-none font-mono text-sm ${!isEditingContent ? 'bg-gray-50 cursor-default' : 'bg-white'}`}
+                                style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+                              />
+                            </div>
+
+                            {/* Post Button */}
+                            <div className="pt-4 mt-4 border-t border-gray-200">
+                        <Button
+                          onClick={handlePostToLinkedIn}
+                          disabled={isPostingToLinkedIn || selectedPlatforms.length === 0 || !customCaption}
+                                className="w-full bg-gradient-to-r from-csa-blue to-csa-accent hover:from-csa-navy hover:to-orange-600 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                size="lg"
+                        >
+                                {isPostingToLinkedIn ? (
+                                  <>
+                                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                    Posting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Send className="h-5 w-5 mr-2" />
+                                    {selectedPlatforms.length > 0 
+                                      ? `Post to All Selected Platforms (${selectedPlatforms.length})`
+                                      : "Post to Platforms"}
+                                  </>
+                                )}
+                        </Button>
                     </div>
               </CardContent>
             </Card>
-                    ) : (
-                      <Card className="border-dashed border-2 border-csa-blue/30 bg-csa-light">
-                        <CardContent className="p-12 flex flex-col items-center justify-center text-center">
-                          <div className="p-4 bg-gradient-to-br from-csa-blue/20 to-csa-accent/20 rounded-full mb-4">
-                            <Sparkles className="h-8 w-8 text-csa-blue" />
+                      )}
                   </div>
-                          <h3 className="text-lg font-semibold text-csa-navy mb-2">Ready to Generate</h3>
-                          <p className="text-sm text-gray-500 max-w-xs">
-                            Select an event and click "Generate Content" to create AI-powered social media posts
-                          </p>
-                </CardContent>
-              </Card>
-            )}
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
