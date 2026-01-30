@@ -3,7 +3,7 @@ const API_BASE_URL_DEV = import.meta.env.VITE_DEV_API_URL || "http://localhost:8
 const API_BASE_URL_PROD = import.meta.env.VITE_PROD_API_URL;
 
 // Use production URL by default, fallback to dev for local development
-export const API_BASE_URL = API_BASE_URL_DEV;
+export const API_BASE_URL = API_BASE_URL_PROD;
 
 export const API_ENDPOINTS = {
   SEND_MESSAGE: `${API_BASE_URL}/v1/routes/message`,
