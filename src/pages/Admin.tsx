@@ -748,6 +748,7 @@ export default function Admin() {
   const [isLoadingScheduledPosts, setIsLoadingScheduledPosts] = useState(false);
   const [postPreviewPlatform, setPostPreviewPlatform] = useState<string>("linkedin");
   const [generatedImagePath, setGeneratedImagePath] = useState<string>("");
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string>(""); // Public URL for LinkedIn post
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isPostingToLinkedIn, setIsPostingToLinkedIn] = useState(false);
   
@@ -797,11 +798,24 @@ export default function Admin() {
       }
 
       const imageData = await imageResponse.json();
+      console.log('Image generation response:', { 
+        success: imageData.success, 
+        hasImagePath: !!imageData.image_path,
+        hasImageUrl: !!imageData.image_url,
+        imagePathLength: imageData.image_path?.length,
+        imagePathPreview: imageData.image_path?.substring(0, 50)
+      });
+      
       const imagePath = imageData.image_path;
+      const imageUrl = imageData.image_url; // Public URL for posting to LinkedIn
 
-      if (imagePath) {
+      if (imagePath && imagePath.trim()) {
         setGeneratedImagePath(imagePath);
+        setGeneratedImageUrl(imageUrl && imageUrl.trim() ? imageUrl : "");
         toast.success("Image regenerated successfully!");
+      } else {
+        console.error('Image path is missing or empty:', imageData);
+        throw new Error('Image path not found in response');
       }
     } catch (error) {
       console.error('Error generating image:', error);
@@ -923,9 +937,11 @@ export default function Admin() {
       const postData: any = {
         text: textContent
       };
-      
-      // Add image URL/data URL if available
-      // The backend will download it to a temp file and pass to LinkedIn MCP
+      // Send public image URL for LinkedIn (backend requires https URL to attach image)
+      if (generatedImageUrl && generatedImageUrl.trim().startsWith("https://")) {
+        postData.image_url = generatedImageUrl.trim();
+      }
+      // Also send image_path for display compatibility (data URL); backend uses image_url for posting
       if (generatedImagePath && generatedImagePath.trim()) {
         postData.image_path = generatedImagePath;
       }
@@ -949,7 +965,9 @@ export default function Admin() {
       const data = await response.json();
       
       if (data.success) {
-        toast.success(`Posted to LinkedIn successfully! Post URN: ${data.post_urn || 'N/A'}`);
+        const postId = data.post_id || 'N/A';
+        const imageId = data.image_id ? ` (Image ID: ${data.image_id})` : '';
+        toast.success(`Posted to LinkedIn successfully! Post ID: ${postId}${imageId}`);
       } else {
         throw new Error(data.message || 'Failed to post to LinkedIn');
       }
@@ -5221,12 +5239,12 @@ export default function Admin() {
 
                   {/* Generated Content Section - Side by Side */}
                   {(generatedCaption || generatedImagePath) && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                       {/* Left Column - Generated Image */}
                       {generatedImagePath && (
-                        <Card className="border-green-200 bg-white flex flex-col">
-                          <CardContent className="p-5 flex flex-col flex-1">
-                            <div className="flex items-center justify-between pb-2 border-b border-green-200 mb-4">
+                        <Card className="border-green-200 bg-white flex flex-col h-full">
+                          <CardContent className="p-5 flex flex-col flex-1 min-h-0">
+                            <div className="flex items-center justify-between pb-2 border-b border-green-200 mb-4 flex-shrink-0">
                               <div className="flex items-center gap-2">
                                 <div className="p-1.5 bg-green-100 rounded-full">
                                   <ImageIcon className="h-4 w-4 text-green-600" />
@@ -5248,11 +5266,11 @@ export default function Admin() {
                                 )}
                               </Button>
                             </div>
-                            <div className="relative flex-1 flex items-center">
+                            <div className="relative flex-1 flex items-center justify-center min-h-[400px]">
                               <img
                                 src={generatedImagePath}
                                 alt="Generated event image"
-                                className="w-full h-auto rounded-lg border-2 border-gray-200 shadow-md"
+                                className="w-full h-full object-contain rounded-lg border-2 border-gray-200 shadow-md"
                                 onError={(e) => {
                                   e.currentTarget.src = '/placeholder.svg';
                                   toast.error("Failed to load generated image");
@@ -5273,9 +5291,9 @@ export default function Admin() {
 
                       {/* Right Column - Generated Content Editor */}
                       {generatedCaption && (
-                        <Card className="border-green-200 bg-white flex flex-col">
-                          <CardContent className="p-5 flex flex-col flex-1">
-                            <div className="flex items-center justify-between pb-2 border-b border-green-200 mb-4">
+                        <Card className="border-green-200 bg-white flex flex-col h-full">
+                          <CardContent className="p-5 flex flex-col flex-1 min-h-0">
+                            <div className="flex items-center justify-between pb-2 border-b border-green-200 mb-4 flex-shrink-0">
                               <div className="flex items-center gap-2">
                                 <div className="p-1.5 bg-green-100 rounded-full">
                                   <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -5338,14 +5356,31 @@ export default function Admin() {
 
                             {/* Content Display/Editor */}
                             <div className="flex-1 flex flex-col min-h-[400px]">
-                              <Textarea
-                                value={customCaption}
-                                onChange={(e) => setCustomCaption(e.target.value)}
-                                placeholder="AI-generated content will appear here. You can edit it..."
-                                readOnly={!isEditingContent}
-                                className={`flex-1 min-h-[400px] resize-none font-mono text-sm ${!isEditingContent ? 'bg-gray-50 cursor-default' : 'bg-white'}`}
-                                style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
-                              />
+                              {!isEditingContent ? (
+                                // View Mode - Preview Style
+                                <div className="flex-1 min-h-[400px] p-5 bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 rounded-lg border-2 border-gray-200 shadow-inner overflow-y-auto">
+                                  <div className="prose prose-sm max-w-none">
+                                    <p className="text-base font-sans text-gray-800 leading-relaxed whitespace-pre-wrap break-words" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                                      {customCaption || (
+                                        <span className="text-gray-400 italic">AI-generated content will appear here...</span>
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+                              ) : (
+                                // Edit Mode - Active Input Style
+                                <Textarea
+                                  value={customCaption}
+                                  onChange={(e) => setCustomCaption(e.target.value)}
+                                  placeholder="AI-generated content will appear here. You can edit it..."
+                                  className="flex-1 min-h-[400px] resize-none text-base font-sans bg-white border-2 border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-lg shadow-sm transition-all p-5 text-gray-800 leading-relaxed"
+                                  style={{ 
+                                    whiteSpace: 'pre-wrap', 
+                                    wordWrap: 'break-word',
+                                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                                  }}
+                                />
+                              )}
                             </div>
 
                             {/* Post Button */}
