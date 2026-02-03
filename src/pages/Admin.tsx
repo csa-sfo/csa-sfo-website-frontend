@@ -709,6 +709,7 @@ export default function Admin() {
   const [eventUsersPerPage] = useState(10);
   const [mainSection, setMainSection] = useState("dashboard");
   const [activeTab, setActiveTab] = useState("manage");
+  const [downloadingEventId, setDownloadingEventId] = useState<string | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
@@ -1240,6 +1241,125 @@ export default function Admin() {
       // Error fetching registered users
     } finally {
       setIsLoadingEventUsers(false);
+    }
+  };
+
+  // Download attendees for a specific event
+  const handleDownloadEventAttendees = async (eventId: string, eventTitle: string) => {
+    if (!isAdmin) {
+      toast.error('Admin access required');
+      return;
+    }
+
+    setDownloadingEventId(eventId);
+    try {
+      // Get authentication token (same pattern as other functions)
+      const storedTokens = localStorage.getItem('csaTokens');
+      if (!storedTokens) {
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
+
+      const tokens = JSON.parse(storedTokens);
+      let accessToken = tokens.accessToken || tokens.adminToken || tokens.token;
+
+      if (!accessToken) {
+        // Try to get a fresh admin token if user is admin but no token found
+        if (user && user.role === 'admin') {
+          try {
+            const adminCheckResponse = await fetch(`${API_BASE_URL}/v1/routes/admin/check`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ email: user.email }),
+            });
+            
+            if (adminCheckResponse.ok) {
+              const adminResult = await adminCheckResponse.json();
+              if (adminResult.is_admin && adminResult.admin_token) {
+                const freshTokens = { accessToken: adminResult.admin_token };
+                localStorage.setItem('csaTokens', JSON.stringify(freshTokens));
+                accessToken = adminResult.admin_token;
+              }
+            }
+          } catch (error) {
+            // Failed to get fresh admin token
+          }
+        }
+        
+        if (!accessToken) {
+          toast.error('Authentication required. Please log in again.');
+          return;
+        }
+      }
+
+      const downloadUrl = `${API_ENDPOINTS.EXPORT_EVENT_ATTENDEES}/${eventId}`;
+      console.log('Downloading attendees from:', downloadUrl);
+      
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+      
+      console.log('Response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to download attendees';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use status text
+          errorMessage = response.statusText || errorMessage;
+        }
+        
+        if (response.status === 401) {
+          toast.error('Authentication failed. Please log in again.');
+          return;
+        }
+        if (response.status === 404) {
+          toast.error('Event not found');
+          return;
+        }
+        if (response.status === 500) {
+          toast.error(`Server error: ${errorMessage}`);
+          return;
+        }
+        toast.error(`Error: ${errorMessage}`);
+        return;
+      }
+
+      // Get filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `attendees_${eventTitle.replace(/[^a-z0-9]/gi, '_')}.xlsx`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success(`Attendees for "${eventTitle}" downloaded successfully!`);
+    } catch (error) {
+      console.error('Error downloading event attendees:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to download attendees: ${errorMessage}`);
+    } finally {
+      setDownloadingEventId(null);
     }
   };
 
@@ -3154,6 +3274,20 @@ export default function Admin() {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDownloadEventAttendees(event.id, event.title)}
+                                  disabled={downloadingEventId === event.id}
+                                  title="Download attendees list"
+                                  className="text-green-600 border-green-600 hover:bg-green-50"
+                                >
+                                  {downloadingEventId === event.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <FileText className="h-4 w-4" />
+                                  )}
+                                </Button>
                                 {isEventPast(event.date_time) ? (
                                   <Button
                                     variant="outline"
