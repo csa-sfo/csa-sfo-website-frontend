@@ -28,6 +28,7 @@ export const API_ENDPOINTS = {
   EVENT_REGISTERED_USERS: `${API_BASE_URL}/v1/routes/event-registered-users`,
   EVENT_REGISTRATION_DELETE: `${API_BASE_URL}/v1/routes/event-registrations/delete`,
   SIMPLE_REGISTRATION: `${API_BASE_URL}/v1/routes/simple-registration`,
+  EXPORT_EVENT_ATTENDEES: `${API_BASE_URL}/v1/routes/export-attendees`,
   // User Management Endpoints
   USERS_ALL: `${API_BASE_URL}/v1/routes/users/all`,
   USER_DELETE: `${API_BASE_URL}/v1/routes/users/delete`,
