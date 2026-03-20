@@ -116,10 +116,12 @@ const sponsors = [
   { name: "Oasis", logo: "/lovable-uploads/oasis-logo.png", website: "https://www.oasis.security/" },
   { name: "P0 Security", logo: "/lovable-uploads/posecurity-logo.png", website: "https://www.p0.dev/" },
   { name: "RAD Security", logo: "/lovable-uploads/RAD-logo.png", website: "https://www.radsecurity.ai/" },
-  { name: "Strong DM", logo: "/lovable-uploads/strongdm-logo.png", website: "https://www.strongdm.com/" },
+  // { name: "Strong DM", logo: "/lovable-uploads/strongdm-logo.png", website: "https://www.strongdm.com/" },
   { name: "SANS", logo: "/lovable-uploads/SANS-logo.png", website: "https://www.sans.org/" },
   { name: "Horizon3.ai", logo: "/lovable-uploads/horizon3logo.jpg", website: "https://www.horizon3.ai/" },
   { name: "Palo Alto Networks", logo: "/lovable-uploads/palo.jpg", website: "https://www.paloaltonetworks.com/" },
+  { name: "Corelight", logo: "/lovable-uploads/corelight-logo.png", website: "https://www.corelight.com/" },
+  { name: "Salt Security", logo: "/lovable-uploads/salt-security-logo.png", website: "https://salt.security/" },
 ];
 
 const partners = [
