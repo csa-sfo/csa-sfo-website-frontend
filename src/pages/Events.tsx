@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -250,6 +250,7 @@ export const allEvents: Event[] = [
 */
 
 export default function Events() {
+  const location = useLocation();
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedTopic, setSelectedTopic] = useState("all");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -643,7 +644,7 @@ export default function Events() {
             <div className="flex-1">
               <CardTitle className="text-xl mb-2 leading-tight">
                 <Link 
-                  to={`/events/${event.slug}`}
+                  to={`/events/${event.slug}${location.search}`}
                   className="text-csa-blue hover:font-bold transition-all cursor-pointer"
                 >
                   {event.title}
@@ -728,7 +729,7 @@ export default function Events() {
                 </div>
                 */}
                 <Button asChild className="bg-csa-blue hover:bg-csa-blue/90">
-                  <Link to={`/events/${event.slug}`}>
+                  <Link to={`/events/${event.slug}${location.search}`}>
                     {spotsLeft > 0 ? "Register" : "Join Waitlist"}
                   </Link>
                 </Button>

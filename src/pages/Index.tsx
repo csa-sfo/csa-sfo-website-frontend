@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -133,6 +133,7 @@ const partners = [
 
 export default function Index() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [upcomingEventData, setUpcomingEventData] = useState<Event | null>(null);
   const [attendeesCount, setAttendeesCount] = useState<number>(0);
   const pageVisits = usePageVisitsCounter();
@@ -336,7 +337,7 @@ export default function Index() {
                       size="lg"
                       className="bg-csa-accent hover:bg-csa-accent/90 text-white whitespace-nowrap"
                     >
-                      <Link to={`/events/${displayEvent.slug}`}>
+                      <Link to={`/events/${displayEvent.slug}${location.search}`}>
                         Register Now
                       </Link>
                     </Button>
