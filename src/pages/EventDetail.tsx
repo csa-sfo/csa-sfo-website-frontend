@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -358,6 +358,7 @@ Whether you're interested in AI security, MCP (Model Context Protocol) security,
 export default function EventDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user, isAdmin } = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
@@ -579,7 +580,7 @@ export default function EventDetail() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button 
                     onClick={() => {
-                      navigate('/events#past');
+                      navigate({ pathname: '/events', search: location.search, hash: '#past' });
                     }}
                     variant="outline"
                     className="border-primary text-primary hover:bg-primary hover:text-white"
@@ -590,7 +591,7 @@ export default function EventDetail() {
                     asChild 
                     className="bg-csa-blue hover:bg-csa-blue/90 text-white"
                   >
-                    <Link to="/events">
+                    <Link to={`/events${location.search}`}>
                       <ArrowLeft className="h-4 w-4 mr-2" />
                       Back to Events
                     </Link>
@@ -725,7 +726,7 @@ END:VCALENDAR`;
         <div className="container-site">
           <div className="mb-6">
             <Button asChild className="bg-csa-accent hover:bg-csa-accent/90 text-white border-none">
-              <Link to="/events">
+              <Link to={`/events${location.search}`}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Events
               </Link>

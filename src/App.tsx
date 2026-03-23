@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -26,6 +27,19 @@ import AuthCallback from "./pages/AuthCallback";
 import ScrollToTop from "@/components/ScrollToTop";
 
 const queryClient = new QueryClient();
+
+/** Mirrors index.html redirect logic for client-side navigations (React Router does not reload the page). */
+function RedirectQueryHandler() {
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const redirectUrl = params.get("redirect");
+    if (redirectUrl) {
+      window.location.assign(redirectUrl);
+    }
+  }, [location.search]);
+  return null;
+}
 
 const Layout = () => {
   const location = useLocation();
@@ -70,6 +84,7 @@ const AppContent = () => {
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <RedirectQueryHandler />
         <ScrollToTop />
         <Layout />
       </BrowserRouter>
