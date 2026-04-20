@@ -118,6 +118,7 @@ const sponsors = [
   // { name: "Strong DM", logo: "/lovable-uploads/strongdm-logo.png", website: "https://www.strongdm.com/" },
   { name: "SANS", logo: "/lovable-uploads/SANS-logo.png", website: "https://www.sans.org/" },
   { name: "Horizon3.ai", logo: "/lovable-uploads/horizon3logo.jpg", website: "https://www.horizon3.ai/" },
+  { name: "Infoblox", logo: "/lovable-uploads/Infoblox_NEW_Logo.jpg", website: "https://www.infoblox.com/" },
   { name: "Palo Alto Networks", logo: "/lovable-uploads/palo.jpg", website: "https://www.paloaltonetworks.com/" },
   { name: "Corelight", logo: "/lovable-uploads/corelight-logo.png", website: "https://www.corelight.com/" },
   { name: "Salt Security", logo: "/lovable-uploads/salt-security-logo.png", website: "https://salt.security/" },
@@ -501,7 +502,7 @@ export default function Index() {
                           src={sponsor.logo} 
                           alt={`${sponsor.name} logo`}
                           className={`object-contain transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110 ${
-                            sponsor.name === "Horizon3.ai" 
+                            sponsor.name === "Horizon3.ai" || sponsor.name === "Infoblox"
                               ? "max-h-16 max-w-[180px]" 
                               : "max-h-12 max-w-[140px]"
                           }`}
