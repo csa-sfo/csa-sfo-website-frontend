@@ -57,6 +57,8 @@ const sponsors = [
   { name: "Palo Alto Networks", logo: "/lovable-uploads/palo.jpg", website: "https://www.paloaltonetworks.com/" },
   { name: "Corelight", logo: "/lovable-uploads/corelight-logo.png", website: "https://www.corelight.com/" },
   { name: "Salt Security", logo: "/lovable-uploads/salt-security-logo.png", website: "https://salt.security/" },
+  { name: "Axonius", logo: "/lovable-uploads/axonious.png", website: "https://www.axonius.com/" },
+  { name: "Sysdig", logo: "/lovable-uploads/SysdigLogo.png", website: "https://www.sysdig.com/" },
 ];
 
 const partners = [
