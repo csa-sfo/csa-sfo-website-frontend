@@ -59,6 +59,7 @@ const sponsors = [
   { name: "Salt Security", logo: "/lovable-uploads/salt-security-logo.png", website: "https://salt.security/" },
   { name: "Axonius", logo: "/lovable-uploads/axonious.png", website: "https://www.axonius.com/" },
   { name: "Sysdig", logo: "/lovable-uploads/SysdigLogo.png", website: "https://www.sysdig.com/" },
+  { name: "CSA SFO", logo: "/lovable-uploads/csa-sfo-logo.png", website: "https://csasfo.com" },
 ];
 
 const partners = [
